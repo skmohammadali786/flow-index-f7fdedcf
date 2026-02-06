@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Heart, Mail, Lock, User, Eye, EyeOff, Sparkles, Calendar, TrendingUp, Shield } from 'lucide-react';
+import { Heart, Mail, Lock, User, Eye, EyeOff, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -138,81 +138,34 @@ const Auth = () => {
     });
   };
 
-  const features = [
-    { icon: Calendar, title: "Track Your Cycle", description: "Log periods & symptoms effortlessly" },
-    { icon: TrendingUp, title: "Smart Predictions", description: "AI-powered cycle forecasting" },
-    { icon: Shield, title: "Private & Secure", description: "Your data stays yours" },
-  ];
 
   return (
     <div className="min-h-screen gradient-soft flex items-center justify-center p-4">
-      <div className="w-full max-w-5xl flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-16">
-        {/* Left side - Branding & Features */}
+      <div className="w-full max-w-lg">
+        {/* Logo centered above form */}
         <motion.div 
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="flex-1 flex flex-col items-center lg:items-start text-center lg:text-left"
+          className="flex flex-col items-center mb-8"
         >
-          {/* Logo */}
           <motion.div 
             initial={{ scale: 0.9 }}
             animate={{ scale: 1 }}
             transition={{ duration: 0.3 }}
-            className="flex items-center gap-3 mb-6"
+            className="w-20 h-20 rounded-3xl gradient-primary flex items-center justify-center shadow-elevated mb-4"
           >
-            <div className="w-14 h-14 rounded-2xl gradient-primary flex items-center justify-center shadow-elevated">
-              <Heart className="w-7 h-7 text-primary-foreground" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-display font-bold text-foreground">Flow Index</h1>
-              <p className="text-sm text-muted-foreground">Period Health Tracker</p>
-            </div>
+            <Heart className="w-10 h-10 text-primary-foreground" />
           </motion.div>
-
-          {/* Tagline */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.4 }}
-            className="mb-8"
-          >
-            <h2 className="text-2xl lg:text-3xl font-display font-semibold text-foreground mb-3">
-              Your cycle, <span className="text-primary">your way</span>
-            </h2>
-            <p className="text-muted-foreground text-lg max-w-md">
-              Track your menstrual health with care, privacy, and beautiful insights.
-            </p>
-          </motion.div>
-
-          {/* Features */}
-          <div className="space-y-4 hidden lg:block w-full max-w-md">
-            {features.map((feature, index) => (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3 + index * 0.1, duration: 0.4 }}
-                className="flex items-start gap-4 p-4 rounded-xl bg-card/50 backdrop-blur-sm border border-border/50"
-              >
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
-                  <feature.icon className="w-5 h-5 text-primary" />
-                </div>
-                <div>
-                  <h3 className="font-medium text-foreground">{feature.title}</h3>
-                  <p className="text-sm text-muted-foreground">{feature.description}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
+          <h1 className="text-4xl font-display font-bold text-foreground">Flow Index</h1>
         </motion.div>
 
-        {/* Right side - Auth Form */}
+        {/* Auth Form */}
         <motion.div 
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="flex-1 flex justify-center w-full max-w-md"
+          className="w-full"
         >
           <Card className="w-full border-border/50 shadow-elevated bg-card/80 backdrop-blur-sm">
             <CardHeader className="text-center pb-4">
@@ -221,8 +174,8 @@ const Auth = () => {
               </CardTitle>
               <CardDescription>
                 {activeTab === 'login' 
-                  ? 'Sign in to continue tracking your cycle' 
-                  : 'Create your account to start tracking'}
+                  ? 'Sign in to continue' 
+                  : 'Create your account'}
               </CardDescription>
             </CardHeader>
 
