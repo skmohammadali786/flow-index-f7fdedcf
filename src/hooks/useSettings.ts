@@ -77,7 +77,7 @@ export function useSettings() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `bloom-backup-${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `flowindex-backup-${new Date().toISOString().split('T')[0]}.json`;
     a.click();
     URL.revokeObjectURL(url);
     
@@ -90,9 +90,28 @@ export function useSettings() {
       reader.onload = (e) => {
         try {
           const data = JSON.parse(e.target?.result as string);
-          if (data.settings) setSettings({ ...DEFAULT_SETTINGS, ...data.settings });
-          if (data.profile) setProfile({ ...DEFAULT_PROFILE, ...data.profile });
-          if (data.logs) localStorage.setItem('period_tracker_data', JSON.stringify(data.logs));
+          
+          // Update settings
+          if (data.settings) {
+            const newSettings = { ...DEFAULT_SETTINGS, ...data.settings };
+            setSettings(newSettings);
+            localStorage.setItem(SETTINGS_KEY, JSON.stringify(newSettings));
+          }
+          
+          // Update profile
+          if (data.profile) {
+            const newProfile = { ...DEFAULT_PROFILE, ...data.profile };
+            setProfile(newProfile);
+            localStorage.setItem(PROFILE_KEY, JSON.stringify(newProfile));
+          }
+          
+          // Update logs and reload to sync all data
+          if (data.logs) {
+            localStorage.setItem('period_tracker_data', JSON.stringify(data.logs));
+            // Reload to ensure all hooks pick up the new data
+            window.location.reload();
+          }
+          
           resolve(true);
         } catch {
           resolve(false);

@@ -38,7 +38,7 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
 
   const steps = [
     {
-      title: 'Welcome to Bloom',
+      title: 'Welcome to Flow Index',
       description: 'Your personal cycle companion. Let\'s set things up to give you the best experience.',
       icon: <Flower2 className="h-12 w-12" />,
     },

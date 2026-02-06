@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   User, 
@@ -30,6 +30,12 @@ export function ProfileView({ profile, stats, onUpdateProfile }: ProfileViewProp
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(profile.name);
   const [editedBirthDate, setEditedBirthDate] = useState(profile.birthDate || '');
+
+  // Sync local state with profile when it changes (e.g., after import)
+  useEffect(() => {
+    setEditedName(profile.name);
+    setEditedBirthDate(profile.birthDate || '');
+  }, [profile.name, profile.birthDate]);
 
   const containerVariants = {
     hidden: { opacity: 0 },

@@ -48,7 +48,7 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
             }}
             onClick={() => onTabChange('calendar')}
           >
-            Bloom
+            Flow Index
           </motion.h1>
           
           <div className="flex items-center gap-1">
