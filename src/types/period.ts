@@ -14,6 +14,14 @@ export type Symptom =
   | 'nausea'
   | 'cravings';
 
+export type SleepQuality = 'poor' | 'fair' | 'good' | 'excellent';
+
+export interface Medication {
+  name: string;
+  dosage?: string;
+  taken: boolean;
+}
+
 export interface DayLog {
   date: string;
   isPeriod: boolean;
@@ -21,6 +29,13 @@ export interface DayLog {
   moods: Mood[];
   symptoms: Symptom[];
   notes?: string;
+  waterIntake?: number; // glasses of water
+  medications?: Medication[];
+  sleepHours?: number;
+  sleepQuality?: SleepQuality;
+  exerciseMinutes?: number;
+  weight?: number;
+  temperature?: number; // basal body temperature
 }
 
 export interface CycleData {

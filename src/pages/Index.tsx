@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Header } from '@/components/period/Header';
 import { CycleCalendar } from '@/components/period/CycleCalendar';
@@ -10,16 +10,23 @@ import { SettingsView } from '@/components/period/SettingsView';
 import { ProfileView } from '@/components/period/ProfileView';
 import { HealthTipsView } from '@/components/period/HealthTipsView';
 import { SymptomAnalyticsView } from '@/components/period/SymptomAnalyticsView';
+import { CycleCharts } from '@/components/period/CycleCharts';
+import { PartnerShareView } from '@/components/period/PartnerShareView';
+import { OnboardingFlow, OnboardingData } from '@/components/period/OnboardingFlow';
+import { HealthReportGenerator } from '@/components/period/HealthReportGenerator';
 import { usePeriodTracker } from '@/hooks/usePeriodTracker';
 import { useSettings } from '@/hooks/useSettings';
 import { useSymptomAnalytics } from '@/hooks/useSymptomAnalytics';
-import { startOfDay } from 'date-fns';
+import { startOfDay, format } from 'date-fns';
 
-type TabType = 'calendar' | 'insights' | 'history' | 'tips' | 'analytics' | 'settings' | 'profile';
+type TabType = 'calendar' | 'insights' | 'history' | 'tips' | 'analytics' | 'charts' | 'share' | 'report' | 'settings' | 'profile';
+
+const ONBOARDING_KEY = 'period_tracker_onboarding_complete';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<TabType>('calendar');
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   
   const {
     logs,
@@ -30,6 +37,11 @@ const Index = () => {
     logMood,
     logSymptom,
     logNotes,
+    logWaterIntake,
+    logMedication,
+    logSleep,
+    logExercise,
+    logTemperature,
     getPredictions,
     getStats,
     isInFertileWindow,
@@ -58,6 +70,31 @@ const Index = () => {
     moodsByPhase,
     currentPhase,
   } = useSymptomAnalytics(logs, cycles);
+
+  // Check if onboarding is needed
+  useEffect(() => {
+    if (isLoaded && settingsLoaded) {
+      const onboardingComplete = localStorage.getItem(ONBOARDING_KEY);
+      if (!onboardingComplete && cycles.length === 0) {
+        setShowOnboarding(true);
+      }
+    }
+  }, [isLoaded, settingsLoaded, cycles.length]);
+
+  const handleOnboardingComplete = (data: OnboardingData) => {
+    // Log the initial period
+    logPeriodDay(data.lastPeriodDate, true, 'medium');
+    
+    // Save cycle length preference
+    updateSettings({
+      cycleLength: data.averageCycleLength,
+      periodLength: data.averagePeriodLength,
+    });
+    
+    // Mark onboarding as complete
+    localStorage.setItem(ONBOARDING_KEY, 'true');
+    setShowOnboarding(false);
+  };
 
   const predictions = getPredictions();
   const stats = getStats();
@@ -93,6 +130,10 @@ const Index = () => {
         </motion.div>
       </div>
     );
+  }
+
+  if (showOnboarding) {
+    return <OnboardingFlow onComplete={handleOnboardingComplete} />;
   }
 
   const pageVariants = {
@@ -180,6 +221,55 @@ const Index = () => {
             </motion.div>
           )}
 
+          {activeTab === 'charts' && (
+            <motion.div
+              key="charts"
+              variants={pageVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              transition={{ duration: 0.2 }}
+            >
+              <CycleCharts logs={logs} cycles={cycles} />
+            </motion.div>
+          )}
+
+          {activeTab === 'share' && (
+            <motion.div
+              key="share"
+              variants={pageVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              transition={{ duration: 0.2 }}
+            >
+              <PartnerShareView
+                predictions={predictions}
+                stats={stats}
+                currentPhase={currentPhase}
+                daysUntilNextPeriod={daysUntilNextPeriod}
+                currentCycleDay={currentCycleDay}
+              />
+            </motion.div>
+          )}
+
+          {activeTab === 'report' && (
+            <motion.div
+              key="report"
+              variants={pageVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              transition={{ duration: 0.2 }}
+            >
+              <HealthReportGenerator
+                logs={logs}
+                cycles={cycles}
+                stats={stats}
+              />
+            </motion.div>
+          )}
+
           {activeTab === 'history' && (
             <motion.div
               key="history"
@@ -243,6 +333,11 @@ const Index = () => {
         onLogMood={logMood}
         onLogSymptom={logSymptom}
         onLogNotes={logNotes}
+        onLogWaterIntake={logWaterIntake}
+        onLogMedication={logMedication}
+        onLogSleep={logSleep}
+        onLogExercise={logExercise}
+        onLogTemperature={logTemperature}
       />
     </div>
   );

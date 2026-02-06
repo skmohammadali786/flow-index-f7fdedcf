@@ -1,8 +1,15 @@
 import { motion } from 'framer-motion';
-import { User, Settings } from 'lucide-react';
+import { User, Settings, BarChart3, Share2, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu';
 
-type TabType = 'calendar' | 'insights' | 'history' | 'tips' | 'analytics' | 'settings' | 'profile';
+type TabType = 'calendar' | 'insights' | 'history' | 'tips' | 'analytics' | 'charts' | 'share' | 'report' | 'settings' | 'profile';
 
 interface HeaderProps {
   activeTab: TabType;
@@ -18,7 +25,13 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
     { id: 'history' as const, label: 'History' },
   ];
 
-  const isMainTab = mainTabs.some(t => t.id === activeTab);
+  const moreOptions = [
+    { id: 'charts' as const, label: 'Charts', icon: BarChart3 },
+    { id: 'share' as const, label: 'Partner Share', icon: Share2 },
+    { id: 'report' as const, label: 'Health Report', icon: FileText },
+  ];
+
+  const isMoreTab = moreOptions.some(t => t.id === activeTab);
 
   return (
     <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
@@ -39,6 +52,29 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
           </motion.h1>
           
           <div className="flex items-center gap-1">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant={isMoreTab ? 'secondary' : 'ghost'}
+                  size="sm"
+                  className="rounded-full px-3"
+                >
+                  More
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {moreOptions.map((option) => (
+                  <DropdownMenuItem
+                    key={option.id}
+                    onClick={() => onTabChange(option.id)}
+                    className="cursor-pointer"
+                  >
+                    <option.icon className="h-4 w-4 mr-2" />
+                    {option.label}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button
               variant={activeTab === 'profile' ? 'secondary' : 'ghost'}
               size="icon"

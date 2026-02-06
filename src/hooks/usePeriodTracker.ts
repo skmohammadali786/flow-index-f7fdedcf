@@ -6,7 +6,9 @@ import {
   CycleStats,
   FlowIntensity,
   Mood,
-  Symptom 
+  Symptom,
+  Medication,
+  SleepQuality
 } from '@/types/period';
 import { 
   format, 
@@ -171,6 +173,89 @@ export function usePeriodTracker() {
     });
   }, []);
 
+  // Log water intake
+  const logWaterIntake = useCallback((date: Date, glasses: number) => {
+    const dateStr = format(startOfDay(date), 'yyyy-MM-dd');
+    
+    setLogs(prev => {
+      const existing = prev.find(log => log.date === dateStr);
+      if (existing) {
+        return prev.map(log => log.date === dateStr ? { ...log, waterIntake: glasses } : log);
+      }
+      return [...prev, { date: dateStr, isPeriod: false, moods: [], symptoms: [], waterIntake: glasses }];
+    });
+  }, []);
+
+  // Log medication
+  const logMedication = useCallback((date: Date, medication: Medication) => {
+    const dateStr = format(startOfDay(date), 'yyyy-MM-dd');
+    
+    setLogs(prev => {
+      const existing = prev.find(log => log.date === dateStr);
+      if (existing) {
+        const medications = existing.medications || [];
+        const existingMedIndex = medications.findIndex(m => m.name === medication.name);
+        let updatedMedications: Medication[];
+        
+        if (existingMedIndex >= 0) {
+          if (medication.taken === medications[existingMedIndex].taken) {
+            // Remove medication if clicking same state
+            updatedMedications = medications.filter(m => m.name !== medication.name);
+          } else {
+            // Toggle medication state
+            updatedMedications = medications.map((m, i) => 
+              i === existingMedIndex ? medication : m
+            );
+          }
+        } else {
+          updatedMedications = [...medications, medication];
+        }
+        
+        return prev.map(log => log.date === dateStr ? { ...log, medications: updatedMedications } : log);
+      }
+      return [...prev, { date: dateStr, isPeriod: false, moods: [], symptoms: [], medications: [medication] }];
+    });
+  }, []);
+
+  // Log sleep
+  const logSleep = useCallback((date: Date, hours: number, quality?: SleepQuality) => {
+    const dateStr = format(startOfDay(date), 'yyyy-MM-dd');
+    
+    setLogs(prev => {
+      const existing = prev.find(log => log.date === dateStr);
+      if (existing) {
+        return prev.map(log => log.date === dateStr ? { ...log, sleepHours: hours, sleepQuality: quality } : log);
+      }
+      return [...prev, { date: dateStr, isPeriod: false, moods: [], symptoms: [], sleepHours: hours, sleepQuality: quality }];
+    });
+  }, []);
+
+  // Log exercise
+  const logExercise = useCallback((date: Date, minutes: number) => {
+    const dateStr = format(startOfDay(date), 'yyyy-MM-dd');
+    
+    setLogs(prev => {
+      const existing = prev.find(log => log.date === dateStr);
+      if (existing) {
+        return prev.map(log => log.date === dateStr ? { ...log, exerciseMinutes: minutes } : log);
+      }
+      return [...prev, { date: dateStr, isPeriod: false, moods: [], symptoms: [], exerciseMinutes: minutes }];
+    });
+  }, []);
+
+  // Log temperature
+  const logTemperature = useCallback((date: Date, temp: number) => {
+    const dateStr = format(startOfDay(date), 'yyyy-MM-dd');
+    
+    setLogs(prev => {
+      const existing = prev.find(log => log.date === dateStr);
+      if (existing) {
+        return prev.map(log => log.date === dateStr ? { ...log, temperature: temp } : log);
+      }
+      return [...prev, { date: dateStr, isPeriod: false, moods: [], symptoms: [], temperature: temp }];
+    });
+  }, []);
+
   // Calculate predictions
   const getPredictions = useCallback((): CyclePrediction | null => {
     if (cycles.length < 2) return null;
@@ -314,6 +399,11 @@ export function usePeriodTracker() {
     logMood,
     logSymptom,
     logNotes,
+    logWaterIntake,
+    logMedication,
+    logSleep,
+    logExercise,
+    logTemperature,
     getPredictions,
     getStats,
     isInFertileWindow,
