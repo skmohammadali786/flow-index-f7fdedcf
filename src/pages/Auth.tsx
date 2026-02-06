@@ -56,6 +56,8 @@ const Auth = () => {
     // Simulate login - will be replaced with Supabase auth
     setTimeout(() => {
       setIsLoading(false);
+      // Mark as returning user (skip onboarding)
+      localStorage.setItem('period_tracker_is_new_user', 'false');
       toast({
         title: "Login successful!",
         description: "Welcome back to Flow Index",
@@ -108,6 +110,10 @@ const Auth = () => {
     // Simulate signup - will be replaced with Supabase auth
     setTimeout(() => {
       setIsLoading(false);
+      // Mark as new user (show onboarding)
+      localStorage.setItem('period_tracker_is_new_user', 'true');
+      // Clear onboarding complete flag for new users
+      localStorage.removeItem('period_tracker_onboarding_complete');
       toast({
         title: "Account created!",
         description: "Welcome to Flow Index. Let's get started!",
