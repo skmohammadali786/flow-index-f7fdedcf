@@ -30,10 +30,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Create env file for build
+        run: echo "GITHUB_PAGES=true" > .env
+
       - name: Build
         run: npm run build
-        env:
-          GITHUB_PAGES: 'true'
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
