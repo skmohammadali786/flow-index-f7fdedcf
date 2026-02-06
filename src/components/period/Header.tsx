@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { User, Settings, BarChart3, Share2, FileText } from 'lucide-react';
+import { User, Settings, Lightbulb, Share2, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -20,13 +20,13 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
   const mainTabs = [
     { id: 'calendar' as const, label: 'Calendar' },
     { id: 'insights' as const, label: 'Insights' },
-    { id: 'tips' as const, label: 'Tips' },
+    { id: 'charts' as const, label: 'Charts' },
     { id: 'analytics' as const, label: 'Analytics' },
     { id: 'history' as const, label: 'History' },
   ];
 
   const moreOptions = [
-    { id: 'charts' as const, label: 'Charts', icon: BarChart3 },
+    { id: 'tips' as const, label: 'Health Tips', icon: Lightbulb },
     { id: 'share' as const, label: 'Partner Share', icon: Share2 },
     { id: 'report' as const, label: 'Health Report', icon: FileText },
   ];
