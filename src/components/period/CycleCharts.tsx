@@ -124,7 +124,7 @@ export function CycleCharts({ logs, cycles }: CycleChartsProps) {
     visible: { opacity: 1, y: 0 },
   };
 
-  if (logs.length < 5) {
+  if (logs.length < 2) {
     return (
       <div className="bg-card rounded-2xl p-8 text-center shadow-card">
         <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-muted flex items-center justify-center">
@@ -134,7 +134,7 @@ export function CycleCharts({ logs, cycles }: CycleChartsProps) {
           Not Enough Data Yet
         </h3>
         <p className="text-muted-foreground text-sm">
-          Keep logging your daily data to see trends and charts here.
+          Log at least 2 days of data to see trends and charts here.
         </p>
       </div>
     );
