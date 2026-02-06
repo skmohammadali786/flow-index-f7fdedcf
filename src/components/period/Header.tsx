@@ -63,16 +63,19 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                {moreOptions.map((option) => (
-                  <DropdownMenuItem
-                    key={option.id}
-                    onClick={() => onTabChange(option.id)}
-                    className="cursor-pointer"
-                  >
-                    <option.icon className="h-4 w-4 mr-2" />
-                    {option.label}
-                  </DropdownMenuItem>
-                ))}
+              {moreOptions.map((option) => {
+                  const Icon = option.icon;
+                  return (
+                    <DropdownMenuItem
+                      key={option.id}
+                      onClick={() => onTabChange(option.id)}
+                      className="cursor-pointer"
+                    >
+                      <Icon className="h-4 w-4 mr-2" />
+                      {option.label}
+                    </DropdownMenuItem>
+                  );
+                })}
               </DropdownMenuContent>
             </DropdownMenu>
             <Button
