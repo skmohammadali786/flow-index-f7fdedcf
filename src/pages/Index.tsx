@@ -71,15 +71,19 @@ const Index = () => {
     currentPhase,
   } = useSymptomAnalytics(logs, cycles);
 
-  // Check if onboarding is needed
+  // Check if onboarding is needed - only for new signups
   useEffect(() => {
     if (isLoaded && settingsLoaded) {
       const onboardingComplete = localStorage.getItem(ONBOARDING_KEY);
-      if (!onboardingComplete && cycles.length === 0) {
+      const isNewUser = localStorage.getItem('period_tracker_is_new_user');
+      
+      // Only show onboarding for new users who signed up (not logged in)
+      // and haven't completed onboarding yet
+      if (!onboardingComplete && isNewUser === 'true') {
         setShowOnboarding(true);
       }
     }
-  }, [isLoaded, settingsLoaded, cycles.length]);
+  }, [isLoaded, settingsLoaded]);
 
   const handleOnboardingComplete = (data: OnboardingData) => {
     // Log the initial period
@@ -93,6 +97,8 @@ const Index = () => {
     
     // Mark onboarding as complete
     localStorage.setItem(ONBOARDING_KEY, 'true');
+    // Clear the new user flag
+    localStorage.removeItem('period_tracker_is_new_user');
     setShowOnboarding(false);
   };
 
