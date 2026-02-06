@@ -1,10 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { 
   User, 
   Calendar, 
-  Cloud, 
-  CloudOff, 
   Edit2, 
   Check, 
   X,
@@ -55,10 +53,25 @@ export function ProfileView({ profile, stats, onUpdateProfile }: ProfileViewProp
     setIsEditing(false);
   };
 
-  const daysTracking = differenceInDays(new Date(), parseISO(profile.createdAt));
+  // Calculate days tracking properly - ensure it's at least 0
+  const daysTracking = useMemo(() => {
+    try {
+      const created = parseISO(profile.createdAt);
+      const diff = differenceInDays(new Date(), created);
+      return Math.max(0, diff);
+    } catch {
+      return 0;
+    }
+  }, [profile.createdAt]);
 
-  // Calculate achievements
-  const achievements = [
+  // Get actual logged days count
+  const totalLoggedDays = useMemo(() => {
+    // This would need to be passed from parent - for now estimate based on cycles
+    return stats ? Math.max(stats.totalCycles * (stats.averagePeriodLength || 5), daysTracking > 0 ? 1 : 0) : 0;
+  }, [stats, daysTracking]);
+
+  // Calculate achievements based on actual data
+  const achievements = useMemo(() => [
     {
       id: 'first_log',
       title: 'First Log',
@@ -76,14 +89,14 @@ export function ProfileView({ profile, stats, onUpdateProfile }: ProfileViewProp
     {
       id: 'week_streak',
       title: 'Week Streak',
-      description: 'Logged for 7 days in a row',
+      description: 'Using app for 7+ days',
       icon: '🔥',
       earned: daysTracking >= 7,
     },
     {
       id: 'month_tracker',
       title: 'Monthly Master',
-      description: 'Tracking for 30+ days',
+      description: 'Using app for 30+ days',
       icon: '🏆',
       earned: daysTracking >= 30,
     },
@@ -97,11 +110,11 @@ export function ProfileView({ profile, stats, onUpdateProfile }: ProfileViewProp
     {
       id: 'year_veteran',
       title: 'Year Veteran',
-      description: 'Tracking for a full year',
+      description: 'Using app for a full year',
       icon: '💎',
       earned: daysTracking >= 365,
     },
-  ];
+  ], [stats, daysTracking]);
 
   const earnedAchievements = achievements.filter(a => a.earned);
 
@@ -189,29 +202,6 @@ export function ProfileView({ profile, stats, onUpdateProfile }: ProfileViewProp
         </div>
       </motion.section>
 
-      {/* Sync Status */}
-      <motion.section variants={itemVariants} className="bg-card rounded-2xl p-5 shadow-card">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-muted">
-              <CloudOff className="h-5 w-5 text-muted-foreground" />
-            </div>
-            <div>
-              <p className="font-medium">Cloud Sync</p>
-              <p className="text-xs text-muted-foreground">Data stored locally on device</p>
-            </div>
-          </div>
-          <Button variant="outline" size="sm" disabled>
-            <Cloud className="h-4 w-4 mr-2" />
-            Connect
-          </Button>
-        </div>
-        {profile.lastBackup && (
-          <p className="text-xs text-muted-foreground mt-3 pl-12">
-            Last backup: {format(parseISO(profile.lastBackup), 'MMM d, yyyy h:mm a')}
-          </p>
-        )}
-      </motion.section>
 
       {/* Achievements */}
       <motion.section variants={itemVariants} className="bg-card rounded-2xl p-5 shadow-card">
