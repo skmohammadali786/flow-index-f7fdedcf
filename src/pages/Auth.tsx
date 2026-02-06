@@ -6,15 +6,18 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Mail, Lock, User, Eye, EyeOff, Sparkles } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, Sparkles, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import logo from '@/assets/logo.jpg';
 
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login');
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
   const navigate = useNavigate();
   const { toast } = useToast();
   const { signIn, signUp } = useAuth();
@@ -139,6 +142,52 @@ const Auth = () => {
     });
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!resetEmail) {
+      toast({
+        title: "Missing email",
+        description: "Please enter your email address",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!validateEmail(resetEmail)) {
+      toast({
+        title: "Invalid email",
+        description: "Please enter a valid email address",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+      redirectTo: `${window.location.origin}/auth`,
+    });
+
+    setIsLoading(false);
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Check your email",
+      description: "We've sent you a password reset link.",
+    });
+    setShowForgotPassword(false);
+    setResetEmail('');
+  };
+
 
   return (
     <div className="min-h-screen gradient-soft flex items-center justify-center p-4">
@@ -181,6 +230,57 @@ const Auth = () => {
             </CardHeader>
 
             <CardContent>
+              {showForgotPassword ? (
+                <motion.form
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                  onSubmit={handleForgotPassword}
+                  className="space-y-4"
+                >
+                  <button
+                    type="button"
+                    onClick={() => setShowForgotPassword(false)}
+                    className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    Back to sign in
+                  </button>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="reset-email" className="text-sm font-medium">Email</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input
+                        id="reset-email"
+                        type="email"
+                        placeholder="you@example.com"
+                        value={resetEmail}
+                        onChange={(e) => setResetEmail(e.target.value)}
+                        className="pl-10 border-border/50 focus:border-primary"
+                      />
+                    </div>
+                  </div>
+
+                  <Button
+                    type="submit"
+                    className="w-full gradient-primary text-primary-foreground font-medium h-11"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      >
+                        <Sparkles className="w-5 h-5" />
+                      </motion.div>
+                    ) : (
+                      'Send Reset Link'
+                    )}
+                  </Button>
+                </motion.form>
+              ) : (
               <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'login' | 'signup')} className="w-full">
                 <TabsList className="grid w-full grid-cols-2 mb-6">
                   <TabsTrigger value="login" className="font-medium">Sign In</TabsTrigger>
@@ -238,10 +338,7 @@ const Auth = () => {
                         <button 
                           type="button" 
                           className="text-sm text-primary hover:underline"
-                          onClick={() => toast({
-                            title: "Password Reset",
-                            description: "Please contact support for password reset assistance.",
-                          })}
+                          onClick={() => setShowForgotPassword(true)}
                         >
                           Forgot password?
                         </button>
@@ -369,6 +466,7 @@ const Auth = () => {
                   </TabsContent>
                 </AnimatePresence>
               </Tabs>
+              )}
             </CardContent>
           </Card>
         </motion.div>
