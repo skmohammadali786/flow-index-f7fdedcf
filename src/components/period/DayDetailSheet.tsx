@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
 import { X, Droplets, Heart, Activity, FileText, GlassWater, Pill, Moon, Dumbbell, Thermometer } from 'lucide-react';
@@ -69,6 +70,34 @@ const commonMedications = [
   { name: 'Vitamin D', dosage: '' },
 ];
 
+// Custom hook for debounced value
+function useDebouncedCallback<T extends (...args: any[]) => void>(
+  callback: T,
+  delay: number
+): T {
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  
+  const debouncedCallback = useCallback((...args: Parameters<T>) => {
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    timeoutRef.current = setTimeout(() => {
+      callback(...args);
+    }, delay);
+  }, [callback, delay]) as T;
+  
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+  
+  return debouncedCallback;
+}
+
 export function DayDetailSheet({
   date,
   log,
@@ -84,11 +113,49 @@ export function DayDetailSheet({
   onLogExercise,
   onLogTemperature,
 }: DayDetailSheetProps) {
-  if (!date) return null;
+  // Local state for sliders to prevent lag
+  const [localWater, setLocalWater] = useState(0);
+  const [localSleep, setLocalSleep] = useState(0);
+  const [localExercise, setLocalExercise] = useState(0);
+  const [localNotes, setLocalNotes] = useState('');
+  const [localTemp, setLocalTemp] = useState<number | undefined>(undefined);
 
-  const waterGlasses = log?.waterIntake ?? 0;
-  const exerciseMinutes = log?.exerciseMinutes ?? 0;
-  const sleepHours = log?.sleepHours ?? 0;
+  // Sync local state when log changes
+  useEffect(() => {
+    setLocalWater(log?.waterIntake ?? 0);
+    setLocalSleep(log?.sleepHours ?? 0);
+    setLocalExercise(log?.exerciseMinutes ?? 0);
+    setLocalNotes(log?.notes ?? '');
+    setLocalTemp(log?.temperature);
+  }, [log, date]);
+
+  // Debounced save functions (500ms delay)
+  const debouncedSaveWater = useDebouncedCallback(
+    (d: Date, value: number) => onLogWaterIntake?.(d, value),
+    500
+  );
+  
+  const debouncedSaveSleep = useDebouncedCallback(
+    (d: Date, hours: number, quality?: SleepQuality) => onLogSleep?.(d, hours, quality),
+    500
+  );
+  
+  const debouncedSaveExercise = useDebouncedCallback(
+    (d: Date, minutes: number) => onLogExercise?.(d, minutes),
+    500
+  );
+  
+  const debouncedSaveNotes = useDebouncedCallback(
+    (d: Date, notes: string) => onLogNotes(d, notes),
+    500
+  );
+  
+  const debouncedSaveTemp = useDebouncedCallback(
+    (d: Date, temp: number) => onLogTemperature?.(d, temp),
+    500
+  );
+
+  if (!date) return null;
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -220,16 +287,19 @@ export function DayDetailSheet({
               <div className="flex items-center gap-4">
                 <div className="flex-1">
                   <Slider
-                    value={[waterGlasses]}
+                    value={[localWater]}
                     min={0}
                     max={12}
                     step={1}
-                    onValueChange={(value) => onLogWaterIntake(date, value[0])}
+                    onValueChange={(value) => {
+                      setLocalWater(value[0]);
+                      debouncedSaveWater(date, value[0]);
+                    }}
                     className="w-full"
                   />
                 </div>
                 <div className="text-center min-w-[60px]">
-                  <span className="text-2xl font-semibold">{waterGlasses}</span>
+                  <span className="text-2xl font-semibold">{localWater}</span>
                   <p className="text-xs text-muted-foreground">glasses</p>
                 </div>
               </div>
@@ -239,10 +309,13 @@ export function DayDetailSheet({
                   <motion.button
                     key={i}
                     whileTap={{ scale: 0.9 }}
-                    onClick={() => onLogWaterIntake(date, i + 1)}
+                    onClick={() => {
+                      setLocalWater(i + 1);
+                      onLogWaterIntake?.(date, i + 1);
+                    }}
                     className={cn(
                       "w-6 h-8 rounded transition-colors",
-                      i < waterGlasses ? "bg-secondary" : "bg-muted"
+                      i < localWater ? "bg-secondary" : "bg-muted"
                     )}
                   />
                 ))}
@@ -263,16 +336,19 @@ export function DayDetailSheet({
               <div className="flex items-center gap-4 mb-4">
                 <div className="flex-1">
                   <Slider
-                    value={[sleepHours]}
+                    value={[localSleep]}
                     min={0}
                     max={12}
                     step={0.5}
-                    onValueChange={(value) => onLogSleep(date, value[0], log?.sleepQuality)}
+                    onValueChange={(value) => {
+                      setLocalSleep(value[0]);
+                      debouncedSaveSleep(date, value[0], log?.sleepQuality);
+                    }}
                     className="w-full"
                   />
                 </div>
                 <div className="text-center min-w-[60px]">
-                  <span className="text-2xl font-semibold">{sleepHours}</span>
+                  <span className="text-2xl font-semibold">{localSleep}</span>
                   <p className="text-xs text-muted-foreground">hours</p>
                 </div>
               </div>
@@ -282,7 +358,7 @@ export function DayDetailSheet({
                   <motion.button
                     key={option.value}
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => onLogSleep(date, sleepHours || 7, option.value)}
+                    onClick={() => onLogSleep?.(date, localSleep || 7, option.value)}
                     className={cn(
                       "p-2 rounded-xl border-2 transition-all flex flex-col items-center",
                       log?.sleepQuality === option.value
@@ -311,16 +387,19 @@ export function DayDetailSheet({
               <div className="flex items-center gap-4">
                 <div className="flex-1">
                   <Slider
-                    value={[exerciseMinutes]}
+                    value={[localExercise]}
                     min={0}
                     max={120}
                     step={5}
-                    onValueChange={(value) => onLogExercise(date, value[0])}
+                    onValueChange={(value) => {
+                      setLocalExercise(value[0]);
+                      debouncedSaveExercise(date, value[0]);
+                    }}
                     className="w-full"
                   />
                 </div>
                 <div className="text-center min-w-[60px]">
-                  <span className="text-2xl font-semibold">{exerciseMinutes}</span>
+                  <span className="text-2xl font-semibold">{localExercise}</span>
                   <p className="text-xs text-muted-foreground">minutes</p>
                 </div>
               </div>
@@ -329,9 +408,12 @@ export function DayDetailSheet({
                 {[15, 30, 45, 60, 90].map((mins) => (
                   <Button
                     key={mins}
-                    variant={exerciseMinutes === mins ? "default" : "outline"}
+                    variant={localExercise === mins ? "default" : "outline"}
                     size="sm"
-                    onClick={() => onLogExercise(date, mins)}
+                    onClick={() => {
+                      setLocalExercise(mins);
+                      onLogExercise?.(date, mins);
+                    }}
                     className="text-xs"
                   >
                     {mins} min
@@ -392,8 +474,14 @@ export function DayDetailSheet({
                   min="35"
                   max="40"
                   placeholder="36.5"
-                  value={log?.temperature || ''}
-                  onChange={(e) => onLogTemperature(date, parseFloat(e.target.value))}
+                  value={localTemp ?? ''}
+                  onChange={(e) => {
+                    const value = parseFloat(e.target.value);
+                    setLocalTemp(isNaN(value) ? undefined : value);
+                    if (!isNaN(value)) {
+                      debouncedSaveTemp(date, value);
+                    }
+                  }}
                   className="flex-1"
                 />
                 <span className="text-muted-foreground">°C</span>
@@ -412,19 +500,20 @@ export function DayDetailSheet({
 
             <Textarea
               placeholder="Add any notes for this day..."
-              value={log?.notes || ''}
+              value={localNotes}
               onChange={(e) => {
                 // Sanitize input: remove control characters and limit length
                 const sanitizedValue = e.target.value
                   .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // Remove control characters
                   .slice(0, 500); // Limit to 500 characters
-                onLogNotes(date, sanitizedValue);
+                setLocalNotes(sanitizedValue);
+                debouncedSaveNotes(date, sanitizedValue);
               }}
               maxLength={500}
               className="min-h-[100px] resize-none border-lavender/30 focus:border-lavender"
             />
             <p className="text-xs text-muted-foreground mt-1 text-right">
-              {(log?.notes?.length || 0)}/500 characters
+              {localNotes.length}/500 characters
             </p>
           </section>
         </div>
