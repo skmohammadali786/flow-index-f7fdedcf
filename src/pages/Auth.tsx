@@ -6,9 +6,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Heart, Mail, Lock, User, Eye, EyeOff, Sparkles } from 'lucide-react';
+import { Mail, Lock, User, Eye, EyeOff, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import logo from '@/assets/logo.jpg';
 
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -153,9 +154,9 @@ const Auth = () => {
             initial={{ scale: 0.9 }}
             animate={{ scale: 1 }}
             transition={{ duration: 0.3 }}
-            className="w-20 h-20 rounded-3xl gradient-primary flex items-center justify-center shadow-elevated mb-4"
+            className="w-20 h-20 rounded-3xl overflow-hidden shadow-elevated mb-4"
           >
-            <Heart className="w-10 h-10 text-primary-foreground" />
+            <img src={logo} alt="Flow Index" className="w-full h-full object-cover" />
           </motion.div>
           <h1 className="text-4xl font-display font-bold text-foreground">Flow Index</h1>
         </motion.div>
