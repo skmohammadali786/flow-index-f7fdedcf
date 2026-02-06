@@ -14,7 +14,183 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      cycles: {
+        Row: {
+          created_at: string
+          end_date: string | null
+          id: string
+          length: number | null
+          start_date: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          length?: number | null
+          start_date: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string | null
+          id?: string
+          length?: number | null
+          start_date?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      period_logs: {
+        Row: {
+          created_at: string
+          date: string
+          exercise_minutes: number | null
+          flow_intensity: string | null
+          id: string
+          is_period: boolean
+          medications: Json | null
+          moods: string[] | null
+          notes: string | null
+          sleep_hours: number | null
+          sleep_quality: string | null
+          symptoms: string[] | null
+          temperature: number | null
+          updated_at: string
+          user_id: string
+          water_intake: number | null
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          exercise_minutes?: number | null
+          flow_intensity?: string | null
+          id?: string
+          is_period?: boolean
+          medications?: Json | null
+          moods?: string[] | null
+          notes?: string | null
+          sleep_hours?: number | null
+          sleep_quality?: string | null
+          symptoms?: string[] | null
+          temperature?: number | null
+          updated_at?: string
+          user_id: string
+          water_intake?: number | null
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          exercise_minutes?: number | null
+          flow_intensity?: string | null
+          id?: string
+          is_period?: boolean
+          medications?: Json | null
+          moods?: string[] | null
+          notes?: string | null
+          sleep_hours?: number | null
+          sleep_quality?: string | null
+          symptoms?: string[] | null
+          temperature?: number | null
+          updated_at?: string
+          user_id?: string
+          water_intake?: number | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          birth_date: string | null
+          created_at: string
+          id: string
+          name: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          birth_date?: string | null
+          created_at?: string
+          id?: string
+          name?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          birth_date?: string | null
+          created_at?: string
+          id?: string
+          name?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_settings: {
+        Row: {
+          created_at: string
+          cycle_length: number
+          daily_log_reminder: boolean
+          daily_log_reminder_time: string
+          date_format: string
+          fertile_window_reminder: boolean
+          first_day_of_week: number
+          id: string
+          luteal_phase_length: number
+          ovulation_reminder: boolean
+          period_length: number
+          period_reminder: boolean
+          period_reminder_days: number
+          show_fertile_window: boolean
+          show_ovulation: boolean
+          tracking_goal: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          cycle_length?: number
+          daily_log_reminder?: boolean
+          daily_log_reminder_time?: string
+          date_format?: string
+          fertile_window_reminder?: boolean
+          first_day_of_week?: number
+          id?: string
+          luteal_phase_length?: number
+          ovulation_reminder?: boolean
+          period_length?: number
+          period_reminder?: boolean
+          period_reminder_days?: number
+          show_fertile_window?: boolean
+          show_ovulation?: boolean
+          tracking_goal?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          cycle_length?: number
+          daily_log_reminder?: boolean
+          daily_log_reminder_time?: string
+          date_format?: string
+          fertile_window_reminder?: boolean
+          first_day_of_week?: number
+          id?: string
+          luteal_phase_length?: number
+          ovulation_reminder?: boolean
+          period_length?: number
+          period_reminder?: boolean
+          period_reminder_days?: number
+          show_fertile_window?: boolean
+          show_ovulation?: boolean
+          tracking_goal?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

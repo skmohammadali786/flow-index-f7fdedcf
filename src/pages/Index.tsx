@@ -14,16 +14,18 @@ import { CycleCharts } from '@/components/period/CycleCharts';
 import { PartnerShareView } from '@/components/period/PartnerShareView';
 import { OnboardingFlow, OnboardingData } from '@/components/period/OnboardingFlow';
 import { HealthReportGenerator } from '@/components/period/HealthReportGenerator';
-import { usePeriodTracker } from '@/hooks/usePeriodTracker';
-import { useSettings } from '@/hooks/useSettings';
+import { useSupabasePeriodTracker } from '@/hooks/useSupabasePeriodTracker';
+import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
 import { useSymptomAnalytics } from '@/hooks/useSymptomAnalytics';
-import { startOfDay, format } from 'date-fns';
+import { useAuth } from '@/contexts/AuthContext';
+import { startOfDay } from 'date-fns';
 
 type TabType = 'calendar' | 'insights' | 'history' | 'tips' | 'analytics' | 'charts' | 'share' | 'report' | 'settings' | 'profile';
 
 const ONBOARDING_KEY = 'period_tracker_onboarding_complete';
 
 const Index = () => {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<TabType>('calendar');
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -49,7 +51,7 @@ const Index = () => {
     isPredictedPeriod,
     getDaysUntilNextPeriod,
     getCurrentCycleDay,
-  } = usePeriodTracker();
+  } = useSupabasePeriodTracker();
 
   const {
     settings,
@@ -61,7 +63,7 @@ const Index = () => {
     resetSettings,
     exportData,
     importData,
-  } = useSettings();
+  } = useSupabaseSettings();
 
   const {
     symptomPatterns,
@@ -73,17 +75,17 @@ const Index = () => {
 
   // Check if onboarding is needed - only for new signups
   useEffect(() => {
-    if (isLoaded && settingsLoaded) {
+    if (isLoaded && settingsLoaded && user) {
       const onboardingComplete = localStorage.getItem(ONBOARDING_KEY);
       const isNewUser = localStorage.getItem('period_tracker_is_new_user');
       
       // Only show onboarding for new users who signed up (not logged in)
-      // and haven't completed onboarding yet
-      if (!onboardingComplete && isNewUser === 'true') {
+      // and haven't completed onboarding yet, and have no cycles
+      if (!onboardingComplete && isNewUser === 'true' && cycles.length === 0) {
         setShowOnboarding(true);
       }
     }
-  }, [isLoaded, settingsLoaded]);
+  }, [isLoaded, settingsLoaded, user, cycles.length]);
 
   const handleOnboardingComplete = (data: OnboardingData) => {
     // Log the initial period

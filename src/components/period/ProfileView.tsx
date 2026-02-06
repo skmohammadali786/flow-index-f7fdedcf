@@ -18,7 +18,7 @@ import { Label } from '@/components/ui/label';
 import { UserProfile } from '@/types/settings';
 import { CycleStats } from '@/types/period';
 import { format, parseISO, differenceInDays } from 'date-fns';
-import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
 interface ProfileViewProps {
@@ -31,17 +31,11 @@ export function ProfileView({ profile, stats, onUpdateProfile }: ProfileViewProp
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(profile.name);
   const [editedBirthDate, setEditedBirthDate] = useState(profile.birthDate || '');
-  const navigate = useNavigate();
+  const { signOut } = useAuth();
 
-  const handleLogout = () => {
-    // Clear all local storage data
-    localStorage.removeItem('period_tracker_data');
-    localStorage.removeItem('period_tracker_settings');
-    localStorage.removeItem('period_tracker_profile');
-    localStorage.removeItem('period_tracker_onboarding_complete');
-    
+  const handleLogout = async () => {
+    await signOut();
     toast.success('Logged out successfully');
-    navigate('/auth');
   };
 
   // Sync local state with profile when it changes (e.g., after import)
