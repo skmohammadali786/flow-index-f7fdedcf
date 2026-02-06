@@ -43,7 +43,9 @@ export function HealthReportGenerator({ logs, cycles, stats }: HealthReportGener
     const monthsAgo = parseInt(options.period);
     const startDate = subMonths(new Date(), monthsAgo);
     
-    const filteredLogs = logs.filter(log => parseISO(log.date) >= startDate);
+    const filteredLogs = logs
+      .filter(log => parseISO(log.date) >= startDate)
+      .sort((a, b) => parseISO(b.date).getTime() - parseISO(a.date).getTime());
     const filteredCycles = cycles.filter(cycle => parseISO(cycle.startDate) >= startDate);
     
     // Calculate symptom frequencies
@@ -65,11 +67,15 @@ export function HealthReportGenerator({ logs, cycles, stats }: HealthReportGener
     // Calculate averages
     const sleepLogs = filteredLogs.filter(log => log.sleepHours);
     const waterLogs = filteredLogs.filter(log => log.waterIntake);
+    const exerciseLogs = filteredLogs.filter(log => log.exerciseMinutes);
     const avgSleep = sleepLogs.length > 0 
       ? sleepLogs.reduce((sum, log) => sum + (log.sleepHours || 0), 0) / sleepLogs.length 
       : 0;
     const avgWater = waterLogs.length > 0 
       ? waterLogs.reduce((sum, log) => sum + (log.waterIntake || 0), 0) / waterLogs.length 
+      : 0;
+    const avgExercise = exerciseLogs.length > 0
+      ? exerciseLogs.reduce((sum, log) => sum + (log.exerciseMinutes || 0), 0) / exerciseLogs.length
       : 0;
     
     // Medication tracking
@@ -82,18 +88,24 @@ export function HealthReportGenerator({ logs, cycles, stats }: HealthReportGener
       });
     });
     
+    // Period days count
+    const periodDays = filteredLogs.filter(log => log.isPeriod).length;
+    
     return {
       dateRange: {
         start: format(startDate, 'MMM d, yyyy'),
         end: format(new Date(), 'MMM d, yyyy'),
       },
       totalDaysLogged: filteredLogs.length,
+      periodDays,
       cycles: filteredCycles.length,
       symptomCounts,
       moodCounts,
       avgSleep: Math.round(avgSleep * 10) / 10,
       avgWater: Math.round(avgWater * 10) / 10,
+      avgExercise: Math.round(avgExercise),
       medicationLogs,
+      dailyLogs: filteredLogs,
     };
   }, [logs, cycles, options.period]);
 
@@ -109,6 +121,7 @@ export function HealthReportGenerator({ logs, cycles, stats }: HealthReportGener
 Report Period: ${reportData.dateRange.start} - ${reportData.dateRange.end}
 Generated: ${format(new Date(), 'MMMM d, yyyy h:mm a')}
 Total Days Logged: ${reportData.totalDaysLogged}
+Period Days: ${reportData.periodDays}
 
 `;
 
@@ -124,6 +137,53 @@ Average Period Length: ${stats.averagePeriodLength} days
 Cycle Range: ${stats.shortestCycle} - ${stats.longestCycle} days
 
 `;
+    }
+
+    // Add daily log details
+    if (reportData.dailyLogs.length > 0) {
+      report += `
+═══════════════════════════════════════════════════════════════
+                       DAILY LOG DETAILS
+═══════════════════════════════════════════════════════════════
+
+`;
+      reportData.dailyLogs.forEach(log => {
+        report += `┌─────────────────────────────────────────────────────────────┐
+│ ${format(parseISO(log.date), 'EEEE, MMMM d, yyyy').padEnd(59)}│
+└─────────────────────────────────────────────────────────────┘
+`;
+        if (log.isPeriod) {
+          report += `  🩸 Period Day${log.flowIntensity ? ` (${log.flowIntensity} flow)` : ''}\n`;
+        }
+        if (log.moods.length > 0) {
+          report += `  😊 Mood: ${log.moods.join(', ')}\n`;
+        }
+        if (log.symptoms.length > 0) {
+          report += `  🩺 Symptoms: ${log.symptoms.map(s => s.replace('_', ' ')).join(', ')}\n`;
+        }
+        if (log.sleepHours) {
+          report += `  😴 Sleep: ${log.sleepHours} hours${log.sleepQuality ? ` (${log.sleepQuality})` : ''}\n`;
+        }
+        if (log.waterIntake) {
+          report += `  💧 Water: ${log.waterIntake} glasses\n`;
+        }
+        if (log.exerciseMinutes) {
+          report += `  🏃 Exercise: ${log.exerciseMinutes} minutes\n`;
+        }
+        if (log.temperature) {
+          report += `  🌡️ Temperature: ${log.temperature}°C\n`;
+        }
+        if (log.medications && log.medications.length > 0) {
+          const takenMeds = log.medications.filter(m => m.taken);
+          if (takenMeds.length > 0) {
+            report += `  💊 Medications: ${takenMeds.map(m => m.name).join(', ')}\n`;
+          }
+        }
+        if (log.notes) {
+          report += `  📝 Notes: ${log.notes}\n`;
+        }
+        report += '\n';
+      });
     }
 
     if (options.includeSymptoms && Object.keys(reportData.symptomCounts).length > 0) {
@@ -183,10 +243,11 @@ Average Sleep: ${reportData.avgSleep} hours per night
     if (options.includeWater && reportData.avgWater > 0) {
       report += `
 ═══════════════════════════════════════════════════════════════
-                      HYDRATION
+                   HYDRATION & EXERCISE
 ═══════════════════════════════════════════════════════════════
 
 Average Water Intake: ${reportData.avgWater} glasses per day
+Average Exercise: ${reportData.avgExercise} minutes per day
 
 `;
     }
