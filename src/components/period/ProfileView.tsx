@@ -9,7 +9,8 @@ import {
   Sparkles,
   Heart,
   Award,
-  Shield
+  Shield,
+  LogOut
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -17,6 +18,8 @@ import { Label } from '@/components/ui/label';
 import { UserProfile } from '@/types/settings';
 import { CycleStats } from '@/types/period';
 import { format, parseISO, differenceInDays } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 interface ProfileViewProps {
   profile: UserProfile;
@@ -28,6 +31,18 @@ export function ProfileView({ profile, stats, onUpdateProfile }: ProfileViewProp
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(profile.name);
   const [editedBirthDate, setEditedBirthDate] = useState(profile.birthDate || '');
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    // Clear all local storage data
+    localStorage.removeItem('period_tracker_data');
+    localStorage.removeItem('period_tracker_settings');
+    localStorage.removeItem('period_tracker_profile');
+    localStorage.removeItem('period_tracker_onboarding_complete');
+    
+    toast.success('Logged out successfully');
+    navigate('/auth');
+  };
 
   // Sync local state with profile when it changes (e.g., after import)
   useEffect(() => {
@@ -281,6 +296,18 @@ export function ProfileView({ profile, stats, onUpdateProfile }: ProfileViewProp
             </p>
           </div>
         </div>
+      </motion.section>
+
+      {/* Logout Button */}
+      <motion.section variants={itemVariants}>
+        <Button
+          variant="outline"
+          className="w-full h-12 text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
+          onClick={handleLogout}
+        >
+          <LogOut className="h-4 w-4 mr-2" />
+          Log Out
+        </Button>
       </motion.section>
     </motion.div>
   );
