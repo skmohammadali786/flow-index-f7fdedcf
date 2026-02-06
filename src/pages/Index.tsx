@@ -257,6 +257,7 @@ const Index = () => {
                 currentPhase={currentPhase}
                 daysUntilNextPeriod={daysUntilNextPeriod}
                 currentCycleDay={currentCycleDay}
+                logs={logs}
               />
             </motion.div>
           )}
