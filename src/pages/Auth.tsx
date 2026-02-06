@@ -259,7 +259,14 @@ const Auth = () => {
                     </div>
 
                     <div className="flex justify-end">
-                      <button type="button" className="text-sm text-primary hover:underline">
+                      <button 
+                        type="button" 
+                        className="text-sm text-primary hover:underline"
+                        onClick={() => toast({
+                          title: "Password Reset",
+                          description: "This feature will be available after connecting the backend. Please contact support for assistance.",
+                        })}
+                      >
                         Forgot password?
                       </button>
                     </div>
