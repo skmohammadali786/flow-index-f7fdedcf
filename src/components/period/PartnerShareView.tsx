@@ -97,7 +97,7 @@ export function PartnerShareView({
   const currentPhaseInfo = phaseInfo[currentPhase];
 
   const shareableText = useMemo(() => {
-    const lines: string[] = ['💐 Cycle Update from Bloom\n'];
+    const lines: string[] = ['💐 Cycle Update from Flow Index\n'];
     
     if (shareSettings.showCurrentPhase && currentPhaseInfo) {
       lines.push(`Current Phase: ${currentPhaseInfo.title}`);
