@@ -58,7 +58,7 @@ const Auth = () => {
       setIsLoading(false);
       toast({
         title: "Login successful!",
-        description: "Welcome back to Bloom",
+        description: "Welcome back to Flow Index",
       });
       navigate('/');
     }, 1500);
@@ -110,7 +110,7 @@ const Auth = () => {
       setIsLoading(false);
       toast({
         title: "Account created!",
-        description: "Welcome to Bloom. Let's get started!",
+        description: "Welcome to Flow Index. Let's get started!",
       });
       navigate('/');
     }, 1500);
@@ -123,28 +123,28 @@ const Auth = () => {
   ];
 
   return (
-    <div className="min-h-screen gradient-soft flex flex-col lg:flex-row">
-      {/* Left side - Branding & Features */}
-      <motion.div 
-        initial={{ opacity: 0, x: -20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.5 }}
-        className="lg:w-1/2 p-8 lg:p-16 flex flex-col justify-center"
-      >
-        <div className="max-w-md mx-auto lg:mx-0">
+    <div className="min-h-screen gradient-soft flex items-center justify-center p-4">
+      <div className="w-full max-w-5xl flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-16">
+        {/* Left side - Branding & Features */}
+        <motion.div 
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5 }}
+          className="flex-1 flex flex-col items-center lg:items-start text-center lg:text-left"
+        >
           {/* Logo */}
           <motion.div 
             initial={{ scale: 0.9 }}
             animate={{ scale: 1 }}
             transition={{ duration: 0.3 }}
-            className="flex items-center gap-3 mb-8"
+            className="flex items-center gap-3 mb-6"
           >
             <div className="w-14 h-14 rounded-2xl gradient-primary flex items-center justify-center shadow-elevated">
               <Heart className="w-7 h-7 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-3xl font-display font-bold text-foreground">Bloom</h1>
-              <p className="text-sm text-muted-foreground">Period Tracker</p>
+              <h1 className="text-3xl font-display font-bold text-foreground">Flow Index</h1>
+              <p className="text-sm text-muted-foreground">Period Health Tracker</p>
             </div>
           </motion.div>
 
@@ -153,18 +153,18 @@ const Auth = () => {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.4 }}
-            className="mb-10"
+            className="mb-8"
           >
             <h2 className="text-2xl lg:text-3xl font-display font-semibold text-foreground mb-3">
               Your cycle, <span className="text-primary">your way</span>
             </h2>
-            <p className="text-muted-foreground text-lg">
+            <p className="text-muted-foreground text-lg max-w-md">
               Track your menstrual health with care, privacy, and beautiful insights.
             </p>
           </motion.div>
 
           {/* Features */}
-          <div className="space-y-4 hidden lg:block">
+          <div className="space-y-4 hidden lg:block w-full max-w-md">
             {features.map((feature, index) => (
               <motion.div
                 key={feature.title}
@@ -183,43 +183,30 @@ const Auth = () => {
               </motion.div>
             ))}
           </div>
+        </motion.div>
 
-          {/* Decorative elements */}
-          <motion.div
-            animate={{ y: [0, -10, 0] }}
-            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute top-20 right-20 w-20 h-20 rounded-full bg-lavender/20 blur-2xl hidden lg:block"
-          />
-          <motion.div
-            animate={{ y: [0, 10, 0] }}
-            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute bottom-40 left-20 w-32 h-32 rounded-full bg-peach/20 blur-3xl hidden lg:block"
-          />
-        </div>
-      </motion.div>
-
-      {/* Right side - Auth Form */}
-      <motion.div 
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
-        className="lg:w-1/2 p-6 lg:p-16 flex items-center justify-center"
-      >
-        <Card className="w-full max-w-md border-border/50 shadow-elevated bg-card/80 backdrop-blur-sm">
-          <CardHeader className="text-center pb-4">
-            <div className="lg:hidden flex items-center justify-center gap-2 mb-4">
-              <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center">
-                <Heart className="w-5 h-5 text-primary-foreground" />
+        {/* Right side - Auth Form */}
+        <motion.div 
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="flex-1 flex justify-center w-full max-w-md"
+        >
+          <Card className="w-full border-border/50 shadow-elevated bg-card/80 backdrop-blur-sm">
+            <CardHeader className="text-center pb-4">
+              <div className="lg:hidden flex items-center justify-center gap-2 mb-4">
+                <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center">
+                  <Heart className="w-5 h-5 text-primary-foreground" />
+                </div>
+                <span className="text-xl font-display font-bold">Flow Index</span>
               </div>
-              <span className="text-xl font-display font-bold">Bloom</span>
-            </div>
-            <CardTitle className="text-2xl font-display">
-              {activeTab === 'login' ? 'Welcome back' : 'Create account'}
-            </CardTitle>
-            <CardDescription>
+              <CardTitle className="text-2xl font-display">
+                {activeTab === 'login' ? 'Welcome back' : 'Get started'}
+              </CardTitle>
+              <CardDescription>
               {activeTab === 'login' 
                 ? 'Sign in to continue tracking your cycle' 
-                : 'Start your wellness journey today'}
+                : 'Create your account to start tracking'}
             </CardDescription>
           </CardHeader>
 
@@ -448,11 +435,12 @@ const Auth = () => {
             </div>
 
             <p className="text-xs text-center text-muted-foreground mt-4">
-              Social login will be available after connecting to backend
+              Social login will be available after connecting backend
             </p>
           </CardContent>
         </Card>
-      </motion.div>
+        </motion.div>
+      </div>
     </div>
   );
 };

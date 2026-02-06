@@ -91,31 +91,64 @@ export function useSettings() {
         try {
           const data = JSON.parse(e.target?.result as string);
           
-          // Update settings
-          if (data.settings) {
+          // Validate required fields
+          if (!data || typeof data !== 'object') {
+            console.error('Invalid data format');
+            resolve(false);
+            return;
+          }
+          
+          // Update settings if present
+          if (data.settings && typeof data.settings === 'object') {
             const newSettings = { ...DEFAULT_SETTINGS, ...data.settings };
             setSettings(newSettings);
             localStorage.setItem(SETTINGS_KEY, JSON.stringify(newSettings));
           }
           
-          // Update profile
-          if (data.profile) {
+          // Update profile if present
+          if (data.profile && typeof data.profile === 'object') {
             const newProfile = { ...DEFAULT_PROFILE, ...data.profile };
             setProfile(newProfile);
             localStorage.setItem(PROFILE_KEY, JSON.stringify(newProfile));
           }
           
-          // Update logs and reload to sync all data
+          // Update logs and cycles - handle both direct format and nested format
           if (data.logs) {
-            localStorage.setItem('period_tracker_data', JSON.stringify(data.logs));
-            // Reload to ensure all hooks pick up the new data
-            window.location.reload();
+            // Check if logs is directly the period data or nested
+            const periodData = data.logs.logs ? data.logs : { logs: data.logs.logs || [], cycles: data.logs.cycles || [] };
+            
+            // If data.logs has logs and cycles arrays, use them directly
+            if (Array.isArray(data.logs.logs) && Array.isArray(data.logs.cycles)) {
+              localStorage.setItem('period_tracker_data', JSON.stringify({
+                logs: data.logs.logs,
+                cycles: data.logs.cycles
+              }));
+            } else if (Array.isArray(data.logs)) {
+              // If logs is an array directly (old format), wrap it
+              localStorage.setItem('period_tracker_data', JSON.stringify({
+                logs: data.logs,
+                cycles: data.cycles || []
+              }));
+            } else {
+              // Store as-is if it's already in the correct format
+              localStorage.setItem('period_tracker_data', JSON.stringify(data.logs));
+            }
+            
+            // Small delay before reload to ensure data is saved
+            setTimeout(() => {
+              window.location.reload();
+            }, 100);
           }
           
           resolve(true);
-        } catch {
+        } catch (error) {
+          console.error('Failed to import data:', error);
           resolve(false);
         }
+      };
+      reader.onerror = () => {
+        console.error('Failed to read file');
+        resolve(false);
       };
       reader.readAsText(file);
     });
