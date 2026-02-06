@@ -6,10 +6,16 @@ import { CycleInsights } from '@/components/period/CycleInsights';
 import { HistoryView } from '@/components/period/HistoryView';
 import { DayDetailSheet } from '@/components/period/DayDetailSheet';
 import { QuickLogButton } from '@/components/period/QuickLogButton';
+import { SettingsView } from '@/components/period/SettingsView';
+import { ProfileView } from '@/components/period/ProfileView';
+import { HealthTipsView } from '@/components/period/HealthTipsView';
+import { SymptomAnalyticsView } from '@/components/period/SymptomAnalyticsView';
 import { usePeriodTracker } from '@/hooks/usePeriodTracker';
-import { isToday, startOfDay } from 'date-fns';
+import { useSettings } from '@/hooks/useSettings';
+import { useSymptomAnalytics } from '@/hooks/useSymptomAnalytics';
+import { startOfDay } from 'date-fns';
 
-type TabType = 'calendar' | 'insights' | 'history';
+type TabType = 'calendar' | 'insights' | 'history' | 'tips' | 'analytics' | 'settings' | 'profile';
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<TabType>('calendar');
@@ -33,6 +39,26 @@ const Index = () => {
     getCurrentCycleDay,
   } = usePeriodTracker();
 
+  const {
+    settings,
+    profile,
+    isLoaded: settingsLoaded,
+    updateSettings,
+    updateNotifications,
+    updateProfile,
+    resetSettings,
+    exportData,
+    importData,
+  } = useSettings();
+
+  const {
+    symptomPatterns,
+    moodPatterns,
+    symptomsByPhase,
+    moodsByPhase,
+    currentPhase,
+  } = useSymptomAnalytics(logs, cycles);
+
   const predictions = getPredictions();
   const stats = getStats();
   const daysUntilNextPeriod = getDaysUntilNextPeriod();
@@ -54,7 +80,7 @@ const Index = () => {
     }
   };
 
-  if (!isLoaded) {
+  if (!isLoaded || !settingsLoaded) {
     return (
       <div className="min-h-screen gradient-soft flex items-center justify-center">
         <motion.div
@@ -69,6 +95,12 @@ const Index = () => {
     );
   }
 
+  const pageVariants = {
+    initial: { opacity: 0, x: -20 },
+    animate: { opacity: 1, x: 0 },
+    exit: { opacity: 0, x: 20 },
+  };
+
   return (
     <div className="min-h-screen gradient-soft">
       <Header activeTab={activeTab} onTabChange={setActiveTab} />
@@ -78,17 +110,18 @@ const Index = () => {
           {activeTab === 'calendar' && (
             <motion.div
               key="calendar"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
+              variants={pageVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
               transition={{ duration: 0.2 }}
             >
               <CycleCalendar
                 logs={logs}
                 onDayClick={handleDayClick}
                 selectedDate={selectedDate}
-                isInFertileWindow={isInFertileWindow}
-                isOvulationDay={isOvulationDay}
+                isInFertileWindow={settings.showFertileWindow ? isInFertileWindow : () => false}
+                isOvulationDay={settings.showOvulation ? isOvulationDay : () => false}
                 isPredictedPeriod={isPredictedPeriod}
                 getLogForDate={getLogForDate}
               />
@@ -98,9 +131,10 @@ const Index = () => {
           {activeTab === 'insights' && (
             <motion.div
               key="insights"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
+              variants={pageVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
               transition={{ duration: 0.2 }}
             >
               <CycleInsights
@@ -112,15 +146,87 @@ const Index = () => {
             </motion.div>
           )}
 
+          {activeTab === 'tips' && (
+            <motion.div
+              key="tips"
+              variants={pageVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              transition={{ duration: 0.2 }}
+            >
+              <HealthTipsView
+                currentPhase={currentPhase}
+                currentCycleDay={currentCycleDay}
+              />
+            </motion.div>
+          )}
+
+          {activeTab === 'analytics' && (
+            <motion.div
+              key="analytics"
+              variants={pageVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              transition={{ duration: 0.2 }}
+            >
+              <SymptomAnalyticsView
+                symptomPatterns={symptomPatterns}
+                moodPatterns={moodPatterns}
+                symptomsByPhase={symptomsByPhase}
+                moodsByPhase={moodsByPhase}
+              />
+            </motion.div>
+          )}
+
           {activeTab === 'history' && (
             <motion.div
               key="history"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: 20 }}
+              variants={pageVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
               transition={{ duration: 0.2 }}
             >
               <HistoryView cycles={cycles} logs={logs} />
+            </motion.div>
+          )}
+
+          {activeTab === 'settings' && (
+            <motion.div
+              key="settings"
+              variants={pageVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              transition={{ duration: 0.2 }}
+            >
+              <SettingsView
+                settings={settings}
+                onUpdateSettings={updateSettings}
+                onUpdateNotifications={updateNotifications}
+                onExportData={exportData}
+                onImportData={importData}
+                onResetSettings={resetSettings}
+              />
+            </motion.div>
+          )}
+
+          {activeTab === 'profile' && (
+            <motion.div
+              key="profile"
+              variants={pageVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              transition={{ duration: 0.2 }}
+            >
+              <ProfileView
+                profile={profile}
+                stats={stats}
+                onUpdateProfile={updateProfile}
+              />
             </motion.div>
           )}
         </AnimatePresence>
