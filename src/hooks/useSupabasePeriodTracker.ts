@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import type { Json } from '@/integrations/supabase/types';
 import { 
   DayLog, 
   CycleData, 
@@ -96,27 +97,50 @@ export function useSupabasePeriodTracker() {
     return logs.find(log => log.date === dateStr);
   }, [logs]);
 
-  // Upsert log to database
+  // Upsert log to database - fetches current data from DB to avoid race conditions
   const upsertLog = async (dateStr: string, updates: Partial<DayLog>) => {
     if (!user) return;
 
-    const existingLog = logs.find(l => l.date === dateStr);
+    // First, fetch the current state from the database to avoid race conditions
+    const { data: existingData } = await supabase
+      .from('period_logs')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('date', dateStr)
+      .maybeSingle();
+
+    // Merge with database data (not stale local state)
+    const currentLog = existingData ? {
+      date: existingData.date,
+      isPeriod: existingData.is_period,
+      flowIntensity: existingData.flow_intensity as FlowIntensity | undefined,
+      moods: (existingData.moods || []) as Mood[],
+      symptoms: (existingData.symptoms || []) as Symptom[],
+      notes: existingData.notes || undefined,
+      waterIntake: existingData.water_intake || undefined,
+      sleepHours: existingData.sleep_hours ? Number(existingData.sleep_hours) : undefined,
+      sleepQuality: existingData.sleep_quality as SleepQuality | undefined,
+      exerciseMinutes: existingData.exercise_minutes || undefined,
+      temperature: existingData.temperature ? Number(existingData.temperature) : undefined,
+      medications: Array.isArray(existingData.medications) ? (existingData.medications as unknown as Medication[]) : undefined,
+    } : undefined;
+
     const newLog: DayLog = {
       date: dateStr,
-      isPeriod: updates.isPeriod ?? existingLog?.isPeriod ?? false,
-      flowIntensity: updates.flowIntensity ?? existingLog?.flowIntensity,
-      moods: updates.moods ?? existingLog?.moods ?? [],
-      symptoms: updates.symptoms ?? existingLog?.symptoms ?? [],
-      notes: updates.notes ?? existingLog?.notes,
-      waterIntake: updates.waterIntake ?? existingLog?.waterIntake,
-      sleepHours: updates.sleepHours ?? existingLog?.sleepHours,
-      sleepQuality: updates.sleepQuality ?? existingLog?.sleepQuality,
-      exerciseMinutes: updates.exerciseMinutes ?? existingLog?.exerciseMinutes,
-      temperature: updates.temperature ?? existingLog?.temperature,
-      medications: updates.medications ?? existingLog?.medications,
+      isPeriod: updates.isPeriod ?? currentLog?.isPeriod ?? false,
+      flowIntensity: updates.flowIntensity ?? currentLog?.flowIntensity,
+      moods: updates.moods ?? currentLog?.moods ?? [],
+      symptoms: updates.symptoms ?? currentLog?.symptoms ?? [],
+      notes: updates.notes ?? currentLog?.notes,
+      waterIntake: updates.waterIntake ?? currentLog?.waterIntake,
+      sleepHours: updates.sleepHours ?? currentLog?.sleepHours,
+      sleepQuality: updates.sleepQuality ?? currentLog?.sleepQuality,
+      exerciseMinutes: updates.exerciseMinutes ?? currentLog?.exerciseMinutes,
+      temperature: updates.temperature ?? currentLog?.temperature,
+      medications: updates.medications ?? currentLog?.medications,
     };
 
-    // Update local state optimistically
+    // Update local state
     setLogs(prev => {
       const existing = prev.find(l => l.date === dateStr);
       if (existing) {
@@ -125,14 +149,7 @@ export function useSupabasePeriodTracker() {
       return [...prev, newLog];
     });
 
-    // Save to database - check if log exists first
-    const { data: existingData } = await supabase
-      .from('period_logs')
-      .select('id')
-      .eq('user_id', user.id)
-      .eq('date', dateStr)
-      .maybeSingle();
-
+    // Save to database
     let error;
     if (existingData) {
       const result = await supabase
@@ -148,7 +165,7 @@ export function useSupabasePeriodTracker() {
           sleep_quality: newLog.sleepQuality || null,
           exercise_minutes: newLog.exerciseMinutes || null,
           temperature: newLog.temperature || null,
-          medications: newLog.medications as unknown as null,
+          medications: newLog.medications ? (newLog.medications as unknown as Json) : null,
         })
         .eq('id', existingData.id);
       error = result.error;
@@ -168,7 +185,7 @@ export function useSupabasePeriodTracker() {
           sleep_quality: newLog.sleepQuality || null,
           exercise_minutes: newLog.exerciseMinutes || null,
           temperature: newLog.temperature || null,
-          medications: newLog.medications as unknown as null,
+          medications: newLog.medications ? (newLog.medications as unknown as Json) : null,
         }]);
       error = result.error;
     }
