@@ -194,12 +194,6 @@ const Auth = () => {
         >
           <Card className="w-full border-border/50 shadow-elevated bg-card/80 backdrop-blur-sm">
             <CardHeader className="text-center pb-4">
-              <div className="lg:hidden flex items-center justify-center gap-2 mb-4">
-                <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center">
-                  <Heart className="w-5 h-5 text-primary-foreground" />
-                </div>
-                <span className="text-xl font-display font-bold">Flow Index</span>
-              </div>
               <CardTitle className="text-2xl font-display">
                 {activeTab === 'login' ? 'Welcome back' : 'Get started'}
               </CardTitle>
