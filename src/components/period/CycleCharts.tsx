@@ -13,9 +13,25 @@ interface CycleChartsProps {
 }
 
 export function CycleCharts({ logs, cycles }: CycleChartsProps) {
-  // Get last 6 months of data
+  // Get daily data for recent logs (last 14 days with data, or all if less)
+  const dailyChartData = useMemo(() => {
+    const sortedLogs = [...logs]
+      .sort((a, b) => parseISO(a.date).getTime() - parseISO(b.date).getTime())
+      .slice(-14);
+    
+    return sortedLogs.map(log => ({
+      date: format(parseISO(log.date), 'MMM d'),
+      symptoms: log.symptoms.length,
+      moods: log.moods.length,
+      sleep: log.sleepHours || 0,
+      exercise: log.exerciseMinutes || 0,
+      water: log.waterIntake || 0,
+    }));
+  }, [logs]);
+
+  // Get monthly data - only include months that have data
   const chartData = useMemo(() => {
-    const months: { month: string; symptoms: number; moods: number; avgSleep: number; avgExercise: number; avgWater: number }[] = [];
+    const months: { month: string; symptoms: number; moods: number; avgSleep: number; avgExercise: number; avgWater: number; hasData: boolean }[] = [];
     
     for (let i = 5; i >= 0; i--) {
       const monthDate = subMonths(new Date(), i);
@@ -47,11 +63,17 @@ export function CycleCharts({ logs, cycles }: CycleChartsProps) {
         avgWater: waterLogs.length > 0 
           ? Math.round(waterLogs.reduce((sum, log) => sum + (log.waterIntake || 0), 0) / waterLogs.length * 10) / 10 
           : 0,
+        hasData: monthLogs.length > 0,
       });
     }
     
-    return months;
+    // Filter to only show months with data, but always show at least current month
+    const monthsWithData = months.filter(m => m.hasData);
+    return monthsWithData.length > 0 ? monthsWithData : [months[months.length - 1]];
   }, [logs]);
+
+  // Determine if we should show daily or monthly view
+  const showDailyView = logs.length < 30;
 
   // Cycle length trend
   const cycleLengthData = useMemo(() => {
@@ -163,39 +185,67 @@ export function CycleCharts({ logs, cycles }: CycleChartsProps) {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Activity className="h-5 w-5 text-peach" />
-                  Symptoms & Moods Over Time
+                  {showDailyView ? 'Daily Symptoms & Moods' : 'Symptoms & Moods Over Time'}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="h-[300px]">
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                      <XAxis dataKey="month" />
-                      <YAxis />
-                      <Tooltip 
-                        contentStyle={{ 
-                          backgroundColor: 'hsl(var(--card))',
-                          border: '1px solid hsl(var(--border))',
-                          borderRadius: '8px',
-                        }}
-                      />
-                      <Legend />
-                      <Area 
-                        type="monotone" 
-                        dataKey="symptoms" 
-                        stroke="hsl(var(--peach))" 
-                        fill="hsl(var(--peach-light))" 
-                        name="Symptoms"
-                      />
-                      <Area 
-                        type="monotone" 
-                        dataKey="moods" 
-                        stroke="hsl(var(--sage))" 
-                        fill="hsl(var(--sage-light))" 
-                        name="Moods"
-                      />
-                    </AreaChart>
+                    {showDailyView ? (
+                      <BarChart data={dailyChartData}>
+                        <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                        <XAxis dataKey="date" />
+                        <YAxis />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'hsl(var(--card))',
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px',
+                          }}
+                        />
+                        <Legend />
+                        <Bar 
+                          dataKey="symptoms" 
+                          fill="hsl(var(--peach))" 
+                          name="Symptoms"
+                          radius={[4, 4, 0, 0]}
+                        />
+                        <Bar 
+                          dataKey="moods" 
+                          fill="hsl(var(--sage))" 
+                          name="Moods"
+                          radius={[4, 4, 0, 0]}
+                        />
+                      </BarChart>
+                    ) : (
+                      <AreaChart data={chartData}>
+                        <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                        <XAxis dataKey="month" />
+                        <YAxis />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'hsl(var(--card))',
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px',
+                          }}
+                        />
+                        <Legend />
+                        <Area 
+                          type="monotone" 
+                          dataKey="symptoms" 
+                          stroke="hsl(var(--peach))" 
+                          fill="hsl(var(--peach-light))" 
+                          name="Symptoms"
+                        />
+                        <Area 
+                          type="monotone" 
+                          dataKey="moods" 
+                          stroke="hsl(var(--sage))" 
+                          fill="hsl(var(--sage-light))" 
+                          name="Moods"
+                        />
+                      </AreaChart>
+                    )}
                   </ResponsiveContainer>
                 </div>
               </CardContent>
@@ -306,27 +356,46 @@ export function CycleCharts({ logs, cycles }: CycleChartsProps) {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Moon className="h-5 w-5 text-lavender" />
-                  Wellness Metrics
+                  {showDailyView ? 'Daily Wellness' : 'Wellness Metrics'}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="h-[300px]">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                      <XAxis dataKey="month" />
-                      <YAxis />
-                      <Tooltip 
-                        contentStyle={{ 
-                          backgroundColor: 'hsl(var(--card))',
-                          border: '1px solid hsl(var(--border))',
-                          borderRadius: '8px',
-                        }}
-                      />
-                      <Legend />
-                      <Bar dataKey="avgSleep" fill="hsl(var(--lavender))" name="Avg Sleep (hrs)" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="avgWater" fill="hsl(var(--secondary))" name="Avg Water (glasses)" radius={[4, 4, 0, 0]} />
-                    </BarChart>
+                    {showDailyView ? (
+                      <BarChart data={dailyChartData}>
+                        <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                        <XAxis dataKey="date" />
+                        <YAxis />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'hsl(var(--card))',
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px',
+                          }}
+                        />
+                        <Legend />
+                        <Bar dataKey="sleep" fill="hsl(var(--lavender))" name="Sleep (hrs)" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="water" fill="hsl(var(--secondary))" name="Water (glasses)" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="exercise" fill="hsl(var(--sage))" name="Exercise (min)" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    ) : (
+                      <BarChart data={chartData}>
+                        <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                        <XAxis dataKey="month" />
+                        <YAxis />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'hsl(var(--card))',
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px',
+                          }}
+                        />
+                        <Legend />
+                        <Bar dataKey="avgSleep" fill="hsl(var(--lavender))" name="Avg Sleep (hrs)" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="avgWater" fill="hsl(var(--secondary))" name="Avg Water (glasses)" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    )}
                   </ResponsiveContainer>
                 </div>
               </CardContent>
