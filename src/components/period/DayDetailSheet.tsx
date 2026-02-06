@@ -413,9 +413,19 @@ export function DayDetailSheet({
             <Textarea
               placeholder="Add any notes for this day..."
               value={log?.notes || ''}
-              onChange={(e) => onLogNotes(date, e.target.value)}
+              onChange={(e) => {
+                // Sanitize input: remove control characters and limit length
+                const sanitizedValue = e.target.value
+                  .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '') // Remove control characters
+                  .slice(0, 500); // Limit to 500 characters
+                onLogNotes(date, sanitizedValue);
+              }}
+              maxLength={500}
               className="min-h-[100px] resize-none border-lavender/30 focus:border-lavender"
             />
+            <p className="text-xs text-muted-foreground mt-1 text-right">
+              {(log?.notes?.length || 0)}/500 characters
+            </p>
           </section>
         </div>
       </SheetContent>
