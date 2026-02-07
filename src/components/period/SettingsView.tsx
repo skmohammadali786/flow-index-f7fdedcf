@@ -3,16 +3,11 @@ import {
   Settings, 
   Bell, 
   Calendar, 
-  Moon, 
-  Sun, 
   Download, 
-  Upload,
   RotateCcw,
   ChevronRight,
-  Clock,
   Target,
   Eye,
-  EyeOff
 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Slider } from '@/components/ui/slider';
@@ -27,14 +22,12 @@ import {
 } from '@/components/ui/select';
 import { UserSettings } from '@/types/settings';
 import { toast } from 'sonner';
-import { useRef } from 'react';
 
 interface SettingsViewProps {
   settings: UserSettings;
   onUpdateSettings: (updates: Partial<UserSettings>) => void;
   onUpdateNotifications: (updates: Partial<UserSettings['notifications']>) => void;
   onExportData: () => void;
-  onImportData: (file: File) => Promise<boolean>;
   onResetSettings: () => void;
 }
 
@@ -43,10 +36,8 @@ export function SettingsView({
   onUpdateSettings,
   onUpdateNotifications,
   onExportData,
-  onImportData,
   onResetSettings,
 }: SettingsViewProps) {
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -56,21 +47,6 @@ export function SettingsView({
   const itemVariants = {
     hidden: { opacity: 0, y: 10 },
     visible: { opacity: 1, y: 0 },
-  };
-
-  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const success = await onImportData(file);
-    if (success) {
-      toast.success('Data imported successfully');
-    } else {
-      toast.error('Failed to import data');
-    }
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
   };
 
   return (
@@ -331,24 +307,6 @@ export function SettingsView({
             <ChevronRight className="h-4 w-4" />
           </Button>
 
-          <Button
-            variant="outline"
-            className="w-full justify-between"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <span className="flex items-center gap-2">
-              <Upload className="h-4 w-4" />
-              Import Data
-            </span>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept=".json"
-            onChange={handleImport}
-            className="hidden"
-          />
 
           <Button
             variant="outline"
