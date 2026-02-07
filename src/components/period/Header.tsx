@@ -106,7 +106,7 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
               <button
                 key={tab.id}
                 onClick={() => onTabChange(tab.id)}
-                className="relative py-2 px-1 text-xs font-medium rounded-lg transition-colors flex flex-col items-center gap-0.5"
+                className="relative py-2.5 px-1 rounded-lg transition-colors flex items-center justify-center"
                 title={tab.fullLabel}
               >
                 {activeTab === tab.id && (
@@ -117,15 +117,9 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
                   />
                 )}
                 <Icon className={cn(
-                  "relative z-10 h-4 w-4",
+                  "relative z-10 h-5 w-5",
                   activeTab === tab.id ? 'text-foreground' : 'text-muted-foreground'
                 )} />
-                <span className={cn(
-                  "relative z-10 text-[10px] leading-tight",
-                  activeTab === tab.id ? 'text-foreground' : 'text-muted-foreground'
-                )}>
-                  {tab.label}
-                </span>
               </button>
             );
           })}
