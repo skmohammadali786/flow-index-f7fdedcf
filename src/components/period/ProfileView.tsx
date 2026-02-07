@@ -298,7 +298,7 @@ export function ProfileView({ profile, stats, onUpdateProfile }: ProfileViewProp
           <div>
             <p className="font-medium text-sm">Your Privacy Matters</p>
             <p className="text-xs text-muted-foreground mt-1">
-              All your data is stored locally on your device. We never access or share your personal health information.
+              All your data is stored on your account. We never access or share your personal health information.
             </p>
           </div>
         </div>
