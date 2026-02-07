@@ -183,96 +183,57 @@ export function useSupabaseSettings() {
   const exportData = useCallback(async () => {
     if (!user) return;
 
-    // Fetch all user data
-    const { data: logsData } = await supabase
-      .from('period_logs')
-      .select('*')
-      .eq('user_id', user.id);
-
-    const { data: cyclesData } = await supabase
-      .from('cycles')
-      .select('*')
-      .eq('user_id', user.id);
+    // Fetch all user data from all tables
+    const [logsResult, cyclesResult, clinicalResult, profileResult, settingsResult] = await Promise.all([
+      supabase
+        .from('period_logs')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('date', { ascending: false }),
+      supabase
+        .from('cycles')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('start_date', { ascending: false }),
+      supabase
+        .from('clinical_assessments')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('date', { ascending: false }),
+      supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle(),
+      supabase
+        .from('user_settings')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle(),
+    ]);
 
     const data = {
-      settings,
-      profile,
-      logs: { logs: logsData, cycles: cyclesData },
       exportedAt: new Date().toISOString(),
+      profile: profileResult.data || profile,
+      settings: settingsResult.data || settings,
+      periodLogs: logsResult.data || [],
+      cycles: cyclesResult.data || [],
+      clinicalAssessments: clinicalResult.data || [],
+      summary: {
+        totalPeriodLogs: logsResult.data?.length || 0,
+        totalCycles: cyclesResult.data?.length || 0,
+        totalClinicalAssessments: clinicalResult.data?.length || 0,
+      },
     };
 
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `flowindex-backup-${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `flowindex-complete-backup-${new Date().toISOString().split('T')[0]}.json`;
     a.click();
     URL.revokeObjectURL(url);
   }, [user, settings, profile]);
-
-  const importData = useCallback(async (file: File): Promise<boolean> => {
-    if (!user) return false;
-
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        try {
-          const data = JSON.parse(e.target?.result as string);
-          
-          // Import settings
-          if (data.settings) {
-            await updateSettings(data.settings);
-          }
-          
-          // Import profile
-          if (data.profile) {
-            await updateProfile(data.profile);
-          }
-          
-          // Import logs
-          if (data.logs?.logs && Array.isArray(data.logs.logs)) {
-            for (const log of data.logs.logs) {
-              await supabase.from('period_logs').upsert({
-                user_id: user.id,
-                date: log.date,
-                is_period: log.is_period,
-                flow_intensity: log.flow_intensity,
-                moods: log.moods || [],
-                symptoms: log.symptoms || [],
-                notes: log.notes,
-                water_intake: log.water_intake,
-                sleep_hours: log.sleep_hours,
-                sleep_quality: log.sleep_quality,
-                exercise_minutes: log.exercise_minutes,
-                temperature: log.temperature,
-                medications: log.medications || [],
-              }, { onConflict: 'user_id,date' });
-            }
-          }
-          
-          // Import cycles
-          if (data.logs?.cycles && Array.isArray(data.logs.cycles)) {
-            for (const cycle of data.logs.cycles) {
-              await supabase.from('cycles').upsert({
-                user_id: user.id,
-                start_date: cycle.start_date,
-                end_date: cycle.end_date,
-                length: cycle.length,
-              });
-            }
-          }
-          
-          // Reload to sync data
-          window.location.reload();
-          resolve(true);
-        } catch (error) {
-          console.error('Import error:', error);
-          resolve(false);
-        }
-      };
-      reader.readAsText(file);
-    });
-  }, [user, updateSettings, updateProfile]);
 
   return {
     settings,
@@ -283,6 +244,5 @@ export function useSupabaseSettings() {
     updateProfile,
     resetSettings,
     exportData,
-    importData,
   };
 }
