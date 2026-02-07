@@ -46,8 +46,8 @@ export function useBrainForecast(
   // Get today's log data
   const todayStatus = useMemo((): TodayStatus => {
     const today = format(new Date(), 'yyyy-MM-dd');
-    const todayLog = logs.find(log => log.date === today);
-    const todayAssessment = clinicalAssessments.find(a => a.date === today);
+    const todayLog = logs?.find(log => log.date === today);
+    const todayAssessment = clinicalAssessments?.find(a => a.date === today);
 
     return {
       sleepQuality: todayLog?.sleepQuality || null,
@@ -65,7 +65,7 @@ export function useBrainForecast(
 
   // Calculate historical patterns for current phase
   const phaseHistory = useMemo(() => {
-    if (!currentPhase || cycles.length === 0) return null;
+    if (!currentPhase || !cycles || cycles.length === 0) return null;
 
     const phaseData: {
       symptoms: Record<string, number>;
@@ -93,7 +93,7 @@ export function useBrainForecast(
     let painCount = 0, fatigueCount = 0, moodCount = 0;
 
     // Look at logs from the same phase in previous cycles
-    logs.forEach(log => {
+    (logs || []).forEach(log => {
       const logDate = parseISO(log.date);
       
       // Find which cycle this log belongs to
@@ -138,7 +138,7 @@ export function useBrainForecast(
     });
 
     // Get clinical assessments for the same phase
-    clinicalAssessments.forEach(assessment => {
+    (clinicalAssessments || []).forEach(assessment => {
       const assessmentDate = parseISO(assessment.date);
       
       for (const cycle of cycles) {
