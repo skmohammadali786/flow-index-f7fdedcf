@@ -11,26 +11,30 @@ import {
   Clock,
   Target,
   Sparkles,
-  AlertCircle
+  AlertCircle,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  Droplets,
+  Heart,
+  Info,
+  CheckCircle2,
+  AlertTriangle,
+  Loader2
 } from 'lucide-react';
 import { CyclePhase } from '@/types/settings';
+import { DayLog, CycleData } from '@/types/period';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { useBrainForecast } from '@/hooks/useBrainForecast';
+import { useClinicalAssessments } from '@/hooks/useClinicalAssessments';
 
 interface BrainForecastViewProps {
   currentPhase: CyclePhase | null;
   currentCycleDay: number | null;
-}
-
-interface CognitiveForecast {
-  focus: number;
-  processingSpeed: number;
-  mentalClarity: number;
-  energy: number;
-  creativity: number;
-  emotionalResilience: number;
+  logs: DayLog[];
+  cycles: CycleData[];
 }
 
 interface BrainBreak {
@@ -49,44 +53,6 @@ interface WorkSchedule {
   taskType: string;
   avoidTime: string;
 }
-
-const getCognitiveForecast = (phase: CyclePhase): CognitiveForecast => {
-  const forecasts: Record<CyclePhase, CognitiveForecast> = {
-    menstrual: {
-      focus: 40,
-      processingSpeed: 45,
-      mentalClarity: 35,
-      energy: 30,
-      creativity: 65,
-      emotionalResilience: 40,
-    },
-    follicular: {
-      focus: 75,
-      processingSpeed: 80,
-      mentalClarity: 85,
-      energy: 70,
-      creativity: 90,
-      emotionalResilience: 75,
-    },
-    ovulation: {
-      focus: 85,
-      processingSpeed: 90,
-      mentalClarity: 80,
-      energy: 95,
-      creativity: 85,
-      emotionalResilience: 70,
-    },
-    luteal: {
-      focus: 55,
-      processingSpeed: 60,
-      mentalClarity: 50,
-      energy: 45,
-      creativity: 70,
-      emotionalResilience: 55,
-    },
-  };
-  return forecasts[phase];
-};
 
 const getBrainBreaks = (phase: CyclePhase): BrainBreak[] => {
   const breaks: Record<CyclePhase, BrainBreak[]> = {
@@ -152,36 +118,6 @@ const getWorkSchedule = (phase: CyclePhase): WorkSchedule => {
   return schedules[phase];
 };
 
-const getPhaseInsight = (phase: CyclePhase): { title: string; description: string; keyHormone: string; brainEffect: string } => {
-  const insights: Record<CyclePhase, { title: string; description: string; keyHormone: string; brainEffect: string }> = {
-    menstrual: {
-      title: 'Rest & Reflect Phase',
-      description: 'Your brain is in recovery mode. Hormone levels are at their lowest, which can affect neurotransmitter production. This is your time for introspection and gentle self-care.',
-      keyHormone: 'Low Estrogen & Progesterone',
-      brainEffect: 'Reduced verbal memory, increased need for rest, heightened intuition',
-    },
-    follicular: {
-      title: 'Rising Energy Phase',
-      description: 'Estrogen is climbing, boosting serotonin and dopamine. Your brain is primed for new learning, creative thinking, and taking on challenges.',
-      keyHormone: 'Rising Estrogen',
-      brainEffect: 'Enhanced memory formation, verbal fluency, and neuroplasticity',
-    },
-    ovulation: {
-      title: 'Peak Performance Phase',
-      description: 'Estrogen peaks along with a testosterone surge. Your brain has optimal neurotransmitter levels for communication, confidence, and quick thinking.',
-      keyHormone: 'Peak Estrogen + Testosterone',
-      brainEffect: 'Maximum verbal skills, social cognition, and processing speed',
-    },
-    luteal: {
-      title: 'Focus & Finish Phase',
-      description: 'Progesterone rises and GABA increases, creating a calming effect. Your brain shifts toward detail-oriented work and completing existing projects.',
-      keyHormone: 'Rising Progesterone',
-      brainEffect: 'Heightened attention to detail, reduced novelty-seeking, increased sensitivity',
-    },
-  };
-  return insights[phase];
-};
-
 const getProgressColor = (value: number): string => {
   if (value >= 75) return 'bg-sage';
   if (value >= 50) return 'bg-peach';
@@ -196,7 +132,17 @@ const breakTypeColors = {
   grounding: 'bg-peach-light text-peach',
 };
 
-export function BrainForecastView({ currentPhase, currentCycleDay }: BrainForecastViewProps) {
+export function BrainForecastView({ currentPhase, currentCycleDay, logs, cycles }: BrainForecastViewProps) {
+  const { historicalAssessments, isLoading: assessmentsLoading } = useClinicalAssessments();
+  
+  const {
+    todayStatus,
+    personalizedForecast,
+    personalizedInsight,
+    recommendations,
+    phaseHistory,
+  } = useBrainForecast(logs, cycles, currentPhase, currentCycleDay, historicalAssessments);
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { staggerChildren: 0.05 } },
@@ -207,7 +153,15 @@ export function BrainForecastView({ currentPhase, currentCycleDay }: BrainForeca
     visible: { opacity: 1, y: 0 },
   };
 
-  if (!currentPhase) {
+  if (assessmentsLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!currentPhase || !personalizedForecast || !personalizedInsight) {
     return (
       <motion.div
         variants={containerVariants}
@@ -223,7 +177,7 @@ export function BrainForecastView({ currentPhase, currentCycleDay }: BrainForeca
             <Brain className="h-8 w-8 text-lavender" />
           </div>
           <h3 className="font-display font-semibold text-lg mb-2">
-            Brain Forecast Coming Soon
+            Cognitive Forecast Coming Soon
           </h3>
           <p className="text-muted-foreground text-sm max-w-sm mx-auto">
             Log your period to get personalized cognitive forecasts based on your cycle phase.
@@ -233,18 +187,16 @@ export function BrainForecastView({ currentPhase, currentCycleDay }: BrainForeca
     );
   }
 
-  const forecast = getCognitiveForecast(currentPhase);
   const brainBreaks = getBrainBreaks(currentPhase);
   const workSchedule = getWorkSchedule(currentPhase);
-  const insight = getPhaseInsight(currentPhase);
 
   const cognitiveMetrics = [
-    { name: 'Focus', value: forecast.focus, icon: Focus },
-    { name: 'Processing Speed', value: forecast.processingSpeed, icon: Zap },
-    { name: 'Mental Clarity', value: forecast.mentalClarity, icon: CloudFog },
-    { name: 'Energy', value: forecast.energy, icon: Activity },
-    { name: 'Creativity', value: forecast.creativity, icon: Sparkles },
-    { name: 'Emotional Resilience', value: forecast.emotionalResilience, icon: Target },
+    { name: 'Focus', value: personalizedForecast.focus, icon: Focus },
+    { name: 'Processing Speed', value: personalizedForecast.processingSpeed, icon: Zap },
+    { name: 'Mental Clarity', value: personalizedForecast.mentalClarity, icon: CloudFog },
+    { name: 'Energy', value: personalizedForecast.energy, icon: Activity },
+    { name: 'Creativity', value: personalizedForecast.creativity, icon: Sparkles },
+    { name: 'Emotional Resilience', value: personalizedForecast.emotionalResilience, icon: Target },
   ];
 
   return (
@@ -259,16 +211,146 @@ export function BrainForecastView({ currentPhase, currentCycleDay }: BrainForeca
         variants={itemVariants}
         className="gradient-primary rounded-2xl p-6 text-primary-foreground shadow-elevated"
       >
-        <div className="flex items-center gap-2 mb-2">
-          <Brain className="h-5 w-5" />
-          <span className="text-sm font-medium opacity-90">Executive Function Forecast</span>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <Brain className="h-5 w-5" />
+            <span className="text-sm font-medium opacity-90">Cognitive Forecast</span>
+          </div>
+          <Badge 
+            variant="secondary" 
+            className={cn(
+              "text-xs",
+              personalizedForecast.confidence === 'high' ? 'bg-sage/20 text-sage-foreground' :
+              personalizedForecast.confidence === 'medium' ? 'bg-peach/20 text-peach-foreground' :
+              'bg-white/20'
+            )}
+          >
+            {personalizedForecast.confidence === 'high' ? 'High accuracy' :
+             personalizedForecast.confidence === 'medium' ? 'Building data' : 
+             'Getting started'}
+          </Badge>
         </div>
-        <h2 className="text-2xl font-display font-bold mb-1">{insight.title}</h2>
+        <h2 className="text-2xl font-display font-bold mb-1">{personalizedInsight.title}</h2>
         <p className="text-sm opacity-80 mb-3">
-          {currentCycleDay && `Day ${currentCycleDay} • `}{insight.keyHormone}
+          {currentCycleDay && `Day ${currentCycleDay} • `}{personalizedInsight.keyHormone}
         </p>
-        <p className="text-sm opacity-90">{insight.description}</p>
+        <p className="text-sm opacity-90">{personalizedInsight.description}</p>
       </motion.div>
+
+      {/* Today's Status */}
+      <motion.div variants={itemVariants}>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Heart className="h-5 w-5 text-coral" />
+              Today's Status
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg">
+                <Moon className="h-4 w-4 text-lavender" />
+                <div className="min-w-0">
+                  <p className="text-xs text-muted-foreground">Sleep</p>
+                  <p className="text-sm font-medium truncate">
+                    {todayStatus.sleepHours ? `${todayStatus.sleepHours}h` : 'Not logged'}
+                    {todayStatus.sleepQuality && ` (${todayStatus.sleepQuality})`}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg">
+                <Activity className="h-4 w-4 text-sage" />
+                <div className="min-w-0">
+                  <p className="text-xs text-muted-foreground">Exercise</p>
+                  <p className="text-sm font-medium truncate">
+                    {todayStatus.exerciseMinutes ? `${todayStatus.exerciseMinutes} min` : 'Not logged'}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg">
+                <Droplets className="h-4 w-4 text-primary" />
+                <div className="min-w-0">
+                  <p className="text-xs text-muted-foreground">Water</p>
+                  <p className="text-sm font-medium truncate">
+                    {todayStatus.waterIntake ? `${todayStatus.waterIntake} glasses` : 'Not logged'}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg">
+                <Zap className="h-4 w-4 text-peach" />
+                <div className="min-w-0">
+                  <p className="text-xs text-muted-foreground">Symptoms</p>
+                  <p className="text-sm font-medium truncate">
+                    {todayStatus.currentSymptoms.length > 0 
+                      ? `${todayStatus.currentSymptoms.length} logged` 
+                      : 'None logged'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* VAS Summary if data exists */}
+            {(todayStatus.painLevel > 0 || todayStatus.fatigueLevel > 0 || todayStatus.moodLevel > 0) && (
+              <div className="mt-3 p-3 bg-coral-light/30 rounded-lg">
+                <p className="text-xs font-medium mb-2">Clinical Assessment Impact</p>
+                <div className="flex flex-wrap gap-2">
+                  {todayStatus.painLevel > 0 && (
+                    <Badge variant="outline" className="text-xs">
+                      Pain: {todayStatus.painLevel}/100
+                    </Badge>
+                  )}
+                  {todayStatus.fatigueLevel > 0 && (
+                    <Badge variant="outline" className="text-xs">
+                      Fatigue: {todayStatus.fatigueLevel}/100
+                    </Badge>
+                  )}
+                  {todayStatus.moodLevel > 0 && (
+                    <Badge variant="outline" className="text-xs">
+                      Mood: {todayStatus.moodLevel}/100
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* Recommendations */}
+      {recommendations.length > 0 && (
+        <motion.div variants={itemVariants}>
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Info className="h-5 w-5 text-lavender" />
+                Personalized Insights
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {recommendations.map((rec, i) => (
+                <div 
+                  key={i} 
+                  className={cn(
+                    "flex items-start gap-2 p-3 rounded-lg",
+                    rec.type === 'warning' ? 'bg-coral-light/30' :
+                    rec.type === 'boost' ? 'bg-sage-light/50' :
+                    'bg-peach-light/30'
+                  )}
+                >
+                  {rec.type === 'warning' ? (
+                    <AlertTriangle className="h-4 w-4 text-coral mt-0.5 shrink-0" />
+                  ) : rec.type === 'boost' ? (
+                    <CheckCircle2 className="h-4 w-4 text-sage mt-0.5 shrink-0" />
+                  ) : (
+                    <Info className="h-4 w-4 text-peach mt-0.5 shrink-0" />
+                  )}
+                  <p className="text-sm">{rec.message}</p>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
 
       {/* Cognitive Metrics */}
       <motion.div variants={itemVariants}>
@@ -277,6 +359,11 @@ export function BrainForecastView({ currentPhase, currentCycleDay }: BrainForeca
             <CardTitle className="text-lg flex items-center gap-2">
               <Zap className="h-5 w-5 text-coral" />
               Cognitive Forecast
+              {personalizedForecast.dataPoints > 0 && (
+                <Badge variant="outline" className="text-xs ml-auto">
+                  Based on {personalizedForecast.dataPoints} data points
+                </Badge>
+              )}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -306,13 +393,32 @@ export function BrainForecastView({ currentPhase, currentCycleDay }: BrainForeca
               <div className="flex items-start gap-2">
                 <AlertCircle className="h-4 w-4 text-muted-foreground mt-0.5" />
                 <p className="text-xs text-muted-foreground">
-                  <strong>Brain Effect:</strong> {insight.brainEffect}
+                  <strong>Brain Effect:</strong> {personalizedInsight.brainEffect}
                 </p>
               </div>
             </div>
           </CardContent>
         </Card>
       </motion.div>
+
+      {/* Personal Pattern Note */}
+      {personalizedInsight.personalNote && (
+        <motion.div variants={itemVariants}>
+          <div className="bg-gradient-to-br from-lavender-light to-sage-light rounded-2xl p-5">
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-card rounded-lg shadow-sm">
+                <TrendingUp className="h-5 w-5 text-lavender" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-sm mb-1">Your Pattern Insights</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  {personalizedInsight.personalNote}
+                </p>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* Optimal Work Schedule */}
       <motion.div variants={itemVariants}>
@@ -410,8 +516,8 @@ export function BrainForecastView({ currentPhase, currentCycleDay }: BrainForeca
             <div>
               <h3 className="font-semibold text-sm mb-1">Neuroscience Insight</h3>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                Your brain's prefrontal cortex (responsible for executive function) is directly influenced by estrogen and progesterone levels. 
-                By aligning your work with these natural rhythms, you can optimize productivity while reducing mental fatigue and burnout.
+                Your brain's prefrontal cortex is directly influenced by estrogen and progesterone levels. 
+                By aligning your work with these natural rhythms, you can optimize productivity while reducing mental fatigue.
               </p>
             </div>
           </div>

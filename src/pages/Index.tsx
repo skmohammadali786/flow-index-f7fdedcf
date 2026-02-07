@@ -298,6 +298,8 @@ const Index = () => {
               <BrainForecastView
                 currentPhase={currentPhase}
                 currentCycleDay={currentCycleDay}
+                logs={logs}
+                cycles={cycles}
               />
             </motion.div>
           )}
