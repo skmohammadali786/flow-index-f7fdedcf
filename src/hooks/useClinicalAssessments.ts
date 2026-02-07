@@ -24,48 +24,73 @@ export function useClinicalAssessments() {
     bloatingVas: 0,
     additionalNotes: '',
   });
+  const [historicalAssessments, setHistoricalAssessments] = useState<ClinicalAssessment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Fetch today's assessment on mount
+  // Fetch today's assessment and historical data on mount
   useEffect(() => {
     if (!user) {
       setIsLoading(false);
       return;
     }
 
-    const fetchTodaysAssessment = async () => {
+    const fetchAssessments = async () => {
       try {
         const today = format(new Date(), 'yyyy-MM-dd');
-        const { data, error } = await supabase
+        
+        // Fetch today's assessment
+        const { data: todayData, error: todayError } = await supabase
           .from('clinical_assessments')
           .select('*')
           .eq('user_id', user.id)
           .eq('date', today)
           .maybeSingle();
 
-        if (error) throw error;
+        if (todayError) throw todayError;
 
-        if (data) {
+        if (todayData) {
           setAssessment({
-            id: data.id,
-            date: data.date,
-            painVas: data.pain_vas ?? 0,
-            fatigueVas: data.fatigue_vas ?? 0,
-            moodVas: data.mood_vas ?? 0,
-            bloatingVas: data.bloating_vas ?? 0,
-            additionalNotes: data.additional_notes ?? '',
+            id: todayData.id,
+            date: todayData.date,
+            painVas: todayData.pain_vas ?? 0,
+            fatigueVas: todayData.fatigue_vas ?? 0,
+            moodVas: todayData.mood_vas ?? 0,
+            bloatingVas: todayData.bloating_vas ?? 0,
+            additionalNotes: todayData.additional_notes ?? '',
           });
         }
+
+        // Fetch historical assessments (last 30 days)
+        const { data: historyData, error: historyError } = await supabase
+          .from('clinical_assessments')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('date', { ascending: true })
+          .limit(30);
+
+        if (historyError) throw historyError;
+
+        if (historyData) {
+          setHistoricalAssessments(historyData.map(item => ({
+            id: item.id,
+            date: item.date,
+            painVas: item.pain_vas ?? 0,
+            fatigueVas: item.fatigue_vas ?? 0,
+            moodVas: item.mood_vas ?? 0,
+            bloatingVas: item.bloating_vas ?? 0,
+            additionalNotes: item.additional_notes ?? '',
+          })));
+        }
       } catch (error) {
-        console.error('Error fetching clinical assessment:', error);
+        console.error('Error fetching clinical assessments:', error);
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchTodaysAssessment();
+    fetchAssessments();
   }, [user]);
 
   // Save assessment to database with debounce
@@ -111,12 +136,38 @@ export function useClinicalAssessments() {
           if (error) throw error;
         } else {
           // Insert new record
-          const { error } = await supabase
+          const { data: insertedData, error } = await supabase
             .from('clinical_assessments')
-            .insert(assessmentData);
+            .insert(assessmentData)
+            .select()
+            .single();
 
           if (error) throw error;
+
+          // Update historical assessments with the new entry
+          if (insertedData) {
+            setHistoricalAssessments(prev => [...prev, {
+              id: insertedData.id,
+              date: insertedData.date,
+              painVas: insertedData.pain_vas ?? 0,
+              fatigueVas: insertedData.fatigue_vas ?? 0,
+              moodVas: insertedData.mood_vas ?? 0,
+              bloatingVas: insertedData.bloating_vas ?? 0,
+              additionalNotes: insertedData.additional_notes ?? '',
+            }]);
+          }
         }
+
+        // Update historical assessments for today's entry
+        setHistoricalAssessments(prev => {
+          const existingIndex = prev.findIndex(a => a.date === today);
+          if (existingIndex >= 0) {
+            const updated = [...prev];
+            updated[existingIndex] = { ...newAssessment, date: today };
+            return updated;
+          }
+          return prev;
+        });
       } catch (error) {
         console.error('Error saving clinical assessment:', error);
         toast.error('Failed to save assessment');
@@ -158,35 +209,6 @@ export function useClinicalAssessments() {
     });
   }, [saveAssessment]);
 
-  // Get all historical assessments
-  const getHistoricalAssessments = useCallback(async () => {
-    if (!user) return [];
-
-    try {
-      const { data, error } = await supabase
-        .from('clinical_assessments')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('date', { ascending: false })
-        .limit(30);
-
-      if (error) throw error;
-
-      return data?.map(item => ({
-        id: item.id,
-        date: item.date,
-        painVas: item.pain_vas ?? 0,
-        fatigueVas: item.fatigue_vas ?? 0,
-        moodVas: item.mood_vas ?? 0,
-        bloatingVas: item.bloating_vas ?? 0,
-        additionalNotes: item.additional_notes ?? '',
-      })) ?? [];
-    } catch (error) {
-      console.error('Error fetching historical assessments:', error);
-      return [];
-    }
-  }, [user]);
-
   // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
@@ -198,10 +220,10 @@ export function useClinicalAssessments() {
 
   return {
     assessment,
+    historicalAssessments,
     isLoading,
     isSaving,
     updateVasScale,
     updateNotes,
-    getHistoricalAssessments,
   };
 }

@@ -16,7 +16,8 @@ import {
   Thermometer,
   Droplets,
   Moon,
-  Loader2
+  Loader2,
+  TrendingUp
 } from 'lucide-react';
 import { DayLog, CycleData, CycleStats, Symptom, Mood } from '@/types/period';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -30,6 +31,7 @@ import { toast } from 'sonner';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useClinicalAssessments } from '@/hooks/useClinicalAssessments';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 interface ClinicalEvidenceViewProps {
   logs: DayLog[];
@@ -94,7 +96,19 @@ const redFlagSymptoms = [
 
 export function ClinicalEvidenceView({ logs, cycles, stats }: ClinicalEvidenceViewProps) {
   const [copied, setCopied] = useState(false);
-  const { assessment, isLoading, isSaving, updateVasScale, updateNotes } = useClinicalAssessments();
+  const { assessment, historicalAssessments, isLoading, isSaving, updateVasScale, updateNotes } = useClinicalAssessments();
+
+  // Prepare chart data from historical assessments
+  const chartData = useMemo(() => {
+    return historicalAssessments.map(a => ({
+      date: format(parseISO(a.date), 'MMM d'),
+      fullDate: a.date,
+      pain: a.painVas,
+      fatigue: a.fatigueVas,
+      mood: a.moodVas,
+      bloating: a.bloatingVas,
+    }));
+  }, [historicalAssessments]);
 
   // Helper to get VAS value by id
   const getVasValue = (id: string): number => {
@@ -291,18 +305,26 @@ export function ClinicalEvidenceView({ logs, cycles, stats }: ClinicalEvidenceVi
       </motion.div>
 
       <Tabs defaultValue="vas" className="w-full">
-        <TabsList className="grid grid-cols-3 w-full">
+        <TabsList className="grid grid-cols-4 w-full">
           <TabsTrigger value="vas" className="text-xs sm:text-sm">
             <BarChart3 className="h-4 w-4 mr-1 sm:mr-2" />
-            VAS Scales
+            <span className="hidden sm:inline">VAS</span>
+            <span className="sm:hidden">VAS</span>
+          </TabsTrigger>
+          <TabsTrigger value="trends" className="text-xs sm:text-sm">
+            <TrendingUp className="h-4 w-4 mr-1 sm:mr-2" />
+            <span className="hidden sm:inline">Trends</span>
+            <span className="sm:hidden">Trend</span>
           </TabsTrigger>
           <TabsTrigger value="symptoms" className="text-xs sm:text-sm">
             <ClipboardList className="h-4 w-4 mr-1 sm:mr-2" />
-            Analysis
+            <span className="hidden sm:inline">Analysis</span>
+            <span className="sm:hidden">Ana</span>
           </TabsTrigger>
           <TabsTrigger value="report" className="text-xs sm:text-sm">
             <FileText className="h-4 w-4 mr-1 sm:mr-2" />
-            Report
+            <span className="hidden sm:inline">Report</span>
+            <span className="sm:hidden">Rep</span>
           </TabsTrigger>
         </TabsList>
 
@@ -392,6 +414,173 @@ export function ClinicalEvidenceView({ logs, cycles, stats }: ClinicalEvidenceVi
               </CardContent>
             </Card>
           </motion.div>
+        </TabsContent>
+
+        {/* VAS Trends Tab */}
+        <TabsContent value="trends" className="space-y-4 mt-4">
+          <motion.div variants={itemVariants}>
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-sage" />
+                  VAS Score Trends
+                </CardTitle>
+                <CardDescription>
+                  Track how your symptom scores change over time (last 30 days)
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {chartData.length < 2 ? (
+                  <div className="py-8 text-center">
+                    <TrendingUp className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <h3 className="font-semibold mb-2">Not Enough Data</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Log at least 2 days of VAS scores to see trends. Keep rating your symptoms daily!
+                    </p>
+                  </div>
+                ) : (
+                  <div className="h-[300px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                        <XAxis 
+                          dataKey="date" 
+                          tick={{ fontSize: 10 }}
+                          className="text-muted-foreground"
+                        />
+                        <YAxis 
+                          domain={[0, 10]} 
+                          tick={{ fontSize: 10 }}
+                          className="text-muted-foreground"
+                        />
+                        <Tooltip 
+                          contentStyle={{ 
+                            backgroundColor: 'hsl(var(--card))', 
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '8px',
+                            fontSize: '12px'
+                          }}
+                        />
+                        <Legend wrapperStyle={{ fontSize: '11px' }} />
+                        <Line 
+                          type="monotone" 
+                          dataKey="pain" 
+                          name="Pain"
+                          stroke="hsl(var(--coral))" 
+                          strokeWidth={2}
+                          dot={{ r: 3 }}
+                          activeDot={{ r: 5 }}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="fatigue" 
+                          name="Fatigue"
+                          stroke="hsl(var(--lavender))" 
+                          strokeWidth={2}
+                          dot={{ r: 3 }}
+                          activeDot={{ r: 5 }}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="mood" 
+                          name="Mood"
+                          stroke="hsl(var(--peach))" 
+                          strokeWidth={2}
+                          dot={{ r: 3 }}
+                          activeDot={{ r: 5 }}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="bloating" 
+                          name="Bloating"
+                          stroke="hsl(var(--sage))" 
+                          strokeWidth={2}
+                          dot={{ r: 3 }}
+                          activeDot={{ r: 5 }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Historical Data Table */}
+          {chartData.length > 0 && (
+            <motion.div variants={itemVariants}>
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Calendar className="h-5 w-5 text-lavender" />
+                    Assessment History
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left py-2 px-2 font-medium">Date</th>
+                          <th className="text-center py-2 px-2 font-medium">Pain</th>
+                          <th className="text-center py-2 px-2 font-medium">Fatigue</th>
+                          <th className="text-center py-2 px-2 font-medium">Mood</th>
+                          <th className="text-center py-2 px-2 font-medium">Bloating</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {[...chartData].reverse().slice(0, 7).map((row, idx) => (
+                          <tr key={row.fullDate} className={cn("border-b last:border-0", idx === 0 && "bg-muted/30")}>
+                            <td className="py-2 px-2">{row.date}</td>
+                            <td className="text-center py-2 px-2">
+                              <Badge variant={row.pain > 6 ? 'destructive' : row.pain > 3 ? 'secondary' : 'outline'} className="w-8 justify-center">
+                                {row.pain}
+                              </Badge>
+                            </td>
+                            <td className="text-center py-2 px-2">
+                              <Badge variant={row.fatigue > 6 ? 'destructive' : row.fatigue > 3 ? 'secondary' : 'outline'} className="w-8 justify-center">
+                                {row.fatigue}
+                              </Badge>
+                            </td>
+                            <td className="text-center py-2 px-2">
+                              <Badge variant={row.mood > 6 ? 'destructive' : row.mood > 3 ? 'secondary' : 'outline'} className="w-8 justify-center">
+                                {row.mood}
+                              </Badge>
+                            </td>
+                            <td className="text-center py-2 px-2">
+                              <Badge variant={row.bloating > 6 ? 'destructive' : row.bloating > 3 ? 'secondary' : 'outline'} className="w-8 justify-center">
+                                {row.bloating}
+                              </Badge>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+
+          {/* Trend Insights */}
+          {chartData.length >= 2 && (
+            <motion.div variants={itemVariants}>
+              <div className="bg-gradient-to-br from-sage-light to-lavender-light rounded-2xl p-5">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-card rounded-lg shadow-sm">
+                    <Info className="h-5 w-5 text-sage" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-sm mb-1">Understanding Your Trends</h3>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      Tracking VAS scores over time helps identify patterns in your symptoms. Share these trends with your healthcare provider 
+                      to help them understand your condition better and make more informed treatment decisions.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
         </TabsContent>
 
         {/* Symptoms Analysis Tab */}
