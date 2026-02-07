@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
   FileText, 
@@ -15,7 +15,8 @@ import {
   Heart,
   Thermometer,
   Droplets,
-  Moon
+  Moon,
+  Loader2
 } from 'lucide-react';
 import { DayLog, CycleData, CycleStats, Symptom, Mood } from '@/types/period';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -28,6 +29,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { useClinicalAssessments } from '@/hooks/useClinicalAssessments';
 
 interface ClinicalEvidenceViewProps {
   logs: DayLog[];
@@ -35,14 +37,20 @@ interface ClinicalEvidenceViewProps {
   stats: CycleStats | null;
 }
 
-interface VASScale {
+interface VASScaleDisplay {
   id: string;
   name: string;
   description: string;
-  value: number;
   clinicalTerm: string;
   icon: typeof Activity;
 }
+
+const vasScaleDisplays: VASScaleDisplay[] = [
+  { id: 'pain', name: 'Pain Intensity', description: 'Overall menstrual pain level', clinicalTerm: 'Visual Analog Scale - Pain', icon: Activity },
+  { id: 'fatigue', name: 'Fatigue Level', description: 'Energy and tiredness', clinicalTerm: 'Fatigue Severity Scale', icon: Moon },
+  { id: 'mood', name: 'Mood Disturbance', description: 'Emotional well-being', clinicalTerm: 'Mood Rating Scale', icon: Heart },
+  { id: 'bloating', name: 'Bloating Severity', description: 'Abdominal discomfort', clinicalTerm: 'Bloating Severity Scale', icon: Droplets },
+];
 
 const symptomToClinicalTerm: Record<Symptom, string> = {
   cramps: 'Dysmenorrhea (menstrual cramping)',
@@ -86,13 +94,18 @@ const redFlagSymptoms = [
 
 export function ClinicalEvidenceView({ logs, cycles, stats }: ClinicalEvidenceViewProps) {
   const [copied, setCopied] = useState(false);
-  const [vasScales, setVasScales] = useState<VASScale[]>([
-    { id: 'pain', name: 'Pain Intensity', description: 'Overall menstrual pain level', value: 0, clinicalTerm: 'Visual Analog Scale - Pain', icon: Activity },
-    { id: 'fatigue', name: 'Fatigue Level', description: 'Energy and tiredness', value: 0, clinicalTerm: 'Fatigue Severity Scale', icon: Moon },
-    { id: 'mood', name: 'Mood Disturbance', description: 'Emotional well-being', value: 0, clinicalTerm: 'Mood Rating Scale', icon: Heart },
-    { id: 'bloating', name: 'Bloating Severity', description: 'Abdominal discomfort', value: 0, clinicalTerm: 'Bloating Severity Scale', icon: Droplets },
-  ]);
-  const [additionalNotes, setAdditionalNotes] = useState('');
+  const { assessment, isLoading, isSaving, updateVasScale, updateNotes } = useClinicalAssessments();
+
+  // Helper to get VAS value by id
+  const getVasValue = (id: string): number => {
+    switch (id) {
+      case 'pain': return assessment.painVas;
+      case 'fatigue': return assessment.fatigueVas;
+      case 'mood': return assessment.moodVas;
+      case 'bloating': return assessment.bloatingVas;
+      default: return 0;
+    }
+  };
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -162,13 +175,7 @@ export function ClinicalEvidenceView({ logs, cycles, stats }: ClinicalEvidenceVi
     };
   }, [logs]);
 
-  const updateVasScale = (id: string, value: number) => {
-    setVasScales(scales => 
-      scales.map(scale => 
-        scale.id === id ? { ...scale, value } : scale
-      )
-    );
-  };
+  // VAS scales are now managed by useClinicalAssessments hook
 
   const generateClinicalReport = (): string => {
     const now = new Date();
@@ -192,8 +199,9 @@ export function ClinicalEvidenceView({ logs, cycles, stats }: ClinicalEvidenceVi
     // VAS Scores
     report += `VISUAL ANALOG SCALE ASSESSMENTS\n`;
     report += `${'-'.repeat(30)}\n`;
-    vasScales.forEach(scale => {
-      report += `${scale.clinicalTerm}: ${scale.value}/10 (${getVASDescription(scale.value)})\n`;
+    vasScaleDisplays.forEach(scale => {
+      const value = getVasValue(scale.id);
+      report += `${scale.clinicalTerm}: ${value}/10 (${getVASDescription(value)})\n`;
     });
     report += `\n`;
 
@@ -219,10 +227,10 @@ export function ClinicalEvidenceView({ logs, cycles, stats }: ClinicalEvidenceVi
     }
 
     // Additional Notes
-    if (additionalNotes.trim()) {
+    if (assessment.additionalNotes?.trim()) {
       report += `PATIENT NOTES\n`;
       report += `${'-'.repeat(30)}\n`;
-      report += `${additionalNotes}\n\n`;
+      report += `${assessment.additionalNotes}\n\n`;
     }
 
     // Disclaimer
@@ -312,37 +320,47 @@ export function ClinicalEvidenceView({ logs, cycles, stats }: ClinicalEvidenceVi
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                {vasScales.map((scale) => {
-                  const Icon = scale.icon;
-                  return (
-                    <div key={scale.id} className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Icon className="h-4 w-4 text-muted-foreground" />
-                          <Label className="font-medium">{scale.name}</Label>
+                {isLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : (
+                  vasScaleDisplays.map((scale) => {
+                    const Icon = scale.icon;
+                    const value = getVasValue(scale.id);
+                    return (
+                      <div key={scale.id} className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Icon className="h-4 w-4 text-muted-foreground" />
+                            <Label className="font-medium">{scale.name}</Label>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {isSaving && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
+                            <Badge variant={value > 6 ? 'destructive' : value > 3 ? 'secondary' : 'outline'}>
+                              {value}/10 - {getVASDescription(value)}
+                            </Badge>
+                          </div>
                         </div>
-                        <Badge variant={scale.value > 6 ? 'destructive' : scale.value > 3 ? 'secondary' : 'outline'}>
-                          {scale.value}/10 - {getVASDescription(scale.value)}
-                        </Badge>
+                        <p className="text-xs text-muted-foreground">{scale.description}</p>
+                        <div className="flex items-center gap-4">
+                          <span className="text-xs text-muted-foreground w-12">None</span>
+                          <Slider
+                            value={[value]}
+                            onValueChange={(v) => updateVasScale(scale.id, v[0])}
+                            max={10}
+                            step={1}
+                            className="flex-1"
+                          />
+                          <span className="text-xs text-muted-foreground w-12 text-right">Severe</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground italic">
+                          Clinical term: {scale.clinicalTerm}
+                        </p>
                       </div>
-                      <p className="text-xs text-muted-foreground">{scale.description}</p>
-                      <div className="flex items-center gap-4">
-                        <span className="text-xs text-muted-foreground w-12">None</span>
-                        <Slider
-                          value={[scale.value]}
-                          onValueChange={(v) => updateVasScale(scale.id, v[0])}
-                          max={10}
-                          step={1}
-                          className="flex-1"
-                        />
-                        <span className="text-xs text-muted-foreground w-12 text-right">Severe</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground italic">
-                        Clinical term: {scale.clinicalTerm}
-                      </p>
-                    </div>
-                  );
-                })}
+                    );
+                  })
+                )}
               </CardContent>
             </Card>
           </motion.div>
@@ -474,13 +492,20 @@ export function ClinicalEvidenceView({ logs, cycles, stats }: ClinicalEvidenceVi
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Additional Notes for Your Doctor</Label>
+                  <div className="flex items-center justify-between">
+                    <Label>Additional Notes for Your Doctor</Label>
+                    {isSaving && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
+                  </div>
                   <Textarea
                     placeholder="Add any specific concerns, questions, or symptoms you'd like to discuss with your healthcare provider..."
-                    value={additionalNotes}
-                    onChange={(e) => setAdditionalNotes(e.target.value)}
+                    value={assessment.additionalNotes}
+                    onChange={(e) => updateNotes(e.target.value)}
                     className="min-h-[100px]"
+                    maxLength={500}
                   />
+                  <p className="text-xs text-muted-foreground text-right">
+                    {assessment.additionalNotes?.length || 0}/500
+                  </p>
                 </div>
 
                 <div className="flex gap-2">
