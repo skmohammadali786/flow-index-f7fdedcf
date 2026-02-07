@@ -88,6 +88,12 @@ const Index = () => {
   }, [isLoaded, settingsLoaded, user, cycles.length]);
 
   const handleOnboardingComplete = (data: OnboardingData) => {
+    // Save profile info (name and birth date) to backend
+    updateProfile({
+      name: data.name,
+      birthDate: data.birthDate,
+    });
+    
     // Log the initial period
     logPeriodDay(data.lastPeriodDate, true, 'medium');
     

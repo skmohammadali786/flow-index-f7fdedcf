@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format, subDays } from 'date-fns';
-import { ChevronRight, ChevronLeft, Flower2, Calendar, Droplets, Target, Check } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Flower2, Calendar, Droplets, Target, Check, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,6 +14,8 @@ interface OnboardingFlowProps {
 }
 
 export interface OnboardingData {
+  name: string;
+  birthDate?: string;
   lastPeriodDate: Date;
   averageCycleLength: number;
   averagePeriodLength: number;
@@ -31,6 +33,8 @@ const trackingGoalOptions = [
 
 export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
   const [step, setStep] = useState(0);
+  const [userName, setUserName] = useState('');
+  const [birthDate, setBirthDate] = useState('');
   const [lastPeriodDate, setLastPeriodDate] = useState<Date>(subDays(new Date(), 14));
   const [cycleLength, setCycleLength] = useState(28);
   const [periodLength, setPeriodLength] = useState(5);
@@ -41,6 +45,11 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
       title: 'Welcome to Flow Index',
       description: 'Your personal cycle companion. Let\'s set things up to give you the best experience.',
       icon: <Flower2 className="h-12 w-12" />,
+    },
+    {
+      title: 'Tell us about yourself',
+      description: 'This helps personalize your experience.',
+      icon: <User className="h-8 w-8" />,
     },
     {
       title: 'When did your last period start?',
@@ -66,6 +75,8 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
       setStep(step + 1);
     } else {
       onComplete({
+        name: userName.trim(),
+        birthDate: birthDate || undefined,
         lastPeriodDate,
         averageCycleLength: cycleLength,
         averagePeriodLength: periodLength,
@@ -149,8 +160,46 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
               </div>
             )}
 
-            {/* Step 1: Last Period */}
+            {/* Step 1: Personal Info */}
             {step === 1 && (
+              <div>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="p-2 rounded-lg bg-lavender-light text-lavender">
+                    {currentStep.icon}
+                  </div>
+                  <div>
+                    <h2 className="font-display text-xl font-semibold">{currentStep.title}</h2>
+                    <p className="text-sm text-muted-foreground">{currentStep.description}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <Label className="text-sm font-medium mb-2 block">Your Name</Label>
+                    <Input
+                      type="text"
+                      placeholder="Enter your name"
+                      value={userName}
+                      onChange={(e) => setUserName(e.target.value)}
+                      className="h-14"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium mb-2 block">Date of Birth (optional)</Label>
+                    <Input
+                      type="date"
+                      value={birthDate}
+                      onChange={(e) => setBirthDate(e.target.value)}
+                      className="h-14"
+                      max={new Date().toISOString().split('T')[0]}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Step 2: Last Period */}
+            {step === 2 && (
               <div>
                 <div className="flex items-center gap-3 mb-6">
                   <div className="p-2 rounded-lg bg-coral-light text-coral">
@@ -188,8 +237,8 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
               </div>
             )}
 
-            {/* Step 2: Cycle Length */}
-            {step === 2 && (
+            {/* Step 3: Cycle Length */}
+            {step === 3 && (
               <div>
                 <div className="flex items-center gap-3 mb-6">
                   <div className="p-2 rounded-lg bg-lavender-light text-lavender">
@@ -259,8 +308,8 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
               </div>
             )}
 
-            {/* Step 3: Goals */}
-            {step === 3 && (
+            {/* Step 4: Goals */}
+            {step === 4 && (
               <div>
                 <div className="flex items-center gap-3 mb-6">
                   <div className="p-2 rounded-lg bg-sage-light text-sage">
