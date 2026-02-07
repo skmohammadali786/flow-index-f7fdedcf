@@ -14,13 +14,15 @@ import { CycleCharts } from '@/components/period/CycleCharts';
 import { PartnerShareView } from '@/components/period/PartnerShareView';
 import { OnboardingFlow, OnboardingData } from '@/components/period/OnboardingFlow';
 import { HealthReportGenerator } from '@/components/period/HealthReportGenerator';
+import { BrainForecastView } from '@/components/period/BrainForecastView';
+import { ClinicalEvidenceView } from '@/components/period/ClinicalEvidenceView';
 import { useSupabasePeriodTracker } from '@/hooks/useSupabasePeriodTracker';
 import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
 import { useSymptomAnalytics } from '@/hooks/useSymptomAnalytics';
 import { useAuth } from '@/contexts/AuthContext';
 import { startOfDay } from 'date-fns';
 
-type TabType = 'calendar' | 'insights' | 'history' | 'tips' | 'analytics' | 'charts' | 'share' | 'report' | 'settings' | 'profile';
+type TabType = 'calendar' | 'insights' | 'history' | 'tips' | 'analytics' | 'charts' | 'share' | 'report' | 'brain' | 'clinical' | 'settings' | 'profile';
 
 const ONBOARDING_KEY = 'period_tracker_onboarding_complete';
 
@@ -278,6 +280,39 @@ const Index = () => {
               transition={{ duration: 0.2 }}
             >
               <HealthReportGenerator
+                logs={logs}
+                cycles={cycles}
+                stats={stats}
+              />
+            </motion.div>
+          )}
+
+          {activeTab === 'brain' && (
+            <motion.div
+              key="brain"
+              variants={pageVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              transition={{ duration: 0.2 }}
+            >
+              <BrainForecastView
+                currentPhase={currentPhase}
+                currentCycleDay={currentCycleDay}
+              />
+            </motion.div>
+          )}
+
+          {activeTab === 'clinical' && (
+            <motion.div
+              key="clinical"
+              variants={pageVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              transition={{ duration: 0.2 }}
+            >
+              <ClinicalEvidenceView
                 logs={logs}
                 cycles={cycles}
                 stats={stats}
