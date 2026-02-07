@@ -17,7 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { UserProfile } from '@/types/settings';
 import { CycleStats } from '@/types/period';
-import { format, parseISO, differenceInDays } from 'date-fns';
+import { format, parseISO, differenceInDays, differenceInYears } from 'date-fns';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
@@ -72,6 +72,17 @@ export function ProfileView({ profile, stats, onUpdateProfile }: ProfileViewProp
       return 0;
     }
   }, [profile.createdAt]);
+
+  // Calculate age from birth date
+  const age = useMemo(() => {
+    if (!profile.birthDate) return null;
+    try {
+      const birthDateParsed = parseISO(profile.birthDate);
+      return differenceInYears(new Date(), birthDateParsed);
+    } catch {
+      return null;
+    }
+  }, [profile.birthDate]);
 
   // Get actual logged days count
   const totalLoggedDays = useMemo(() => {
@@ -155,6 +166,7 @@ export function ProfileView({ profile, stats, onUpdateProfile }: ProfileViewProp
                 </h2>
               )}
               <p className="text-sm text-muted-foreground">
+                {age !== null && <span>{age} years old • </span>}
                 Tracking since {format(parseISO(profile.createdAt), 'MMM yyyy')}
               </p>
             </div>
