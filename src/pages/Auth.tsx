@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -458,9 +458,9 @@ const Auth = () => {
 
                       <p className="text-xs text-center text-muted-foreground">
                         By signing up, you agree to our{' '}
-                        <button type="button" className="text-primary hover:underline">Terms of Service</button>
+                        <Link to="/terms" className="text-primary hover:underline">Terms of Service</Link>
                         {' '}and{' '}
-                        <button type="button" className="text-primary hover:underline">Privacy Policy</button>
+                        <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>
                       </p>
                     </motion.form>
                   </TabsContent>
