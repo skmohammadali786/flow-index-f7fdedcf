@@ -22,9 +22,9 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
     { id: 'insights' as const, label: 'Ins', fullLabel: 'Insights', icon: TrendingUp },
     { id: 'charts' as const, label: 'Chrt', fullLabel: 'Charts', icon: BarChart3 },
     { id: 'analytics' as const, label: 'Ana', fullLabel: 'Analytics', icon: Activity },
-    { id: 'history' as const, label: 'Hist', fullLabel: 'History', icon: History },
     { id: 'brain' as const, label: 'Brain', fullLabel: 'Brain Forecast', icon: Brain },
     { id: 'clinical' as const, label: 'Clin', fullLabel: 'Clinical', icon: Stethoscope },
+    { id: 'history' as const, label: 'Hist', fullLabel: 'History', icon: History },
   ];
 
   const moreOptions = [
