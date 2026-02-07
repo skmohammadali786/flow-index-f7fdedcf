@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      clinical_assessments: {
+        Row: {
+          additional_notes: string | null
+          bloating_vas: number | null
+          created_at: string
+          date: string
+          fatigue_vas: number | null
+          id: string
+          mood_vas: number | null
+          pain_vas: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          additional_notes?: string | null
+          bloating_vas?: number | null
+          created_at?: string
+          date?: string
+          fatigue_vas?: number | null
+          id?: string
+          mood_vas?: number | null
+          pain_vas?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          additional_notes?: string | null
+          bloating_vas?: number | null
+          created_at?: string
+          date?: string
+          fatigue_vas?: number | null
+          id?: string
+          mood_vas?: number | null
+          pain_vas?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       cycles: {
         Row: {
           created_at: string
