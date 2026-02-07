@@ -306,25 +306,17 @@ export function ClinicalEvidenceView({ logs, cycles, stats }: ClinicalEvidenceVi
 
       <Tabs defaultValue="vas" className="w-full">
         <TabsList className="grid grid-cols-4 w-full">
-          <TabsTrigger value="vas" className="text-xs sm:text-sm">
-            <BarChart3 className="h-4 w-4 mr-1 sm:mr-2" />
-            <span className="hidden sm:inline">VAS</span>
-            <span className="sm:hidden">VAS</span>
+          <TabsTrigger value="vas" title="VAS Scales">
+            <BarChart3 className="h-5 w-5" />
           </TabsTrigger>
-          <TabsTrigger value="trends" className="text-xs sm:text-sm">
-            <TrendingUp className="h-4 w-4 mr-1 sm:mr-2" />
-            <span className="hidden sm:inline">Trends</span>
-            <span className="sm:hidden">Trend</span>
+          <TabsTrigger value="trends" title="Trends">
+            <TrendingUp className="h-5 w-5" />
           </TabsTrigger>
-          <TabsTrigger value="symptoms" className="text-xs sm:text-sm">
-            <ClipboardList className="h-4 w-4 mr-1 sm:mr-2" />
-            <span className="hidden sm:inline">Analysis</span>
-            <span className="sm:hidden">Ana</span>
+          <TabsTrigger value="symptoms" title="Analysis">
+            <ClipboardList className="h-5 w-5" />
           </TabsTrigger>
-          <TabsTrigger value="report" className="text-xs sm:text-sm">
-            <FileText className="h-4 w-4 mr-1 sm:mr-2" />
-            <span className="hidden sm:inline">Report</span>
-            <span className="sm:hidden">Rep</span>
+          <TabsTrigger value="report" title="Report">
+            <FileText className="h-5 w-5" />
           </TabsTrigger>
         </TabsList>
 
