@@ -1,13 +1,13 @@
 import { motion } from 'framer-motion';
-import { User, Settings, Lightbulb, Share2, FileText, Brain, Stethoscope } from 'lucide-react';
+import { User, Settings, Lightbulb, Share2, FileText, Brain, Stethoscope, Calendar, TrendingUp, BarChart3, Activity, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
+import { cn } from '@/lib/utils';
 
 type TabType = 'calendar' | 'insights' | 'history' | 'tips' | 'analytics' | 'charts' | 'share' | 'report' | 'brain' | 'clinical' | 'settings' | 'profile';
 
@@ -18,13 +18,13 @@ interface HeaderProps {
 
 export function Header({ activeTab, onTabChange }: HeaderProps) {
   const mainTabs = [
-    { id: 'calendar' as const, label: 'Calendar' },
-    { id: 'insights' as const, label: 'Insights' },
-    { id: 'charts' as const, label: 'Charts' },
-    { id: 'analytics' as const, label: 'Analytics' },
-    { id: 'history' as const, label: 'History' },
-    { id: 'brain' as const, label: 'Brain' },
-    { id: 'clinical' as const, label: 'Clinical' },
+    { id: 'calendar' as const, label: 'Cal', fullLabel: 'Calendar', icon: Calendar },
+    { id: 'insights' as const, label: 'Ins', fullLabel: 'Insights', icon: TrendingUp },
+    { id: 'charts' as const, label: 'Chrt', fullLabel: 'Charts', icon: BarChart3 },
+    { id: 'analytics' as const, label: 'Ana', fullLabel: 'Analytics', icon: Activity },
+    { id: 'history' as const, label: 'Hist', fullLabel: 'History', icon: History },
+    { id: 'brain' as const, label: 'Brain', fullLabel: 'Brain Forecast', icon: Brain },
+    { id: 'clinical' as const, label: 'Clin', fullLabel: 'Clinical', icon: Stethoscope },
   ];
 
   const moreOptions = [
@@ -99,25 +99,36 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
           </div>
         </div>
 
-        <nav className="flex gap-1 bg-muted rounded-xl p-1 overflow-x-auto scrollbar-hide">
-          {mainTabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => onTabChange(tab.id)}
-              className="relative flex-1 py-2 px-3 text-sm font-medium rounded-lg transition-colors min-w-fit whitespace-nowrap"
-            >
-              {activeTab === tab.id && (
-                <motion.div
-                  layoutId="activeTab"
-                  className="absolute inset-0 bg-card shadow-sm rounded-lg"
-                  transition={{ type: 'spring', duration: 0.5 }}
-                />
-              )}
-              <span className={`relative z-10 ${activeTab === tab.id ? 'text-foreground' : 'text-muted-foreground'}`}>
-                {tab.label}
-              </span>
-            </button>
-          ))}
+        <nav className="grid grid-cols-7 gap-1 bg-muted rounded-xl p-1">
+          {mainTabs.map((tab) => {
+            const Icon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => onTabChange(tab.id)}
+                className="relative py-2 px-1 text-xs font-medium rounded-lg transition-colors flex flex-col items-center gap-0.5"
+                title={tab.fullLabel}
+              >
+                {activeTab === tab.id && (
+                  <motion.div
+                    layoutId="activeTab"
+                    className="absolute inset-0 bg-card shadow-sm rounded-lg"
+                    transition={{ type: 'spring', duration: 0.5 }}
+                  />
+                )}
+                <Icon className={cn(
+                  "relative z-10 h-4 w-4",
+                  activeTab === tab.id ? 'text-foreground' : 'text-muted-foreground'
+                )} />
+                <span className={cn(
+                  "relative z-10 text-[10px] leading-tight",
+                  activeTab === tab.id ? 'text-foreground' : 'text-muted-foreground'
+                )}>
+                  {tab.label}
+                </span>
+              </button>
+            );
+          })}
         </nav>
       </div>
     </header>
