@@ -175,16 +175,26 @@ export function useSymptomAnalytics(logs: DayLog[], cycles: CycleData[]) {
   const currentPhase = useMemo((): CyclePhase | null => {
     if (cycles.length === 0) return null;
     
+    const today = new Date();
+    
+    // Find the cycle that contains today's date
+    // Sort cycles by start date descending to check most recent first
     const sortedCycles = [...cycles].sort((a, b) => 
       parseISO(b.startDate).getTime() - parseISO(a.startDate).getTime()
     );
     
-    const lastCycleStart = parseISO(sortedCycles[0].startDate);
-    const today = new Date();
-    const dayInCycle = differenceInDays(today, lastCycleStart) + 1;
+    // Find the cycle where today falls within or after the start date
+    for (const cycle of sortedCycles) {
+      const cycleStart = parseISO(cycle.startDate);
+      const dayInCycle = differenceInDays(today, cycleStart) + 1;
+      
+      // If today is on or after cycle start and within reasonable range
+      if (dayInCycle >= 1 && dayInCycle <= 45) {
+        return getCyclePhase(dayInCycle, cycle.length || 28);
+      }
+    }
     
-    if (dayInCycle < 1 || dayInCycle > 45) return null;
-    return getCyclePhase(dayInCycle);
+    return null;
   }, [cycles]);
 
   return {
