@@ -4,12 +4,10 @@ import {
   PdfData,
   calculateInsights,
   calculateSummaryData,
-  phaseInfo,
-  moodLabels,
-  symptomLabels,
   phaseStyles,
   colors
 } from '@/utils/partnerSharePdf';
+import { moodLabels, symptomLabels, getPhaseInfoForPdf } from '@/data/phaseData';
 
 // Helper to convert color array to CSS string
 const toRgb = (color: [number, number, number], opacity = 1) =>
@@ -18,7 +16,7 @@ const toRgb = (color: [number, number, number], opacity = 1) =>
 export const PartnerSharePdfTemplate = forwardRef<HTMLDivElement, { data: PdfData }>(({ data }, ref) => {
   const insights = calculateInsights(data.logs);
   const summaryData = calculateSummaryData(data.logs);
-  const currentPhaseData = phaseInfo[data.currentPhase];
+  const currentPhaseData = getPhaseInfoForPdf(data.currentPhase);
   const phaseStyle = phaseStyles[data.currentPhase];
 
   return (
