@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format, parseISO, subDays, differenceInDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
 import { 
@@ -6,6 +6,8 @@ import {
   Bell, BellOff, TrendingUp, Activity, Droplet, Brain, ChevronDown,
   Lightbulb, BarChart3, MessageCircleHeart, FileDown, Loader2
 } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -17,7 +19,7 @@ import { CyclePrediction, CycleStats, DayLog, Mood, Symptom } from '@/types/peri
 import { CyclePhase } from '@/types/settings';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
-import { generatePartnerSharePdf } from '@/utils/partnerSharePdf';
+import { PartnerSharePdfTemplate } from './PartnerSharePdfTemplate';
 
 interface PartnerShareViewProps {
   predictions: CyclePrediction | null;
@@ -147,6 +149,7 @@ export function PartnerShareView({
   logs = [],
 }: PartnerShareViewProps) {
   const { toast } = useToast();
+  const pdfRef = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
@@ -415,15 +418,44 @@ export function PartnerShareView({
   const handleDownloadPdf = async () => {
     setIsGeneratingPdf(true);
     try {
-      await generatePartnerSharePdf({
-        predictions,
-        stats,
-        currentPhase,
-        daysUntilNextPeriod,
-        currentCycleDay,
-        logs,
-        shareSettings,
+      if (!pdfRef.current) {
+        throw new Error("PDF template ref not found");
+      }
+
+      // Render to canvas with higher scale for better quality
+      const canvas = await html2canvas(pdfRef.current, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff'
       });
+
+      const imgData = canvas.toDataURL('image/png');
+
+      // A4 dimensions in mm
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+
+      // Calculate image dimensions to fit A4 width, maintaining aspect ratio
+      const imgWidth = pdfWidth;
+      const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pdfHeight;
+
+      while (heightLeft > 0) {
+        position -= pdfHeight; // Move the image up by one page height
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pdfHeight;
+      }
+
+      pdf.save(`cycle-update-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+
       toast({
         title: "PDF Downloaded",
         description: "Your partner share report has been saved",
@@ -460,6 +492,22 @@ export function PartnerShareView({
       animate="visible"
       className="space-y-6"
     >
+      {/* Hidden PDF Template */}
+      <div style={{ position: 'absolute', top: -9999, left: -9999 }}>
+         <PartnerSharePdfTemplate
+           ref={pdfRef}
+           data={{
+             predictions,
+             stats,
+             currentPhase,
+             daysUntilNextPeriod,
+             currentCycleDay,
+             logs,
+             shareSettings
+           }}
+         />
+      </div>
+
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
           <div className="p-2 rounded-lg gradient-primary">

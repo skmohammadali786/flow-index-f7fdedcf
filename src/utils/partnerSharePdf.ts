@@ -4,7 +4,7 @@ import { CyclePrediction, CycleStats, DayLog, Mood, Symptom } from '@/types/peri
 import { CyclePhase } from '@/types/settings';
 
 // Beautiful color palette matching the app
-const colors = {
+export const colors = {
   // Primary gradient colors
   primary: [139, 92, 246] as [number, number, number],
   primaryLight: [167, 139, 250] as [number, number, number],
@@ -28,7 +28,7 @@ const colors = {
   border: [233, 213, 255] as [number, number, number],
 };
 
-const phaseStyles: Record<CyclePhase, { 
+export const phaseStyles: Record<CyclePhase, {
   color: [number, number, number]; 
   lightColor: [number, number, number];
   icon: string;
@@ -39,7 +39,7 @@ const phaseStyles: Record<CyclePhase, {
   luteal: { color: colors.peach, lightColor: colors.peachLight, icon: '🍂' },
 };
 
-const moodLabels: Record<Mood, { label: string; emoji: string }> = {
+export const moodLabels: Record<Mood, { label: string; emoji: string }> = {
   happy: { label: 'Happy', emoji: '😊' },
   calm: { label: 'Calm', emoji: '😌' },
   sad: { label: 'Sad', emoji: '😢' },
@@ -49,7 +49,7 @@ const moodLabels: Record<Mood, { label: string; emoji: string }> = {
   tired: { label: 'Tired', emoji: '😴' },
 };
 
-const symptomLabels: Record<Symptom, { label: string; emoji: string }> = {
+export const symptomLabels: Record<Symptom, { label: string; emoji: string }> = {
   cramps: { label: 'Cramps', emoji: '💫' },
   headache: { label: 'Headache', emoji: '🤕' },
   backache: { label: 'Backache', emoji: '🔙' },
@@ -62,7 +62,7 @@ const symptomLabels: Record<Symptom, { label: string; emoji: string }> = {
   cravings: { label: 'Cravings', emoji: '🍫' },
 };
 
-const phaseInfo: Record<CyclePhase, { title: string; subtitle: string; tips: string[] }> = {
+export const phaseInfo: Record<CyclePhase, { title: string; subtitle: string; tips: string[] }> = {
   menstrual: {
     title: 'Menstrual Phase',
     subtitle: 'A time for rest and renewal',
@@ -105,7 +105,7 @@ const phaseInfo: Record<CyclePhase, { title: string; subtitle: string; tips: str
   },
 };
 
-interface PdfData {
+export interface PdfData {
   predictions: CyclePrediction | null;
   stats: CycleStats | null;
   currentPhase: CyclePhase;
@@ -122,7 +122,7 @@ interface PdfData {
   };
 }
 
-function calculateInsights(logs: DayLog[]) {
+export function calculateInsights(logs: DayLog[]) {
   const today = new Date();
   const sevenDaysAgo = subDays(today, 7);
   
@@ -172,7 +172,7 @@ function calculateInsights(logs: DayLog[]) {
   };
 }
 
-function calculateSummaryData(logs: DayLog[]) {
+export function calculateSummaryData(logs: DayLog[]) {
   const today = new Date();
   const weekStart = startOfWeek(today);
   const weekEnd = endOfWeek(today);
