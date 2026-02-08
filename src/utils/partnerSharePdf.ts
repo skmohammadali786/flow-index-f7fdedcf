@@ -2,6 +2,7 @@ import jsPDF from 'jspdf';
 import { format, parseISO, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
 import { CyclePrediction, CycleStats, DayLog, Mood, Symptom } from '@/types/period';
 import { CyclePhase } from '@/types/settings';
+import { moodLabels, symptomLabels, getPhaseInfoForPdf } from '@/data/phaseData';
 
 // Beautiful color palette matching the app
 export const colors = {
@@ -39,71 +40,8 @@ export const phaseStyles: Record<CyclePhase, {
   luteal: { color: colors.peach, lightColor: colors.peachLight, icon: '🍂' },
 };
 
-export const moodLabels: Record<Mood, { label: string; emoji: string }> = {
-  happy: { label: 'Happy', emoji: '😊' },
-  calm: { label: 'Calm', emoji: '😌' },
-  sad: { label: 'Sad', emoji: '😢' },
-  anxious: { label: 'Anxious', emoji: '😰' },
-  irritable: { label: 'Irritable', emoji: '😤' },
-  energetic: { label: 'Energetic', emoji: '⚡' },
-  tired: { label: 'Tired', emoji: '😴' },
-};
-
-export const symptomLabels: Record<Symptom, { label: string; emoji: string }> = {
-  cramps: { label: 'Cramps', emoji: '💫' },
-  headache: { label: 'Headache', emoji: '🤕' },
-  backache: { label: 'Backache', emoji: '🔙' },
-  bloating: { label: 'Bloating', emoji: '🎈' },
-  breast_tenderness: { label: 'Breast Tenderness', emoji: '💗' },
-  acne: { label: 'Acne', emoji: '🔴' },
-  fatigue: { label: 'Fatigue', emoji: '😩' },
-  insomnia: { label: 'Insomnia', emoji: '🌙' },
-  nausea: { label: 'Nausea', emoji: '🤢' },
-  cravings: { label: 'Cravings', emoji: '🍫' },
-};
-
-export const phaseInfo: Record<CyclePhase, { title: string; subtitle: string; tips: string[] }> = {
-  menstrual: {
-    title: 'Menstrual Phase',
-    subtitle: 'A time for rest and renewal',
-    tips: [
-      'Extra rest and comfort may be appreciated',
-      'Offer to help with physical tasks',
-      'Warm drinks and cozy time together',
-      'Be patient with mood fluctuations',
-    ],
-  },
-  follicular: {
-    title: 'Follicular Phase',
-    subtitle: 'Energy is building',
-    tips: [
-      'Great time for planning activities together',
-      'Energy levels are typically rising',
-      'Good time for trying new things',
-      'Creativity and sociability often peak',
-    ],
-  },
-  ovulation: {
-    title: 'Ovulation Phase',
-    subtitle: 'Peak energy and connection',
-    tips: [
-      'Highest energy and confidence time',
-      'Great for social activities and dates',
-      'Communication may be extra effective',
-      'Peak fertility window',
-    ],
-  },
-  luteal: {
-    title: 'Luteal Phase',
-    subtitle: 'Winding down gracefully',
-    tips: [
-      'PMS symptoms may appear later in this phase',
-      'Extra patience and understanding helps',
-      'Comfort foods might be craved',
-      'Quiet, relaxing activities are good',
-    ],
-  },
-};
+// Re-export for backward compatibility
+export { moodLabels, symptomLabels } from '@/data/phaseData';
 
 export interface PdfData {
   predictions: CyclePrediction | null;
@@ -321,7 +259,7 @@ export async function generatePartnerSharePdf(data: PdfData): Promise<void> {
 
   const insights = calculateInsights(data.logs);
   const summaryData = calculateSummaryData(data.logs);
-  const currentPhaseData = phaseInfo[data.currentPhase];
+  const currentPhaseData = getPhaseInfoForPdf(data.currentPhase);
   const phaseStyle = phaseStyles[data.currentPhase];
 
   // Helper to add new page if needed
