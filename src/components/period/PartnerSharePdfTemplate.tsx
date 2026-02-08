@@ -4,12 +4,10 @@ import {
   PdfData,
   calculateInsights,
   calculateSummaryData,
-  phaseInfo,
-  moodLabels,
-  symptomLabels,
   phaseStyles,
   colors
 } from '@/utils/partnerSharePdf';
+import { moodLabels, symptomLabels, getPhaseInfoForPdf } from '@/data/phaseData';
 
 // Helper to convert color array to CSS string
 const toRgb = (color: [number, number, number], opacity = 1) =>
@@ -18,14 +16,14 @@ const toRgb = (color: [number, number, number], opacity = 1) =>
 export const PartnerSharePdfTemplate = forwardRef<HTMLDivElement, { data: PdfData }>(({ data }, ref) => {
   const insights = calculateInsights(data.logs);
   const summaryData = calculateSummaryData(data.logs);
-  const currentPhaseData = phaseInfo[data.currentPhase];
+  const currentPhaseData = getPhaseInfoForPdf(data.currentPhase);
   const phaseStyle = phaseStyles[data.currentPhase];
 
   return (
     <div
       ref={ref}
-      className="bg-white text-[#1e1b4b] font-sans relative box-border"
-      style={{ width: '794px', minHeight: '1123px', height: 'auto', padding: '40px' }} // A4 size
+      className="bg-white text-[#1e1b4b] font-sans relative overflow-hidden box-border"
+      style={{ width: '794px', minHeight: '1123px', padding: '40px' }} // A4 size
     >
       {/* Background Decorations */}
       <div className="absolute top-[-20px] right-[-20px] w-40 h-40 rounded-full opacity-10" style={{ backgroundColor: toRgb(colors.lavender) }} />
