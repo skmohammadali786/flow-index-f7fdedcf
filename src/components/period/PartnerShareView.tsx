@@ -492,21 +492,23 @@ export function PartnerShareView({
       animate="visible"
       className="space-y-6"
     >
-      {/* Hidden PDF Template */}
-      <div style={{ position: 'absolute', top: -9999, left: -9999 }}>
-         <PartnerSharePdfTemplate
-           ref={pdfRef}
-           data={{
-             predictions,
-             stats,
-             currentPhase,
-             daysUntilNextPeriod,
-             currentCycleDay,
-             logs,
-             shareSettings
-           }}
-         />
-      </div>
+      {/* Hidden PDF Template (only mounted while generating) */}
+      {isGeneratingPdf && (
+        <div style={{ position: 'absolute', top: -9999, left: -9999 }}>
+          <PartnerSharePdfTemplate
+            ref={pdfRef}
+            data={{
+              predictions,
+              stats,
+              currentPhase,
+              daysUntilNextPeriod,
+              currentCycleDay,
+              logs,
+              shareSettings,
+            }}
+          />
+        </div>
+      )}
 
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
