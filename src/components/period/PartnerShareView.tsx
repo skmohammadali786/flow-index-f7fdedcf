@@ -934,11 +934,24 @@ export function PartnerShareView({
                 </div>
                 
                 <div className="flex gap-2 mt-4">
-                  <Button onClick={handleShare} className="flex-1">
-                    <Share2 className="h-4 w-4 mr-2" />
-                    Share Text
+                  <Button 
+                    onClick={handleDownloadPdf} 
+                    disabled={isGeneratingPdf}
+                    className="flex-1"
+                  >
+                    {isGeneratingPdf ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Generating...
+                      </>
+                    ) : (
+                      <>
+                        <FileDown className="h-4 w-4 mr-2" />
+                        Share with Partner (PDF)
+                      </>
+                    )}
                   </Button>
-                  <Button variant="outline" onClick={handleCopy}>
+                  <Button variant="outline" onClick={handleCopy} title="Copy as text">
                     {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                   </Button>
                 </div>
