@@ -28,7 +28,11 @@ export const colors = {
   border: [233, 213, 255] as [number, number, number],
 };
 
+<<<<<<< HEAD
 export const phaseStyles: Record<CyclePhase, {
+=======
+export const phaseStyles: Record<CyclePhase, {
+>>>>>>> fix-partner-share-pdf-1994780851259566418
   color: [number, number, number]; 
   lightColor: [number, number, number];
   icon: string;

@@ -431,16 +431,28 @@ export function PartnerShareView({
       });
 
       const imgData = canvas.toDataURL('image/png');
+<<<<<<< HEAD
 
+=======
+
+>>>>>>> fix-partner-share-pdf-1994780851259566418
       // A4 dimensions in mm
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
+<<<<<<< HEAD
 
       // Calculate image dimensions to fit A4 width, maintaining aspect ratio
       const imgWidth = pdfWidth;
       const imgHeight = (canvas.height * pdfWidth) / canvas.width;
 
+=======
+
+      // Calculate image dimensions to fit A4 width, maintaining aspect ratio
+      const imgWidth = pdfWidth;
+      const imgHeight = (canvas.height * pdfWidth) / canvas.width;
+
+>>>>>>> fix-partner-share-pdf-1994780851259566418
       let heightLeft = imgHeight;
       let position = 0;
 
@@ -453,7 +465,11 @@ export function PartnerShareView({
         pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
         heightLeft -= pdfHeight;
       }
+<<<<<<< HEAD
 
+=======
+
+>>>>>>> fix-partner-share-pdf-1994780851259566418
       pdf.save(`cycle-update-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
 
       toast({
@@ -494,7 +510,11 @@ export function PartnerShareView({
     >
       {/* Hidden PDF Template */}
       <div style={{ position: 'absolute', top: -9999, left: -9999 }}>
+<<<<<<< HEAD
          <PartnerSharePdfTemplate
+=======
+         <PartnerSharePdfTemplate
+>>>>>>> fix-partner-share-pdf-1994780851259566418
            ref={pdfRef}
            data={{
              predictions,
