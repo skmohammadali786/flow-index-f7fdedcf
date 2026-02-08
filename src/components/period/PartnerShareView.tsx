@@ -4,7 +4,7 @@ import { format, parseISO, subDays, differenceInDays, startOfWeek, endOfWeek, st
 import { 
   Share2, Copy, Check, Heart, Calendar, Moon, AlertTriangle, Sparkles, 
   Bell, BellOff, TrendingUp, Activity, Droplet, Brain, ChevronDown,
-  Lightbulb, BarChart3, MessageCircleHeart
+  Lightbulb, BarChart3, MessageCircleHeart, FileDown, Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -17,6 +17,7 @@ import { CyclePrediction, CycleStats, DayLog, Mood, Symptom } from '@/types/peri
 import { CyclePhase } from '@/types/settings';
 import { cn } from '@/lib/utils';
 import { useToast } from '@/hooks/use-toast';
+import { generatePartnerSharePdf } from '@/utils/partnerSharePdf';
 
 interface PartnerShareViewProps {
   predictions: CyclePrediction | null;
@@ -148,6 +149,7 @@ export function PartnerShareView({
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [shareSettings, setShareSettings] = useState<ShareSettings>({
     showPeriodDates: true,
     showFertileWindow: false,
@@ -408,6 +410,34 @@ export function PartnerShareView({
         ? "Partner will no longer receive automatic updates" 
         : "Partner will receive updates when your cycle changes phases",
     });
+  };
+
+  const handleDownloadPdf = async () => {
+    setIsGeneratingPdf(true);
+    try {
+      await generatePartnerSharePdf({
+        predictions,
+        stats,
+        currentPhase,
+        daysUntilNextPeriod,
+        currentCycleDay,
+        logs,
+        shareSettings,
+      });
+      toast({
+        title: "PDF Downloaded",
+        description: "Your partner share report has been saved",
+      });
+    } catch (error) {
+      console.error('PDF generation failed:', error);
+      toast({
+        title: "Download Failed",
+        description: "Could not generate PDF. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingPdf(false);
+    }
   };
 
   const containerVariants = {
@@ -906,11 +936,62 @@ export function PartnerShareView({
                 <div className="flex gap-2 mt-4">
                   <Button onClick={handleShare} className="flex-1">
                     <Share2 className="h-4 w-4 mr-2" />
-                    Share with Partner
+                    Share Text
                   </Button>
                   <Button variant="outline" onClick={handleCopy}>
                     {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                   </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* PDF Download */}
+          <motion.div variants={itemVariants}>
+            <Card className="border-primary/30 bg-primary/5">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <FileDown className="h-5 w-5 text-primary" />
+                  Download Full Report
+                </CardTitle>
+                <CardDescription>
+                  Share a beautifully formatted PDF with all your cycle data, charts, and insights
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
+                    <Badge variant="secondary">Current Phase</Badge>
+                    <Badge variant="secondary">Predictions</Badge>
+                    <Badge variant="secondary">Mood Patterns</Badge>
+                    <Badge variant="secondary">Symptom Charts</Badge>
+                    <Badge variant="secondary">Weekly Summary</Badge>
+                    <Badge variant="secondary">Cycle Stats</Badge>
+                    <Badge variant="secondary">Care Tips</Badge>
+                  </div>
+                  
+                  <Button 
+                    onClick={handleDownloadPdf} 
+                    disabled={isGeneratingPdf}
+                    className="w-full"
+                    size="lg"
+                  >
+                    {isGeneratingPdf ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Generating PDF...
+                      </>
+                    ) : (
+                      <>
+                        <FileDown className="h-4 w-4 mr-2" />
+                        Download PDF Report
+                      </>
+                    )}
+                  </Button>
+                  
+                  <p className="text-xs text-center text-muted-foreground">
+                    PDF includes all data based on your sharing settings above
+                  </p>
                 </div>
               </CardContent>
             </Card>
