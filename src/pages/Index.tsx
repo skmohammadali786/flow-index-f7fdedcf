@@ -1,21 +1,23 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Header } from '@/components/period/Header';
-import { CycleCalendar } from '@/components/period/CycleCalendar';
-import { CycleInsights } from '@/components/period/CycleInsights';
-import { HistoryView } from '@/components/period/HistoryView';
 import { DayDetailSheet } from '@/components/period/DayDetailSheet';
 import { QuickLogButton } from '@/components/period/QuickLogButton';
-import { SettingsView } from '@/components/period/SettingsView';
-import { ProfileView } from '@/components/period/ProfileView';
-import { HealthTipsView } from '@/components/period/HealthTipsView';
-import { SymptomAnalyticsView } from '@/components/period/SymptomAnalyticsView';
-import { CycleCharts } from '@/components/period/CycleCharts';
-import { PartnerShareView } from '@/components/period/PartnerShareView';
-import { OnboardingFlow, OnboardingData } from '@/components/period/OnboardingFlow';
-import { HealthReportGenerator } from '@/components/period/HealthReportGenerator';
-import { BrainForecastView } from '@/components/period/BrainForecastView';
-import { ClinicalEvidenceView } from '@/components/period/ClinicalEvidenceView';
+import type { OnboardingData } from '@/components/period/OnboardingFlow';
+
+const CycleCalendar = lazy(() => import('@/components/period/CycleCalendar').then(module => ({ default: module.CycleCalendar })));
+const CycleInsights = lazy(() => import('@/components/period/CycleInsights').then(module => ({ default: module.CycleInsights })));
+const HistoryView = lazy(() => import('@/components/period/HistoryView').then(module => ({ default: module.HistoryView })));
+const SettingsView = lazy(() => import('@/components/period/SettingsView').then(module => ({ default: module.SettingsView })));
+const ProfileView = lazy(() => import('@/components/period/ProfileView').then(module => ({ default: module.ProfileView })));
+const HealthTipsView = lazy(() => import('@/components/period/HealthTipsView').then(module => ({ default: module.HealthTipsView })));
+const SymptomAnalyticsView = lazy(() => import('@/components/period/SymptomAnalyticsView').then(module => ({ default: module.SymptomAnalyticsView })));
+const CycleCharts = lazy(() => import('@/components/period/CycleCharts').then(module => ({ default: module.CycleCharts })));
+const PartnerShareView = lazy(() => import('@/components/period/PartnerShareView').then(module => ({ default: module.PartnerShareView })));
+const OnboardingFlow = lazy(() => import('@/components/period/OnboardingFlow').then(module => ({ default: module.OnboardingFlow })));
+const HealthReportGenerator = lazy(() => import('@/components/period/HealthReportGenerator').then(module => ({ default: module.HealthReportGenerator })));
+const BrainForecastView = lazy(() => import('@/components/period/BrainForecastView').then(module => ({ default: module.BrainForecastView })));
+const ClinicalEvidenceView = lazy(() => import('@/components/period/ClinicalEvidenceView').then(module => ({ default: module.ClinicalEvidenceView })));
 import { useSupabasePeriodTracker } from '@/hooks/useSupabasePeriodTracker';
 import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
 import { useSymptomAnalytics } from '@/hooks/useSymptomAnalytics';
@@ -25,6 +27,13 @@ import { startOfDay } from 'date-fns';
 type TabType = 'calendar' | 'insights' | 'history' | 'tips' | 'analytics' | 'charts' | 'share' | 'report' | 'brain' | 'clinical' | 'settings' | 'profile';
 
 const ONBOARDING_KEY = 'period_tracker_onboarding_complete';
+
+const TabLoadingFallback = () => (
+  <div className="flex flex-col items-center justify-center py-12">
+    <div className="w-10 h-10 rounded-full gradient-primary animate-pulse-soft" />
+    <p className="mt-4 text-muted-foreground">Loading view...</p>
+  </div>
+);
 
 const Index = () => {
   const { user } = useAuth();
@@ -148,7 +157,15 @@ const Index = () => {
   }
 
   if (showOnboarding) {
-    return <OnboardingFlow onComplete={handleOnboardingComplete} />;
+    return (
+      <Suspense fallback={
+        <div className="min-h-screen gradient-soft flex items-center justify-center">
+          <div className="w-12 h-12 rounded-full gradient-primary animate-pulse-soft" />
+        </div>
+      }>
+        <OnboardingFlow onComplete={handleOnboardingComplete} />
+      </Suspense>
+    );
   }
 
   const pageVariants = {
@@ -162,9 +179,10 @@ const Index = () => {
       <Header activeTab={activeTab} onTabChange={setActiveTab} />
 
       <main className="max-w-2xl mx-auto px-4 py-6 pb-24">
-        <AnimatePresence mode="wait">
-          {activeTab === 'calendar' && (
-            <motion.div
+        <Suspense fallback={<TabLoadingFallback />}>
+          <AnimatePresence mode="wait">
+            {activeTab === 'calendar' && (
+              <motion.div
               key="calendar"
               variants={pageVariants}
               initial="initial"
@@ -370,7 +388,8 @@ const Index = () => {
             </motion.div>
           )}
         </AnimatePresence>
-      </main>
+      </Suspense>
+    </main>
 
       <QuickLogButton onLogToday={handleQuickLog} isOnPeriod={isOnPeriod} />
 
