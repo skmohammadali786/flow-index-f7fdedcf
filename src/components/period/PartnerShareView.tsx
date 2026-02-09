@@ -20,7 +20,7 @@ import { useToast } from '@/hooks/use-toast';
 import { generatePartnerSharePdf } from '@/utils/partnerSharePdf';
 import { phaseInfo, moodLabels, symptomLabels } from '@/data/phaseData';
 import { useAuth } from '@/contexts/AuthContext';
-import logoSrc from '@/assets/logo.jpg';
+import logoSrc from '@/assets/logo.png';
 
 interface PartnerShareViewProps {
   predictions: CyclePrediction | null;

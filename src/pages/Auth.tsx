@@ -10,7 +10,7 @@ import { Mail, Lock, User, Eye, EyeOff, Sparkles, ArrowLeft } from 'lucide-react
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import logo from '@/assets/logo.jpg';
+import logo from '@/assets/logo.png';
 
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
