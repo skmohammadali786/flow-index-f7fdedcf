@@ -32,12 +32,12 @@ export const colors = {
 export const phaseStyles: Record<CyclePhase, {
   color: [number, number, number]; 
   lightColor: [number, number, number];
-  icon: string;
+  label: string;
 }> = {
-  menstrual: { color: colors.coral, lightColor: colors.coralLight, icon: '🌙' },
-  follicular: { color: colors.sage, lightColor: colors.sageLight, icon: '✨' },
-  ovulation: { color: colors.lavender, lightColor: colors.lavenderLight, icon: '💜' },
-  luteal: { color: colors.peach, lightColor: colors.peachLight, icon: '🍂' },
+  menstrual: { color: colors.coral, lightColor: colors.coralLight, label: 'M' },
+  follicular: { color: colors.sage, lightColor: colors.sageLight, label: 'F' },
+  ovulation: { color: colors.lavender, lightColor: colors.lavenderLight, label: 'O' },
+  luteal: { color: colors.peach, lightColor: colors.peachLight, label: 'L' },
 };
 
 // Re-export for backward compatibility
@@ -277,7 +277,7 @@ export async function generatePartnerSharePdf(data: PdfData, logoBase64?: string
       // Add page header watermark
       pdf.setFontSize(8);
       pdf.setTextColor(...colors.textMuted);
-      pdf.text('Flow Index • Cycle Update', pageWidth / 2, 10, { align: 'center' });
+      pdf.text('Flow Index - Cycle Update', pageWidth / 2, 10, { align: 'center' });
       return true;
     }
     return false;
@@ -293,8 +293,6 @@ export async function generatePartnerSharePdf(data: PdfData, logoBase64?: string
     pdfDoc.setTextColor(...colors.textMuted);
     pdfDoc.setFont('helvetica', 'italic');
     pdfDoc.text('Generated with love from Flow Index', width / 2, footerY, { align: 'center' });
-    pdfDoc.text('💜', m + 3, footerY);
-    pdfDoc.text('💜', width - m - 3, footerY);
   }
 
   // ===== PAGE BACKGROUND DECORATION =====
@@ -330,7 +328,7 @@ export async function generatePartnerSharePdf(data: PdfData, logoBase64?: string
   pdf.text('Flow Index', margin + logoXOffset, yPos + 10);
   
   pdf.setFontSize(20);
-  pdf.text('💐 Cycle Update', margin + logoXOffset, yPos + 20);
+  pdf.text('Cycle Update', margin + logoXOffset, yPos + 20);
   
   pdf.setFontSize(10);
   pdf.setFont('helvetica', 'normal');
@@ -351,10 +349,12 @@ export async function generatePartnerSharePdf(data: PdfData, logoBase64?: string
     drawRoundedRect(pdf, margin, yPos, contentWidth, 42, 6, phaseStyle.lightColor);
     drawRoundedRect(pdf, margin, yPos, 8, 42, 6, phaseStyle.color);
     
-    // Phase icon circle
+    // Phase icon circle with letter
     drawRoundedRect(pdf, margin + 16, yPos + 8, 26, 26, 13, colors.white);
-    pdf.setFontSize(18);
-    pdf.text(phaseStyle.icon, margin + 22, yPos + 24);
+    pdf.setFontSize(16);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(...phaseStyle.color);
+    pdf.text(phaseStyle.label, margin + 25, yPos + 24);
     
     pdf.setTextColor(...colors.text);
     pdf.setFontSize(18);
@@ -372,7 +372,7 @@ export async function generatePartnerSharePdf(data: PdfData, logoBase64?: string
       pdf.text(`Day ${data.currentCycleDay} of cycle`, margin + 50, yPos + 36);
     }
     if (data.daysUntilNextPeriod !== null) {
-      pdf.text(`•  ${data.daysUntilNextPeriod} days until next period`, margin + 95, yPos + 36);
+      pdf.text(`  |  ${data.daysUntilNextPeriod} days until next period`, margin + 95, yPos + 36);
     }
 
     yPos += 52;
@@ -387,7 +387,7 @@ export async function generatePartnerSharePdf(data: PdfData, logoBase64?: string
     pdf.setTextColor(...colors.text);
     pdf.setFontSize(13);
     pdf.setFont('helvetica', 'bold');
-    pdf.text('📅 Upcoming Dates', margin + 10, yPos + 12);
+    pdf.text('Upcoming Dates', margin + 10, yPos + 12);
     
     const nextStart = new Date(data.predictions.nextPeriodStart);
     const nextEnd = new Date(data.predictions.nextPeriodEnd);
@@ -396,14 +396,14 @@ export async function generatePartnerSharePdf(data: PdfData, logoBase64?: string
     drawRoundedRect(pdf, margin + 10, yPos + 16, 75, 12, 3, colors.coralLight);
     pdf.setFontSize(9);
     pdf.setTextColor(...colors.text);
-    pdf.text(`🩸 Period: ${format(nextStart, 'MMM d')} - ${format(nextEnd, 'MMM d')}`, margin + 14, yPos + 24);
+    pdf.text(`Period: ${format(nextStart, 'MMM d')} - ${format(nextEnd, 'MMM d')}`, margin + 14, yPos + 24);
     
     if (data.shareSettings.showFertileWindow) {
       const fertileStart = new Date(data.predictions.fertileWindowStart);
       const fertileEnd = new Date(data.predictions.fertileWindowEnd);
       
       drawRoundedRect(pdf, margin + 95, yPos + 16, 80, 12, 3, colors.lavenderLight);
-      pdf.text(`🌸 Fertile: ${format(fertileStart, 'MMM d')} - ${format(fertileEnd, 'MMM d')}`, margin + 99, yPos + 24);
+      pdf.text(`Fertile: ${format(fertileStart, 'MMM d')} - ${format(fertileEnd, 'MMM d')}`, margin + 99, yPos + 24);
     }
 
     yPos += 42;
@@ -415,14 +415,14 @@ export async function generatePartnerSharePdf(data: PdfData, logoBase64?: string
   pdf.setTextColor(...colors.text);
   pdf.setFontSize(14);
   pdf.setFont('helvetica', 'bold');
-  pdf.text('📊 This Week at a Glance', margin, yPos + 4);
+  pdf.text('This Week at a Glance', margin, yPos + 4);
   yPos += 12;
   
   const statBoxWidth = (contentWidth - 8) / 3;
   const stats = [
-    { label: 'Days Logged', value: `${insights.daysLogged}/7`, icon: '📝', color: colors.lavenderLight },
-    { label: 'Avg Sleep', value: insights.avgSleep ? `${insights.avgSleep}h` : '—', icon: '😴', color: colors.sageLight },
-    { label: 'Avg Water', value: insights.avgWater ? `${insights.avgWater}` : '—', icon: '💧', color: colors.coralLight },
+    { label: 'Days Logged', value: `${insights.daysLogged}/7`, color: colors.lavenderLight },
+    { label: 'Avg Sleep', value: insights.avgSleep ? `${insights.avgSleep}h` : '-', color: colors.sageLight },
+    { label: 'Avg Water', value: insights.avgWater ? `${insights.avgWater}` : '-', color: colors.coralLight },
   ];
   
   stats.forEach((stat, i) => {
@@ -430,12 +430,9 @@ export async function generatePartnerSharePdf(data: PdfData, logoBase64?: string
     drawRoundedRect(pdf, xOffset, yPos, statBoxWidth, 28, 5, stat.color);
     
     pdf.setFontSize(18);
-    pdf.text(stat.icon, xOffset + 8, yPos + 12);
-    
-    pdf.setFontSize(18);
     pdf.setFont('helvetica', 'bold');
     pdf.setTextColor(...colors.text);
-    pdf.text(stat.value, xOffset + 8, yPos + 22);
+    pdf.text(stat.value, xOffset + 8, yPos + 18);
     
     pdf.setFontSize(8);
     pdf.setFont('helvetica', 'normal');
@@ -454,7 +451,7 @@ export async function generatePartnerSharePdf(data: PdfData, logoBase64?: string
     pdf.setTextColor(...colors.text);
     pdf.setFontSize(13);
     pdf.setFont('helvetica', 'bold');
-    pdf.text('💭 Mood Patterns', margin + 10, yPos + 10);
+    pdf.text('Mood Patterns', margin + 10, yPos + 10);
     
     const maxMoodCount = Math.max(...insights.topMoods.map(m => m.count));
     
@@ -466,13 +463,13 @@ export async function generatePartnerSharePdf(data: PdfData, logoBase64?: string
       
       pdf.setFontSize(10);
       pdf.setTextColor(...colors.text);
-      pdf.text(`${moodInfo.emoji} ${moodInfo.label}`, margin + 10, barY + 5);
+      pdf.text(moodInfo.label, margin + 10, barY + 5);
       
       drawProgressBar(pdf, margin + 50, barY + 1, barWidth, 5, progress, [240, 235, 250], colors.lavender);
       
       pdf.setTextColor(...colors.textMuted);
       pdf.setFontSize(9);
-      pdf.text(`${moodData.count}×`, margin + 52 + barWidth, barY + 5);
+      pdf.text(`${moodData.count}x`, margin + 52 + barWidth, barY + 5);
     });
     
     yPos += 8 + insights.topMoods.length * 12 + 18;
@@ -487,7 +484,7 @@ export async function generatePartnerSharePdf(data: PdfData, logoBase64?: string
     pdf.setTextColor(...colors.text);
     pdf.setFontSize(13);
     pdf.setFont('helvetica', 'bold');
-    pdf.text('🩺 Symptom Tracker', margin + 10, yPos + 10);
+    pdf.text('Symptom Tracker', margin + 10, yPos + 10);
     
     const maxSymptomCount = Math.max(...insights.topSymptoms.map(s => s.count));
     
@@ -499,13 +496,13 @@ export async function generatePartnerSharePdf(data: PdfData, logoBase64?: string
       
       pdf.setFontSize(10);
       pdf.setTextColor(...colors.text);
-      pdf.text(`${symptomInfo.emoji} ${symptomInfo.label}`, margin + 10, barY + 5);
+      pdf.text(symptomInfo.label, margin + 10, barY + 5);
       
       drawProgressBar(pdf, margin + 65, barY + 1, barWidth, 5, progress, [255, 235, 238], colors.coral);
       
       pdf.setTextColor(...colors.textMuted);
       pdf.setFontSize(9);
-      pdf.text(`${symptomData.count}×`, margin + 67 + barWidth, barY + 5);
+      pdf.text(`${symptomData.count}x`, margin + 67 + barWidth, barY + 5);
     });
     
     yPos += 8 + insights.topSymptoms.length * 12 + 18;
@@ -517,7 +514,7 @@ export async function generatePartnerSharePdf(data: PdfData, logoBase64?: string
   pdf.setTextColor(...colors.text);
   pdf.setFontSize(14);
   pdf.setFont('helvetica', 'bold');
-  pdf.text('📈 Summary', margin, yPos + 4);
+  pdf.text('Summary', margin, yPos + 4);
   yPos += 12;
   
   const summaryWidth = (contentWidth - 6) / 2;
@@ -531,11 +528,11 @@ export async function generatePartnerSharePdf(data: PdfData, logoBase64?: string
   
   pdf.setFont('helvetica', 'normal');
   pdf.setFontSize(9);
-  pdf.text(`📝 ${summaryData.weekly.daysLogged} days logged`, margin + 10, yPos + 24);
-  pdf.text(`🩸 ${summaryData.weekly.periodDays} period days`, margin + 10, yPos + 33);
+  pdf.text(`${summaryData.weekly.daysLogged} days logged`, margin + 10, yPos + 24);
+  pdf.text(`${summaryData.weekly.periodDays} period days`, margin + 10, yPos + 33);
   if (summaryData.weekly.topMood) {
     const mood = moodLabels[summaryData.weekly.topMood];
-    pdf.text(`${mood.emoji} Most common: ${mood.label}`, margin + 10, yPos + 42);
+    pdf.text(`Most common: ${mood.label}`, margin + 10, yPos + 42);
   }
   
   // Monthly
@@ -546,9 +543,9 @@ export async function generatePartnerSharePdf(data: PdfData, logoBase64?: string
   
   pdf.setFont('helvetica', 'normal');
   pdf.setFontSize(9);
-  pdf.text(`📝 ${summaryData.monthly.daysLogged} days logged`, margin + summaryWidth + 16, yPos + 24);
-  pdf.text(`😴 Avg sleep: ${summaryData.monthly.avgSleep || '—'}h`, margin + summaryWidth + 16, yPos + 33);
-  pdf.text(`💧 Avg water: ${summaryData.monthly.avgWater || '—'} glasses`, margin + summaryWidth + 16, yPos + 42);
+  pdf.text(`${summaryData.monthly.daysLogged} days logged`, margin + summaryWidth + 16, yPos + 24);
+  pdf.text(`Avg sleep: ${summaryData.monthly.avgSleep || '-'}h`, margin + summaryWidth + 16, yPos + 33);
+  pdf.text(`Avg water: ${summaryData.monthly.avgWater || '-'} glasses`, margin + summaryWidth + 16, yPos + 42);
 
   yPos += 60;
 
@@ -561,7 +558,7 @@ export async function generatePartnerSharePdf(data: PdfData, logoBase64?: string
     pdf.setTextColor(...colors.text);
     pdf.setFontSize(13);
     pdf.setFont('helvetica', 'bold');
-    pdf.text('🔄 Cycle Statistics', margin + 10, yPos + 12);
+    pdf.text('Cycle Statistics', margin + 10, yPos + 12);
     
     const statWidth = (contentWidth - 40) / 4;
     const cycleStats = [
@@ -598,7 +595,7 @@ export async function generatePartnerSharePdf(data: PdfData, logoBase64?: string
     pdf.setTextColor(...colors.text);
     pdf.setFontSize(14);
     pdf.setFont('helvetica', 'bold');
-    pdf.text('💝 How You Can Help', margin + 14, yPos + 14);
+    pdf.text('How You Can Help', margin + 14, yPos + 14);
     
     pdf.setFontSize(10);
     pdf.setFont('helvetica', 'normal');

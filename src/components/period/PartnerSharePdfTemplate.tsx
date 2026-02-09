@@ -51,8 +51,8 @@ export const PartnerSharePdfTemplate = forwardRef<HTMLDivElement, { data: PdfDat
       {/* Current Phase Hero Card */}
       {data.shareSettings.showCurrentPhase && (
         <div className="rounded-2xl p-6 mb-8 flex items-center gap-6 border-l-8 shadow-sm" style={{ backgroundColor: toRgb(phaseStyle.lightColor), borderColor: toRgb(phaseStyle.color) }}>
-            <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center text-4xl shadow-sm">
-              {phaseStyle.icon}
+            <div className="w-16 h-16 rounded-full bg-white flex items-center justify-center text-2xl font-bold shadow-sm" style={{ color: toRgb(phaseStyle.color) }}>
+              {phaseStyle.label}
             </div>
             <div>
               <h2 className="text-2xl font-bold mb-1">{currentPhaseData.title}</h2>
