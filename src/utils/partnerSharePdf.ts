@@ -314,7 +314,7 @@ export async function generatePartnerSharePdf(data: PdfData, logoBase64?: string
   let logoXOffset = 12;
   if (logoBase64) {
     try {
-      pdf.addImage(logoBase64, 'JPEG', margin + 8, yPos + 6, 18, 18);
+      pdf.addImage(logoBase64, 'PNG', margin + 8, yPos + 6, 18, 18);
       logoXOffset = 32;
     } catch (e) {
       console.warn('Could not add logo to PDF:', e);
