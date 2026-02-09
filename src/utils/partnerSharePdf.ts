@@ -50,6 +50,7 @@ export interface PdfData {
   daysUntilNextPeriod: number | null;
   currentCycleDay: number | null;
   logs: DayLog[];
+  userName?: string;
   shareSettings: {
     showPeriodDates: boolean;
     showFertileWindow: boolean;
@@ -244,7 +245,7 @@ function drawDecoCircle(pdf: jsPDF, x: number, y: number, radius: number, color:
   pdf.circle(x, y, radius, 'F');
 }
 
-export async function generatePartnerSharePdf(data: PdfData): Promise<void> {
+export async function generatePartnerSharePdf(data: PdfData, logoBase64?: string): Promise<void> {
   const pdf = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
@@ -261,49 +262,89 @@ export async function generatePartnerSharePdf(data: PdfData): Promise<void> {
   const summaryData = calculateSummaryData(data.logs);
   const currentPhaseData = getPhaseInfoForPdf(data.currentPhase);
   const phaseStyle = phaseStyles[data.currentPhase];
+  const userName = data.userName || 'Your Partner';
 
   // Helper to add new page if needed
   const checkNewPage = (requiredSpace: number) => {
-    if (yPos + requiredSpace > pageHeight - margin - 15) {
+    if (yPos + requiredSpace > pageHeight - margin - 20) {
+      // Add footer to current page before new page
+      addPageFooter(pdf, pageWidth, pageHeight, margin);
       pdf.addPage();
-      yPos = margin;
+      yPos = margin + 5;
       // Add subtle decorative elements on new page
       drawDecoCircle(pdf, pageWidth - 20, 20, 15, colors.lavender, 0.15);
       drawDecoCircle(pdf, 25, pageHeight - 25, 10, colors.coral, 0.1);
+      // Add page header watermark
+      pdf.setFontSize(8);
+      pdf.setTextColor(...colors.textMuted);
+      pdf.text('Flow Index • Cycle Update', pageWidth / 2, 10, { align: 'center' });
       return true;
     }
     return false;
   };
 
+  // Helper to add footer
+  function addPageFooter(pdfDoc: jsPDF, width: number, height: number, m: number) {
+    const footerY = height - 12;
+    pdfDoc.setDrawColor(...colors.border);
+    pdfDoc.setLineWidth(0.3);
+    pdfDoc.line(m, footerY - 3, width - m, footerY - 3);
+    pdfDoc.setFontSize(7);
+    pdfDoc.setTextColor(...colors.textMuted);
+    pdfDoc.setFont('helvetica', 'italic');
+    pdfDoc.text('Generated with love from Flow Index', width / 2, footerY, { align: 'center' });
+    pdfDoc.text('💜', m + 3, footerY);
+    pdfDoc.text('💜', width - m - 3, footerY);
+  }
+
   // ===== PAGE BACKGROUND DECORATION =====
-  // Subtle decorative circles
   drawDecoCircle(pdf, pageWidth + 10, -10, 40, colors.lavender, 0.1);
   drawDecoCircle(pdf, -15, pageHeight / 2, 30, colors.coral, 0.08);
   drawDecoCircle(pdf, pageWidth - 10, pageHeight - 20, 25, colors.sage, 0.1);
 
-  // ===== HEADER =====
-  drawRoundedRect(pdf, margin, yPos, contentWidth, 32, 6, colors.primary);
+  // ===== HEADER WITH BRANDING =====
+  const headerHeight = 38;
+  drawRoundedRect(pdf, margin, yPos, contentWidth, headerHeight, 8, colors.primary);
   
   // Add decorative pattern
-  pdf.setFillColor(255, 255, 255, 0.1);
-  for (let i = 0; i < 5; i++) {
-    pdf.circle(margin + contentWidth - 15 - i * 12, yPos + 16, 3 + i * 0.5, 'F');
+  pdf.setFillColor(255, 255, 255);
+  for (let i = 0; i < 6; i++) {
+    pdf.circle(margin + contentWidth - 12 - i * 10, yPos + headerHeight / 2, 2 + i * 0.3, 'F');
   }
   
+  // Add logo if available
+  let logoXOffset = 12;
+  if (logoBase64) {
+    try {
+      pdf.addImage(logoBase64, 'JPEG', margin + 8, yPos + 6, 18, 18);
+      logoXOffset = 32;
+    } catch (e) {
+      console.warn('Could not add logo to PDF:', e);
+    }
+  }
+  
+  // App name and title
   pdf.setTextColor(...colors.white);
-  pdf.setFontSize(24);
+  pdf.setFontSize(10);
   pdf.setFont('helvetica', 'bold');
-  pdf.text('💐 Cycle Update', margin + 12, yPos + 14);
+  pdf.text('Flow Index', margin + logoXOffset, yPos + 10);
   
-  pdf.setFontSize(11);
+  pdf.setFontSize(20);
+  pdf.text('💐 Cycle Update', margin + logoXOffset, yPos + 20);
+  
+  pdf.setFontSize(10);
   pdf.setFont('helvetica', 'normal');
-  pdf.text('A personal wellness report for your partner', margin + 12, yPos + 22);
+  pdf.text(`A wellness report for ${userName}'s partner`, margin + logoXOffset, yPos + 28);
   
+  // Date on right
   pdf.setFontSize(9);
-  pdf.text(format(new Date(), 'MMMM d, yyyy'), pageWidth - margin - 35, yPos + 14);
-  pdf.text('Flow Index', pageWidth - margin - 23, yPos + 22);
+  pdf.setFont('helvetica', 'bold');
+  pdf.text(format(new Date(), 'MMMM d, yyyy'), pageWidth - margin - 8, yPos + 12, { align: 'right' });
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(8);
+  pdf.text('Partner Share Report', pageWidth - margin - 8, yPos + 19, { align: 'right' });
 
-  yPos += 42;
+  yPos += headerHeight + 10;
 
   // ===== CURRENT PHASE HERO CARD =====
   if (data.shareSettings.showCurrentPhase) {
@@ -572,25 +613,15 @@ export async function generatePartnerSharePdf(data: PdfData): Promise<void> {
     yPos += 70;
   }
 
-  // ===== FOOTER =====
-  const footerY = pageHeight - 18;
+  // ===== FINAL PAGE FOOTER =====
+  addPageFooter(pdf, pageWidth, pageHeight, margin);
   
-  // Decorative line
-  pdf.setDrawColor(...colors.border);
-  pdf.setLineWidth(0.5);
-  pdf.line(margin, footerY - 5, pageWidth - margin, footerY - 5);
-  
-  pdf.setFontSize(8);
+  // Additional signature line on last page
+  pdf.setFontSize(7);
   pdf.setTextColor(...colors.textMuted);
   pdf.setFont('helvetica', 'italic');
-  pdf.text('Generated with love from Flow Index', pageWidth / 2, footerY, { align: 'center' });
-  pdf.text('This report is for personal wellness tracking and partner communication only.', pageWidth / 2, footerY + 5, { align: 'center' });
-  
-  // Heart decoration
-  pdf.setFontSize(10);
-  pdf.text('💜', margin + 5, footerY);
-  pdf.text('💜', pageWidth - margin - 5, footerY);
+  pdf.text('This report is for personal wellness tracking and partner communication only.', pageWidth / 2, pageHeight - 8, { align: 'center' });
 
   // Save the PDF
-  pdf.save(`cycle-update-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+  pdf.save(`flow-index-cycle-update-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
 }

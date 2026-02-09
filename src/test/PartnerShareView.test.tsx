@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import { describe, it, vi, expect } from "vitest";
+import { describe, it, vi, expect, beforeEach } from "vitest";
 import { PartnerShareView } from "@/components/period/PartnerShareView";
 
 // Mock html2canvas
@@ -22,8 +22,40 @@ vi.mock('jspdf', () => ({
     },
     getImageProperties: () => ({ width: 100, height: 100 }),
     addImage: vi.fn(),
-    save: vi.fn()
+    addPage: vi.fn(),
+    save: vi.fn(),
+    setFillColor: vi.fn(),
+    setTextColor: vi.fn(),
+    setFontSize: vi.fn(),
+    setFont: vi.fn(),
+    setDrawColor: vi.fn(),
+    setLineWidth: vi.fn(),
+    text: vi.fn(),
+    rect: vi.fn(),
+    roundedRect: vi.fn(),
+    circle: vi.fn(),
+    line: vi.fn(),
   }))
+}));
+
+// Mock the partner share PDF generator
+vi.mock('@/utils/partnerSharePdf', () => ({
+  generatePartnerSharePdf: vi.fn(() => Promise.resolve())
+}));
+
+// Mock the auth context
+vi.mock('@/contexts/AuthContext', () => ({
+  useAuth: () => ({
+    user: { 
+      email: 'test@example.com',
+      user_metadata: { name: 'Test User' }
+    },
+    session: null,
+    loading: false,
+    signUp: vi.fn(),
+    signIn: vi.fn(),
+    signOut: vi.fn(),
+  })
 }));
 
 // Mock ResizeObserver which is used by some UI components
