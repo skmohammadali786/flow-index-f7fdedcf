@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import { format, parseISO, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
+import { format, parseISO, subDays, startOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
 import { CyclePrediction, CycleStats, DayLog, Mood, Symptom } from '@/types/period';
 import { CyclePhase } from '@/types/settings';
 import { moodLabels, symptomLabels, getPhaseInfoForPdf } from '@/data/phaseData';
@@ -163,6 +163,32 @@ export function calculateSummaryData(logs: DayLog[]) {
     weekly: calculateSummary(weekLogs),
     monthly: calculateSummary(monthLogs),
   };
+}
+
+// Build graph data for PDF chart
+function buildGraphData(logs: DayLog[], days: number) {
+  const today = startOfDay(new Date());
+  const logMap = new Map(logs.map(l => [l.date, l]));
+  const data = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const day = subDays(today, i);
+    const dateStr = format(day, 'yyyy-MM-dd');
+    const log = logMap.get(dateStr);
+    const flowVal = !log?.isPeriod ? 0 : 
+      log.flowIntensity === 'spotting' ? 1 :
+      log.flowIntensity === 'light' ? 2 :
+      log.flowIntensity === 'medium' ? 3 :
+      log.flowIntensity === 'heavy' ? 4 : 2;
+    data.push({
+      date: format(day, 'd'),
+      flow: flowVal,
+      moods: log?.moods?.length || 0,
+      symptoms: log?.symptoms?.length || 0,
+      sleep: log?.sleepHours || 0,
+      water: log?.waterIntake || 0,
+    });
+  }
+  return data;
 }
 
 // Utility functions for drawing
@@ -505,8 +531,107 @@ export async function generatePartnerSharePdf(data: PdfData, logoBase64?: string
       pdf.text(`${symptomData.count}x`, margin + 67 + barWidth, barY + 5);
     });
     
-    yPos += 8 + insights.topSymptoms.length * 12 + 18;
+  yPos += 8 + insights.topSymptoms.length * 12 + 18;
   }
+
+  // ===== INSIGHTS GRAPH (drawn with jsPDF primitives) =====
+  checkNewPage(90);
+  
+  pdf.setTextColor(...colors.text);
+  pdf.setFontSize(14);
+  pdf.setFont('helvetica', 'bold');
+  pdf.text('30-Day Wellness Overview', margin, yPos + 4);
+  yPos += 12;
+
+  // Build graph data
+  const graphData = buildGraphData(data.logs, 30);
+  const graphX = margin + 10;
+  const graphY = yPos;
+  const graphW = contentWidth - 20;
+  const graphH = 55;
+
+  // Background
+  drawRoundedRect(pdf, margin, yPos - 4, contentWidth, graphH + 22, 5, colors.cardBg, colors.border);
+
+  // Grid lines
+  pdf.setDrawColor(230, 230, 240);
+  pdf.setLineWidth(0.15);
+  for (let i = 0; i <= 4; i++) {
+    const gy = graphY + graphH - (i / 4) * graphH;
+    pdf.line(graphX, gy, graphX + graphW, gy);
+  }
+
+  // X-axis labels (every 5 days)
+  pdf.setFontSize(6);
+  pdf.setFont('helvetica', 'normal');
+  pdf.setTextColor(...colors.textMuted);
+  graphData.forEach((d, i) => {
+    if (i % 5 === 0 || i === graphData.length - 1) {
+      const x = graphX + (i / (graphData.length - 1)) * graphW;
+      pdf.text(d.date, x, graphY + graphH + 5, { align: 'center' });
+    }
+  });
+
+  // Find max value for scaling
+  const maxVal = Math.max(
+    4, // flow max
+    ...graphData.map(d => Math.max(d.moods, d.symptoms, d.sleep, d.water))
+  );
+
+  // Line configs
+  const lineConfigs: { key: keyof typeof graphData[0]; color: [number, number, number]; label: string; maxScale: number }[] = [
+    { key: 'flow', color: [220, 60, 80], label: 'Flow', maxScale: 4 },
+    { key: 'moods', color: [74, 180, 100], label: 'Moods', maxScale: maxVal },
+    { key: 'symptoms', color: [240, 130, 50], label: 'Symptoms', maxScale: maxVal },
+    { key: 'sleep', color: [140, 100, 220], label: 'Sleep', maxScale: Math.max(12, maxVal) },
+    { key: 'water', color: [60, 150, 220], label: 'Water', maxScale: Math.max(12, maxVal) },
+  ];
+
+  // Draw lines
+  lineConfigs.forEach(config => {
+    pdf.setDrawColor(...config.color);
+    pdf.setLineWidth(0.6);
+    
+    let prevX: number | null = null;
+    let prevY: number | null = null;
+    
+    graphData.forEach((d, i) => {
+      const val = d[config.key] as number;
+      const x = graphX + (i / (graphData.length - 1)) * graphW;
+      const y = graphY + graphH - (val / config.maxScale) * graphH;
+      
+      if (prevX !== null && prevY !== null) {
+        pdf.line(prevX, prevY, x, y);
+      }
+      prevX = x;
+      prevY = y;
+    });
+
+    // Draw dots at non-zero points
+    graphData.forEach((d, i) => {
+      const val = d[config.key] as number;
+      if (val > 0) {
+        const x = graphX + (i / (graphData.length - 1)) * graphW;
+        const y = graphY + graphH - (val / config.maxScale) * graphH;
+        pdf.setFillColor(...config.color);
+        pdf.circle(x, y, 0.8, 'F');
+      }
+    });
+  });
+
+  // Legend
+  const legendY = graphY + graphH + 10;
+  const legendSpacing = contentWidth / lineConfigs.length;
+  lineConfigs.forEach((config, i) => {
+    const lx = margin + 8 + i * legendSpacing;
+    pdf.setFillColor(...config.color);
+    pdf.circle(lx, legendY, 1.5, 'F');
+    pdf.setFontSize(7);
+    pdf.setTextColor(...colors.textMuted);
+    pdf.text(config.label, lx + 4, legendY + 1.5);
+  });
+
+  yPos += graphH + 30;
 
   // ===== WEEKLY & MONTHLY SUMMARY =====
   checkNewPage(65);
