@@ -6,6 +6,7 @@ import {
   Bell, BellOff, TrendingUp, Activity, Droplet, Brain, ChevronDown,
   Lightbulb, BarChart3, MessageCircleHeart, FileDown, Loader2
 } from 'lucide-react';
+import { InsightsGraph } from './InsightsGraph';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -565,6 +566,21 @@ export function PartnerShareView({
 
         {/* Insights Tab */}
         <TabsContent value="insights" className="space-y-4">
+          {/* All-in-One Insights Graph */}
+          <motion.div variants={itemVariants}>
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <TrendingUp className="h-5 w-5 text-primary" />
+                  30-Day Wellness Overview
+                </CardTitle>
+                <CardDescription>Flow, moods, symptoms, sleep & water at a glance</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <InsightsGraph logs={logs} />
+              </CardContent>
+            </Card>
+          </motion.div>
           {/* Recent Mood Patterns */}
           <motion.div variants={itemVariants}>
             <Card>

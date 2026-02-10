@@ -189,7 +189,7 @@ export function CycleCalendar({
       </div>
 
       {/* Crimson Graph */}
-      <CrimsonGraph logs={logs} currentMonth={currentMonth} />
+      <CrimsonGraph logs={logs} currentMonth={currentMonth} onDayClick={onDayClick} />
     </div>
   );
 }

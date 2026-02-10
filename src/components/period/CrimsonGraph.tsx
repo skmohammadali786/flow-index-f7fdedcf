@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { format, subDays, startOfDay } from 'date-fns';
+import { format, subDays, startOfDay, parseISO } from 'date-fns';
 import { Area, AreaChart, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { DayLog } from '@/types/period';
 import { Droplets } from 'lucide-react';
@@ -7,6 +7,7 @@ import { Droplets } from 'lucide-react';
 interface CrimsonGraphProps {
   logs: DayLog[];
   currentMonth: Date;
+  onDayClick?: (date: Date) => void;
 }
 
 const flowToValue = (log?: DayLog): number => {
@@ -38,16 +39,73 @@ const CustomTooltip = ({ active, payload, label }: any) => {
         <Droplets className="h-3 w-3" />
         {flowLabels[value] || 'None'}
       </p>
+      {value > 0 && (
+        <p className="text-xs text-muted-foreground mt-1">Tap dot to view details</p>
+      )}
     </div>
   );
 };
 
-export function CrimsonGraph({ logs, currentMonth }: CrimsonGraphProps) {
+interface ClickableDotProps {
+  cx?: number;
+  cy?: number;
+  payload?: any;
+  onDayClick?: (date: Date) => void;
+}
+
+const ClickableDot = ({ cx, cy, payload, onDayClick }: ClickableDotProps) => {
+  if (!cx || !cy || !payload || payload.value === 0) return null;
+
+  const intensityColors: Record<number, string> = {
+    1: 'hsl(355, 60%, 80%)',
+    2: 'hsl(355, 65%, 70%)',
+    3: 'hsl(355, 70%, 60%)',
+    4: 'hsl(355, 75%, 50%)',
+  };
+
+  return (
+    <g
+      onClick={() => {
+        if (onDayClick && payload.rawDate) {
+          onDayClick(parseISO(payload.rawDate));
+        }
+      }}
+      style={{ cursor: 'pointer' }}
+    >
+      {/* Larger invisible hit area */}
+      <circle cx={cx} cy={cy} r={12} fill="transparent" />
+      {/* Outer glow */}
+      <circle cx={cx} cy={cy} r={7} fill={intensityColors[payload.value] || 'hsl(355, 70%, 65%)'} opacity={0.3} />
+      {/* Inner dot */}
+      <circle cx={cx} cy={cy} r={4.5} fill={intensityColors[payload.value] || 'hsl(355, 70%, 65%)'} stroke="white" strokeWidth={2} />
+    </g>
+  );
+};
+
+const ActiveClickableDot = ({ cx, cy, payload, onDayClick }: ClickableDotProps) => {
+  if (!cx || !cy || !payload) return null;
+
+  return (
+    <g
+      onClick={() => {
+        if (onDayClick && payload.rawDate) {
+          onDayClick(parseISO(payload.rawDate));
+        }
+      }}
+      style={{ cursor: 'pointer' }}
+    >
+      <circle cx={cx} cy={cy} r={14} fill="transparent" />
+      <circle cx={cx} cy={cy} r={9} fill="hsl(355, 70%, 65%)" opacity={0.2} />
+      <circle cx={cx} cy={cy} r={6} fill="hsl(355, 70%, 65%)" stroke="white" strokeWidth={2.5} />
+    </g>
+  );
+};
+
+export function CrimsonGraph({ logs, currentMonth, onDayClick }: CrimsonGraphProps) {
   const chartData = useMemo(() => {
     const today = startOfDay(new Date());
     const logMap = new Map(logs.map(l => [l.date, l]));
 
-    // Show last 30 days of data
     const data = [];
     for (let i = 29; i >= 0; i--) {
       const day = subDays(today, i);
@@ -55,6 +113,7 @@ export function CrimsonGraph({ logs, currentMonth }: CrimsonGraphProps) {
       const log = logMap.get(dateStr);
       data.push({
         date: format(day, 'MMM d'),
+        rawDate: dateStr,
         value: flowToValue(log),
         raw: log,
       });
@@ -112,8 +171,8 @@ export function CrimsonGraph({ logs, currentMonth }: CrimsonGraphProps) {
                 stroke="hsl(355, 70%, 65%)"
                 strokeWidth={2.5}
                 fill="url(#crimsonGradient)"
-                dot={false}
-                activeDot={{ r: 5, fill: 'hsl(355, 70%, 65%)', strokeWidth: 2, stroke: 'white' }}
+                dot={<ClickableDot onDayClick={onDayClick} />}
+                activeDot={<ActiveClickableDot onDayClick={onDayClick} />}
               />
             </AreaChart>
           </ResponsiveContainer>
@@ -135,3 +194,6 @@ export function CrimsonGraph({ logs, currentMonth }: CrimsonGraphProps) {
     </div>
   );
 }
+
+// Export utilities for reuse in partner share
+export { flowToValue, flowLabels };
