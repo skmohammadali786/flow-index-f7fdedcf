@@ -330,12 +330,6 @@ export async function generatePartnerSharePdf(data: PdfData, logoBase64?: string
   const headerHeight = 38;
   drawRoundedRect(pdf, margin, yPos, contentWidth, headerHeight, 8, colors.primary);
   
-  // Add decorative pattern
-  pdf.setFillColor(255, 255, 255);
-  for (let i = 0; i < 6; i++) {
-    pdf.circle(margin + contentWidth - 12 - i * 10, yPos + headerHeight / 2, 2 + i * 0.3, 'F');
-  }
-  
   // Add logo if available
   let logoXOffset = 12;
   if (logoBase64) {
@@ -413,7 +407,7 @@ export async function generatePartnerSharePdf(data: PdfData, logoBase64?: string
     pdf.setTextColor(...colors.text);
     pdf.setFontSize(13);
     pdf.setFont('helvetica', 'bold');
-    pdf.text('Upcoming Dates', margin + 10, yPos + 12);
+    pdf.text('Upcoming predicted Dates', margin + 10, yPos + 12);
     
     const nextStart = new Date(data.predictions.nextPeriodStart);
     const nextEnd = new Date(data.predictions.nextPeriodEnd);
@@ -444,11 +438,12 @@ export async function generatePartnerSharePdf(data: PdfData, logoBase64?: string
   pdf.text('This Week at a Glance', margin, yPos + 4);
   yPos += 12;
   
-  const statBoxWidth = (contentWidth - 8) / 3;
+  const statBoxWidth = (contentWidth - 12) / 4;
   const stats = [
     { label: 'Days Logged', value: `${insights.daysLogged}/7`, color: colors.lavenderLight },
     { label: 'Avg Sleep', value: insights.avgSleep ? `${insights.avgSleep}h` : '-', color: colors.sageLight },
     { label: 'Avg Water', value: insights.avgWater ? `${insights.avgWater}` : '-', color: colors.coralLight },
+    { label: 'Exercise', value: insights.totalExercise > 0 ? `${insights.totalExercise}m` : '-', color: colors.peachLight },
   ];
   
   stats.forEach((stat, i) => {
