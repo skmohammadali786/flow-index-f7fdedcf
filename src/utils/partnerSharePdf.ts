@@ -464,7 +464,7 @@ export async function generatePartnerSharePdf(data: PdfData, logoBase64?: string
   yPos += 38;
 
   // ===== DAILY LOGS TABLE =====
-  checkNewPage(30);
+  checkNewPage(60);
 
   // Filter logs for the last 7 days and sort descending
   const today = endOfDay(new Date());
