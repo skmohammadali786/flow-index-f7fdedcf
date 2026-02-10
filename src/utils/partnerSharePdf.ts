@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import { format, parseISO, subDays, startOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
+import { format, parseISO, subDays, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
 import { CyclePrediction, CycleStats, DayLog, Mood, Symptom } from '@/types/period';
 import { CyclePhase } from '@/types/settings';
 import { moodLabels, symptomLabels, getPhaseInfoForPdf } from '@/data/phaseData';
@@ -462,6 +462,79 @@ export async function generatePartnerSharePdf(data: PdfData, logoBase64?: string
   });
   
   yPos += 38;
+
+  // ===== DAILY LOGS TABLE =====
+  checkNewPage(60);
+
+  // Filter logs for the last 7 days and sort descending
+  const today = endOfDay(new Date());
+  const sevenDaysAgo = startOfDay(subDays(new Date(), 7));
+  const recentLogs = data.logs
+    .filter(log => {
+      const logDate = parseISO(log.date);
+      return logDate >= sevenDaysAgo && logDate <= today;
+    })
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  if (recentLogs.length > 0) {
+    // Header
+    drawRoundedRect(pdf, margin, yPos, contentWidth, 8, 2, colors.lavenderLight);
+
+    pdf.setFontSize(9);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(...colors.text);
+
+    // Column definitions
+    const cols = [
+      { header: 'Date', x: margin + 4, width: 25 },
+      { header: 'Sleep', x: margin + 29, width: 15 },
+      { header: 'Water', x: margin + 44, width: 15 },
+      { header: 'Activity', x: margin + 59, width: 18 },
+      { header: 'Moods', x: margin + 77, width: 50 },
+      { header: 'Symptoms', x: margin + 127, width: 50 }
+    ];
+
+    cols.forEach(col => {
+      pdf.text(col.header, col.x, yPos + 5);
+    });
+
+    yPos += 10;
+
+    // Rows
+    pdf.setFont('helvetica', 'normal');
+    pdf.setFontSize(8);
+
+    recentLogs.forEach((log) => {
+      checkNewPage(12);
+
+      const dateStr = format(parseISO(log.date), 'EEE d');
+      const sleepStr = log.sleepHours ? `${log.sleepHours}h` : '-';
+      const waterStr = log.waterIntake ? `${log.waterIntake}` : '-';
+      const activityStr = log.exerciseMinutes ? `${log.exerciseMinutes}m` : '-';
+
+      const moodStr = log.moods.map(m => moodLabels[m]?.label || m).join(', ');
+      const symptomStr = log.symptoms.map(s => symptomLabels[s]?.label || s).join(', ');
+
+      // Truncate helper
+      const truncate = (str: string, maxLen: number) => {
+        return str.length > maxLen ? str.substring(0, maxLen - 3) + '...' : str;
+      };
+
+      pdf.text(dateStr, cols[0].x, yPos + 5);
+      pdf.text(sleepStr, cols[1].x, yPos + 5);
+      pdf.text(waterStr, cols[2].x, yPos + 5);
+      pdf.text(activityStr, cols[3].x, yPos + 5);
+      pdf.text(truncate(moodStr, 35), cols[4].x, yPos + 5);
+      pdf.text(truncate(symptomStr, 35), cols[5].x, yPos + 5);
+
+      pdf.setDrawColor(...colors.border);
+      pdf.line(margin, yPos + 8, margin + contentWidth, yPos + 8);
+
+      yPos += 10;
+    });
+
+    yPos += 10;
+  }
 
   // ===== MOOD PATTERNS =====
   if (data.shareSettings.showMoodInsights && insights.topMoods.length > 0) {
