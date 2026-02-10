@@ -17,6 +17,7 @@ import { ChevronLeft, ChevronRight, Droplets } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { DayLog, FlowIntensity } from '@/types/period';
+import { CrimsonGraph } from './CrimsonGraph';
 
 interface CycleCalendarProps {
   logs: DayLog[];
@@ -186,6 +187,9 @@ export function CycleCalendar({
           <span className="text-muted-foreground">Ovulation</span>
         </div>
       </div>
+
+      {/* Crimson Graph */}
+      <CrimsonGraph logs={logs} currentMonth={currentMonth} />
     </div>
   );
 }
