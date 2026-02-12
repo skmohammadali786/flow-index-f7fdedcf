@@ -32,6 +32,10 @@ import { format, parseISO, differenceInDays } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useClinicalAssessments } from '@/hooks/useClinicalAssessments';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { generateClinicalReportPdf } from '@/utils/clinicalReportPdf';
+import { loadLogo } from '@/utils/pdfUtils';
+import logoSrc from '@/assets/logo.png';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ClinicalEvidenceViewProps {
   logs: DayLog[];
@@ -96,7 +100,9 @@ const redFlagSymptoms = [
 
 export function ClinicalEvidenceView({ logs, cycles, stats }: ClinicalEvidenceViewProps) {
   const [copied, setCopied] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const { assessment, historicalAssessments, isLoading, isSaving, updateVasScale, updateNotes } = useClinicalAssessments();
+  const { user } = useAuth();
 
   // Prepare chart data from historical assessments
   const chartData = useMemo(() => {
@@ -268,18 +274,27 @@ export function ClinicalEvidenceView({ logs, cycles, stats }: ClinicalEvidenceVi
     }
   };
 
-  const downloadReport = () => {
-    const report = generateClinicalReport();
-    const blob = new Blob([report], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `menstrual-health-report-${format(new Date(), 'yyyy-MM-dd')}.txt`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    toast.success('Report downloaded');
+  const downloadReport = async () => {
+    setIsGenerating(true);
+    try {
+      const logoBase64 = await loadLogo(logoSrc);
+      const userName = user?.user_metadata?.name || user?.email?.split('@')[0];
+
+      await generateClinicalReportPdf({
+        logs,
+        cycles,
+        stats,
+        assessment,
+        userName
+      }, logoBase64);
+
+      toast.success('Report downloaded');
+    } catch (error) {
+      console.error('PDF generation failed:', error);
+      toast.error('Failed to generate report');
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   return (
@@ -694,8 +709,12 @@ export function ClinicalEvidenceView({ logs, cycles, stats }: ClinicalEvidenceVi
                     {copied ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
                     {copied ? 'Copied!' : 'Copy Report'}
                   </Button>
-                  <Button onClick={downloadReport} className="flex-1">
-                    <Download className="h-4 w-4 mr-2" />
+                  <Button
+                    onClick={downloadReport}
+                    className="flex-1"
+                    disabled={isGenerating}
+                  >
+                    {isGenerating ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
                     Download
                   </Button>
                 </div>

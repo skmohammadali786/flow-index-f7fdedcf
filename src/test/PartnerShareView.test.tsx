@@ -58,6 +58,17 @@ vi.mock('@/contexts/AuthContext', () => ({
   })
 }));
 
+// Mock useWellnessJournal
+vi.mock('@/hooks/useWellnessJournal', () => ({
+  useWellnessJournal: () => ({
+    entries: [],
+    addEntry: vi.fn(),
+    updateEntry: vi.fn(),
+    deleteEntry: vi.fn(),
+    isLoading: false
+  })
+}));
+
 // Mock ResizeObserver which is used by some UI components
 global.ResizeObserver = class ResizeObserver {
   observe() {}
