@@ -183,59 +183,46 @@ export function useSupabaseSettings() {
     }
   }, [user]);
 
-  const exportData = useCallback(async () => {
+  const exportDataPdf = useCallback(async () => {
     if (!user) return;
 
-    // Fetch all user data from all tables
-    const [logsResult, cyclesResult, clinicalResult, profileResult, settingsResult] = await Promise.all([
-      supabase
-        .from('period_logs')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('date', { ascending: false }),
-      supabase
-        .from('cycles')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('start_date', { ascending: false }),
-      supabase
-        .from('clinical_assessments')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('date', { ascending: false }),
-      supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle(),
-      supabase
-        .from('user_settings')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle(),
-    ]);
+    try {
+      // Fetch logs, cycles, assessments (raw DB data)
+      const [logsResult, cyclesResult, clinicalResult] = await Promise.all([
+        supabase
+          .from('period_logs')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('date', { ascending: false }),
+        supabase
+          .from('cycles')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('start_date', { ascending: false }),
+        supabase
+          .from('clinical_assessments')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('date', { ascending: false }),
+      ]);
 
-    const data = {
-      exportedAt: new Date().toISOString(),
-      profile: profileResult.data || profile,
-      settings: settingsResult.data || settings,
-      periodLogs: logsResult.data || [],
-      cycles: cyclesResult.data || [],
-      clinicalAssessments: clinicalResult.data || [],
-      summary: {
-        totalPeriodLogs: logsResult.data?.length || 0,
-        totalCycles: cyclesResult.data?.length || 0,
-        totalClinicalAssessments: clinicalResult.data?.length || 0,
-      },
-    };
+      const logoBase64 = await loadLogo(logoSrc);
 
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `flowindex-complete-backup-${new Date().toISOString().split('T')[0]}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+      // Use local state for profile and settings to ensure correct casing (camelCase)
+      // logsResult, cyclesResult, clinicalResult are from DB (snake_case), which matches DBPeriodLog etc.
+      await generateExportDataPdf({
+        profile: profile,
+        settings: settings,
+        logs: (logsResult.data || []) as any[],
+        cycles: (cyclesResult.data || []) as any[],
+        assessments: (clinicalResult.data || []) as any[],
+      }, logoBase64);
+
+      toast.success("Data export downloaded successfully");
+    } catch (error) {
+      console.error('Export failed:', error);
+      toast.error("Failed to generate export PDF");
+    }
   }, [user, settings, profile]);
 
   const exportDataPdf = useCallback(async () => {
