@@ -21,6 +21,7 @@ import { useToast } from '@/hooks/use-toast';
 import { generatePartnerSharePdf } from '@/utils/partnerSharePdf';
 import { phaseInfo, moodLabels, symptomLabels } from '@/data/phaseData';
 import { useAuth } from '@/contexts/AuthContext';
+import { useWellnessJournal } from '@/hooks/useWellnessJournal';
 import logoSrc from '@/assets/logo.png';
 
 interface PartnerShareViewProps {
@@ -79,6 +80,7 @@ export function PartnerShareView({
 }: PartnerShareViewProps) {
   const { toast } = useToast();
   const { user } = useAuth();
+  const { entries: journalEntries } = useWellnessJournal();
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
@@ -374,6 +376,7 @@ export function PartnerShareView({
         currentCycleDay,
         logs,
         userName,
+        journalEntries,
         shareSettings
       }, logoBase64);
 
