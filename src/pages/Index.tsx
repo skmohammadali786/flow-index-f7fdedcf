@@ -129,6 +129,9 @@ const Index = () => {
   const todayLog = getLogForDate(new Date());
   const isOnPeriod = todayLog?.isPeriod ?? false;
 
+  // Calculate display name for reports
+  const displayName = profile.name || user?.user_metadata?.name || user?.email?.split('@')[0];
+
   const handleDayClick = (date: Date) => {
     setSelectedDate(date);
   };
@@ -284,6 +287,7 @@ const Index = () => {
                 daysUntilNextPeriod={daysUntilNextPeriod}
                 currentCycleDay={currentCycleDay}
                 logs={logs}
+                userName={displayName}
               />
             </motion.div>
           )}
@@ -301,6 +305,7 @@ const Index = () => {
                 logs={logs}
                 cycles={cycles}
                 stats={stats}
+                userName={displayName}
               />
             </motion.div>
           )}
@@ -336,6 +341,7 @@ const Index = () => {
                 logs={logs}
                 cycles={cycles}
                 stats={stats}
+                userName={displayName}
               />
             </motion.div>
           )}

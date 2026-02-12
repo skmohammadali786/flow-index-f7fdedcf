@@ -18,9 +18,10 @@ interface HealthReportGeneratorProps {
   logs: DayLog[];
   cycles: CycleData[];
   stats: CycleStats | null;
+  userName?: string;
 }
 
-export function HealthReportGenerator({ logs, cycles, stats }: HealthReportGeneratorProps) {
+export function HealthReportGenerator({ logs, cycles, stats, userName: propUserName }: HealthReportGeneratorProps) {
   const { toast } = useToast();
   const { user } = useAuth();
   const [isGenerating, setIsGenerating] = useState(false);
@@ -34,7 +35,7 @@ export function HealthReportGenerator({ logs, cycles, stats }: HealthReportGener
     includeWater: false,
   });
 
-  const userName = user?.user_metadata?.name || user?.email?.split('@')[0];
+  const userName = propUserName || user?.user_metadata?.name || user?.email?.split('@')[0];
 
   const reportData = useMemo(() => {
     const monthsAgo = parseInt(options.period);
