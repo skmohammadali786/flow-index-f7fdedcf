@@ -49,7 +49,8 @@ interface SettingsViewProps {
   settings: UserSettings;
   onUpdateSettings: (updates: Partial<UserSettings>) => void;
   onUpdateNotifications: (updates: Partial<UserSettings['notifications']>) => void;
-  onExportPdf: () => Promise<void>;
+  onExportData: () => void;
+  onExportPdf: () => void;
   onResetSettings: () => void;
 }
 
@@ -57,6 +58,7 @@ export function SettingsView({
   settings,
   onUpdateSettings,
   onUpdateNotifications,
+  onExportData,
   onExportPdf,
   onResetSettings,
 }: SettingsViewProps) {
@@ -361,19 +363,23 @@ export function SettingsView({
           <Button
             variant="outline"
             className="w-full justify-between"
-            onClick={async () => {
-              setIsExporting(true);
-              try {
-                await onExportPdf();
-              } finally {
-                setIsExporting(false);
-              }
-            }}
-            disabled={isExporting}
+            onClick={onExportPdf}
           >
             <span className="flex items-center gap-2">
-              {isExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
-              Export Data
+              <FileText className="h-4 w-4" />
+              Export Data (PDF)
+            </span>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+
+          <Button
+            variant="outline"
+            className="w-full justify-between"
+            onClick={onExportData}
+          >
+            <span className="flex items-center gap-2">
+              <Download className="h-4 w-4" />
+              Export Data (JSON)
             </span>
             <ChevronRight className="h-4 w-4" />
           </Button>
