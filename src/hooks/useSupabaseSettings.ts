@@ -5,6 +5,7 @@ import { UserSettings, UserProfile, DEFAULT_SETTINGS, DEFAULT_PROFILE } from '@/
 import { generateExportDataPdf } from '@/utils/exportDataPdf';
 import { loadLogo } from '@/utils/pdfUtils';
 import logoSrc from '@/assets/logo.png';
+import { toast } from 'sonner';
 
 export function useSupabaseSettings() {
   const { user } = useAuth();
@@ -225,49 +226,6 @@ export function useSupabaseSettings() {
     }
   }, [user, settings, profile]);
 
-  const exportDataPdf = useCallback(async () => {
-    if (!user) return;
-
-    // Fetch all user data from all tables
-    const [logsResult, cyclesResult, clinicalResult, profileResult, settingsResult] = await Promise.all([
-      supabase
-        .from('period_logs')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('date', { ascending: false }),
-      supabase
-        .from('cycles')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('start_date', { ascending: false }),
-      supabase
-        .from('clinical_assessments')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('date', { ascending: false }),
-      supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle(),
-      supabase
-        .from('user_settings')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle(),
-    ]);
-
-    const logoBase64 = await loadLogo(logoSrc);
-
-    await generateExportDataPdf({
-      profile: profileResult.data || profile,
-      settings: settingsResult.data || settings,
-      logs: (logsResult.data || []) as any[],
-      cycles: (cyclesResult.data || []) as any[],
-      assessments: (clinicalResult.data || []) as any[],
-    }, logoBase64);
-  }, [user, settings, profile]);
-
   return {
     settings,
     profile,
@@ -276,7 +234,6 @@ export function useSupabaseSettings() {
     updateNotifications,
     updateProfile,
     resetSettings,
-    exportData,
     exportDataPdf,
   };
 }

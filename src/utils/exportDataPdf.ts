@@ -73,7 +73,7 @@ export async function generateExportDataPdf(data: ExportDataPdfProps, logoBase64
   const userName = data.userName || data.profile.name || 'User';
 
   // Helper to add new page if needed
-  const checkNewPage = (requiredSpace: number) => {
+  const checkNewPage = (requiredSpace: number, onNewPage?: () => void) => {
     if (yPos + requiredSpace > pageHeight - margin - 20) {
       addPageFooter(pdf, pageWidth, pageHeight, margin);
       pdf.addPage();
@@ -86,6 +86,10 @@ export async function generateExportDataPdf(data: ExportDataPdfProps, logoBase64
       pdf.setFontSize(8);
       pdf.setTextColor(...colors.textMuted);
       pdf.text('Flow Index - Data Export', pageWidth / 2, 10, { align: 'center' });
+
+      if (onNewPage) {
+        onNewPage();
+      }
       return true;
     }
     return false;
@@ -167,34 +171,37 @@ export async function generateExportDataPdf(data: ExportDataPdfProps, logoBase64
     pdf.text('Cycle History', margin, yPos);
     yPos += 8;
 
-    // Table Header
     const cycleCols = [
       { header: 'Start Date', width: 40 },
       { header: 'End Date', width: 40 },
       { header: 'Length', width: 30 },
     ];
 
-    drawRoundedRect(pdf, margin, yPos, contentWidth, 8, 2, colors.lavenderLight);
-    let x = margin + 5;
-    pdf.setFontSize(9);
-    pdf.setTextColor(...colors.text);
-    cycleCols.forEach(col => {
-      pdf.text(col.header, x, yPos + 5);
-      x += col.width + 10;
-    });
-    yPos += 10;
+    const drawCycleHeader = () => {
+      drawRoundedRect(pdf, margin, yPos, contentWidth, 8, 2, colors.lavenderLight);
+      let x = margin + 5;
+      pdf.setFontSize(9);
+      pdf.setTextColor(...colors.text);
+      cycleCols.forEach(col => {
+        pdf.text(col.header, x, yPos + 5);
+        x += col.width + 10;
+      });
+      yPos += 10;
+    };
+
+    drawCycleHeader();
 
     // Table Rows
     pdf.setFont('helvetica', 'normal');
     data.cycles.forEach((cycle, i) => {
-      checkNewPage(10);
+      checkNewPage(10, drawCycleHeader);
 
       if (i % 2 === 1) {
         pdf.setFillColor(250, 250, 252);
         pdf.rect(margin, yPos - 2, contentWidth, 8, 'F');
       }
 
-      x = margin + 5;
+      let x = margin + 5;
       pdf.text(cycle.start_date, x, yPos + 3); x += cycleCols[0].width + 10;
       pdf.text(cycle.end_date || 'Current', x, yPos + 3); x += cycleCols[1].width + 10;
       pdf.text(cycle.length ? `${cycle.length} days` : '-', x, yPos + 3);
@@ -214,7 +221,6 @@ export async function generateExportDataPdf(data: ExportDataPdfProps, logoBase64
     pdf.text('Clinical Assessments', margin, yPos);
     yPos += 8;
 
-    // Table Header
     const assessCols = [
       { header: 'Date', width: 30 },
       { header: 'Pain', width: 15 },
@@ -224,26 +230,30 @@ export async function generateExportDataPdf(data: ExportDataPdfProps, logoBase64
       { header: 'Notes', width: 60 },
     ];
 
-    drawRoundedRect(pdf, margin, yPos, contentWidth, 8, 2, colors.sageLight);
-    let x = margin + 5;
-    pdf.setFontSize(9);
-    assessCols.forEach(col => {
-      pdf.text(col.header, x, yPos + 5);
-      x += col.width + 5;
-    });
-    yPos += 10;
+    const drawAssessHeader = () => {
+      drawRoundedRect(pdf, margin, yPos, contentWidth, 8, 2, colors.sageLight);
+      let x = margin + 5;
+      pdf.setFontSize(9);
+      assessCols.forEach(col => {
+        pdf.text(col.header, x, yPos + 5);
+        x += col.width + 5;
+      });
+      yPos += 10;
+    };
+
+    drawAssessHeader();
 
     // Table Rows
     pdf.setFont('helvetica', 'normal');
     data.assessments.forEach((assess, i) => {
-      checkNewPage(12);
+      checkNewPage(12, drawAssessHeader);
 
       if (i % 2 === 1) {
         pdf.setFillColor(250, 250, 252);
         pdf.rect(margin, yPos - 2, contentWidth, 10, 'F');
       }
 
-      x = margin + 5;
+      let x = margin + 5;
       pdf.text(assess.date, x, yPos + 3); x += assessCols[0].width + 5;
       pdf.text(assess.pain_vas.toString(), x + 2, yPos + 3); x += assessCols[1].width + 5;
       pdf.text(assess.fatigue_vas.toString(), x + 2, yPos + 3); x += assessCols[2].width + 5;
@@ -269,7 +279,6 @@ export async function generateExportDataPdf(data: ExportDataPdfProps, logoBase64
     pdf.text('Daily Logs History', margin, yPos);
     yPos += 8;
 
-    // Table Header
     const logCols = [
       { header: 'Date', width: 25 },
       { header: 'Flow', width: 15 },
@@ -278,26 +287,30 @@ export async function generateExportDataPdf(data: ExportDataPdfProps, logoBase64
       { header: 'Other', width: 30 },
     ];
 
-    drawRoundedRect(pdf, margin, yPos, contentWidth, 8, 2, colors.coralLight);
-    let x = margin + 5;
-    pdf.setFontSize(9);
-    logCols.forEach(col => {
-      pdf.text(col.header, x, yPos + 5);
-      x += col.width + 5;
-    });
-    yPos += 10;
+    const drawLogHeader = () => {
+      drawRoundedRect(pdf, margin, yPos, contentWidth, 8, 2, colors.coralLight);
+      let x = margin + 5;
+      pdf.setFontSize(9);
+      logCols.forEach(col => {
+        pdf.text(col.header, x, yPos + 5);
+        x += col.width + 5;
+      });
+      yPos += 10;
+    };
+
+    drawLogHeader();
 
     // Table Rows
     pdf.setFont('helvetica', 'normal');
     data.logs.forEach((log, i) => {
-      checkNewPage(15); // Require slightly more space for potentially multi-line
+      checkNewPage(15, drawLogHeader); // Require slightly more space for potentially multi-line
 
       if (i % 2 === 1) {
         pdf.setFillColor(250, 250, 252);
         pdf.rect(margin, yPos - 2, contentWidth, 12, 'F');
       }
 
-      x = margin + 5;
+      let x = margin + 5;
       pdf.text(log.date, x, yPos + 3); x += logCols[0].width + 5;
 
       // Flow
