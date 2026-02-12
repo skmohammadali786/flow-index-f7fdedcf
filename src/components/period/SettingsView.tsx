@@ -15,6 +15,7 @@ import {
   Mail,
   ExternalLink,
   HeadphonesIcon,
+  FileText,
 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -49,6 +50,7 @@ interface SettingsViewProps {
   onUpdateSettings: (updates: Partial<UserSettings>) => void;
   onUpdateNotifications: (updates: Partial<UserSettings['notifications']>) => void;
   onExportData: () => void;
+  onExportPdf: () => void;
   onResetSettings: () => void;
 }
 
@@ -57,6 +59,7 @@ export function SettingsView({
   onUpdateSettings,
   onUpdateNotifications,
   onExportData,
+  onExportPdf,
   onResetSettings,
 }: SettingsViewProps) {
   const { signOut } = useAuth();
@@ -359,15 +362,26 @@ export function SettingsView({
           <Button
             variant="outline"
             className="w-full justify-between"
-            onClick={onExportData}
+            onClick={onExportPdf}
           >
             <span className="flex items-center gap-2">
-              <Download className="h-4 w-4" />
-              Export Data
+              <FileText className="h-4 w-4" />
+              Export Data (PDF)
             </span>
             <ChevronRight className="h-4 w-4" />
           </Button>
 
+          <Button
+            variant="outline"
+            className="w-full justify-between"
+            onClick={onExportData}
+          >
+            <span className="flex items-center gap-2">
+              <Download className="h-4 w-4" />
+              Export Data (JSON)
+            </span>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
 
           <Button
             variant="outline"
