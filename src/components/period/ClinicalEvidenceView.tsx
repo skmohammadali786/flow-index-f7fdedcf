@@ -41,6 +41,7 @@ interface ClinicalEvidenceViewProps {
   logs: DayLog[];
   cycles: CycleData[];
   stats: CycleStats | null;
+  userName?: string;
 }
 
 interface VASScaleDisplay {
@@ -98,11 +99,13 @@ const redFlagSymptoms = [
   { symptom: 'Spotting between periods', condition: 'Metrorrhagia' },
 ];
 
-export function ClinicalEvidenceView({ logs, cycles, stats }: ClinicalEvidenceViewProps) {
+export function ClinicalEvidenceView({ logs, cycles, stats, userName: propUserName }: ClinicalEvidenceViewProps) {
   const [copied, setCopied] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const { assessment, historicalAssessments, isLoading, isSaving, updateVasScale, updateNotes } = useClinicalAssessments();
   const { user } = useAuth();
+
+  const userName = propUserName || user?.user_metadata?.name || user?.email?.split('@')[0];
 
   // Prepare chart data from historical assessments
   const chartData = useMemo(() => {
@@ -278,7 +281,6 @@ export function ClinicalEvidenceView({ logs, cycles, stats }: ClinicalEvidenceVi
     setIsGenerating(true);
     try {
       const logoBase64 = await loadLogo(logoSrc);
-      const userName = user?.user_metadata?.name || user?.email?.split('@')[0];
 
       await generateClinicalReportPdf({
         logs,

@@ -31,6 +31,7 @@ interface PartnerShareViewProps {
   daysUntilNextPeriod: number | null;
   currentCycleDay: number | null;
   logs?: DayLog[];
+  userName?: string;
 }
 
 interface ShareSettings {
@@ -77,6 +78,7 @@ export function PartnerShareView({
   daysUntilNextPeriod,
   currentCycleDay,
   logs = [],
+  userName: propUserName,
 }: PartnerShareViewProps) {
   const { toast } = useToast();
   const { user } = useAuth();
@@ -94,8 +96,8 @@ export function PartnerShareView({
   });
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   
-  // Get user name from metadata or email
-  const userName = user?.user_metadata?.name || user?.email?.split('@')[0] || undefined;
+  // Get user name from prop or metadata or email
+  const userName = propUserName || user?.user_metadata?.name || user?.email?.split('@')[0] || undefined;
 
   const currentPhaseInfo = phaseInfo[currentPhase];
   const currentPhaseUI = phaseUIConfig[currentPhase];
