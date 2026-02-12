@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { format, parseISO, subMonths } from 'date-fns';
+import { parseISO, subMonths } from 'date-fns';
 import { FileText, Download, Calendar, Activity, Heart, Droplets, Moon, Pill } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -9,6 +9,10 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { DayLog, CycleData, CycleStats } from '@/types/period';
+import { generateHealthReportPdf, HealthReportOptions } from '@/utils/healthReportPdf';
+import { loadLogo } from '@/utils/pdfUtils';
+import logoSrc from '@/assets/logo.png';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface HealthReportGeneratorProps {
   logs: DayLog[];
@@ -16,20 +20,11 @@ interface HealthReportGeneratorProps {
   stats: CycleStats | null;
 }
 
-interface ReportOptions {
-  period: '1' | '3' | '6' | '12';
-  includeCycles: boolean;
-  includeSymptoms: boolean;
-  includeMoods: boolean;
-  includeMedications: boolean;
-  includeSleep: boolean;
-  includeWater: boolean;
-}
-
 export function HealthReportGenerator({ logs, cycles, stats }: HealthReportGeneratorProps) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isGenerating, setIsGenerating] = useState(false);
-  const [options, setOptions] = useState<ReportOptions>({
+  const [options, setOptions] = useState<HealthReportOptions>({
     period: '3',
     includeCycles: true,
     includeSymptoms: true,
@@ -39,248 +34,49 @@ export function HealthReportGenerator({ logs, cycles, stats }: HealthReportGener
     includeWater: false,
   });
 
+  const userName = user?.user_metadata?.name || user?.email?.split('@')[0];
+
   const reportData = useMemo(() => {
     const monthsAgo = parseInt(options.period);
     const startDate = subMonths(new Date(), monthsAgo);
     
     const filteredLogs = logs
-      .filter(log => parseISO(log.date) >= startDate)
-      .sort((a, b) => parseISO(b.date).getTime() - parseISO(a.date).getTime());
+      .filter(log => parseISO(log.date) >= startDate);
     const filteredCycles = cycles.filter(cycle => parseISO(cycle.startDate) >= startDate);
     
-    // Calculate symptom frequencies
-    const symptomCounts: Record<string, number> = {};
-    filteredLogs.forEach(log => {
-      log.symptoms.forEach(symptom => {
-        symptomCounts[symptom] = (symptomCounts[symptom] || 0) + 1;
-      });
-    });
-    
-    // Calculate mood frequencies
-    const moodCounts: Record<string, number> = {};
-    filteredLogs.forEach(log => {
-      log.moods.forEach(mood => {
-        moodCounts[mood] = (moodCounts[mood] || 0) + 1;
-      });
-    });
-    
-    // Calculate averages
-    const sleepLogs = filteredLogs.filter(log => log.sleepHours);
-    const waterLogs = filteredLogs.filter(log => log.waterIntake);
-    const exerciseLogs = filteredLogs.filter(log => log.exerciseMinutes);
-    const avgSleep = sleepLogs.length > 0 
-      ? sleepLogs.reduce((sum, log) => sum + (log.sleepHours || 0), 0) / sleepLogs.length 
-      : 0;
-    const avgWater = waterLogs.length > 0 
-      ? waterLogs.reduce((sum, log) => sum + (log.waterIntake || 0), 0) / waterLogs.length 
-      : 0;
-    const avgExercise = exerciseLogs.length > 0
-      ? exerciseLogs.reduce((sum, log) => sum + (log.exerciseMinutes || 0), 0) / exerciseLogs.length
-      : 0;
-    
-    // Medication tracking
-    const medicationLogs: Record<string, number> = {};
-    filteredLogs.forEach(log => {
-      log.medications?.forEach(med => {
-        if (med.taken) {
-          medicationLogs[med.name] = (medicationLogs[med.name] || 0) + 1;
-        }
-      });
-    });
-    
-    // Period days count
-    const periodDays = filteredLogs.filter(log => log.isPeriod).length;
-    
     return {
-      dateRange: {
-        start: format(startDate, 'MMM d, yyyy'),
-        end: format(new Date(), 'MMM d, yyyy'),
-      },
       totalDaysLogged: filteredLogs.length,
-      periodDays,
       cycles: filteredCycles.length,
-      symptomCounts,
-      moodCounts,
-      avgSleep: Math.round(avgSleep * 10) / 10,
-      avgWater: Math.round(avgWater * 10) / 10,
-      avgExercise: Math.round(avgExercise),
-      medicationLogs,
-      dailyLogs: filteredLogs,
     };
   }, [logs, cycles, options.period]);
 
-  const generateReport = () => {
+  const generateReport = async () => {
     setIsGenerating(true);
-    
-    // Build report content
-    let report = `
-╔══════════════════════════════════════════════════════════════╗
-║                  FLOW INDEX HEALTH REPORT                     ║
-╚══════════════════════════════════════════════════════════════╝
+    try {
+      const logoBase64 = await loadLogo(logoSrc);
 
-Report Period: ${reportData.dateRange.start} - ${reportData.dateRange.end}
-Generated: ${format(new Date(), 'MMMM d, yyyy h:mm a')}
-Total Days Logged: ${reportData.totalDaysLogged}
-Period Days: ${reportData.periodDays}
+      await generateHealthReportPdf({
+        logs,
+        cycles,
+        stats,
+        options,
+        userName
+      }, logoBase64);
 
-`;
-
-    if (options.includeCycles && stats) {
-      report += `
-═══════════════════════════════════════════════════════════════
-                        CYCLE SUMMARY
-═══════════════════════════════════════════════════════════════
-
-Cycles Tracked: ${stats.totalCycles}
-Average Cycle Length: ${stats.averageCycleLength} days
-Average Period Length: ${stats.averagePeriodLength} days
-Cycle Range: ${stats.shortestCycle} - ${stats.longestCycle} days
-
-`;
-    }
-
-    // Add daily log details
-    if (reportData.dailyLogs.length > 0) {
-      report += `
-═══════════════════════════════════════════════════════════════
-                       DAILY LOG DETAILS
-═══════════════════════════════════════════════════════════════
-
-`;
-      reportData.dailyLogs.forEach(log => {
-        report += `┌─────────────────────────────────────────────────────────────┐
-│ ${format(parseISO(log.date), 'EEEE, MMMM d, yyyy').padEnd(59)}│
-└─────────────────────────────────────────────────────────────┘
-`;
-        if (log.isPeriod) {
-          report += `  🩸 Period Day${log.flowIntensity ? ` (${log.flowIntensity} flow)` : ''}\n`;
-        }
-        if (log.moods.length > 0) {
-          report += `  😊 Mood: ${log.moods.join(', ')}\n`;
-        }
-        if (log.symptoms.length > 0) {
-          report += `  🩺 Symptoms: ${log.symptoms.map(s => s.replace('_', ' ')).join(', ')}\n`;
-        }
-        if (log.sleepHours) {
-          report += `  😴 Sleep: ${log.sleepHours} hours${log.sleepQuality ? ` (${log.sleepQuality})` : ''}\n`;
-        }
-        if (log.waterIntake) {
-          report += `  💧 Water: ${log.waterIntake} glasses\n`;
-        }
-        if (log.exerciseMinutes) {
-          report += `  🏃 Exercise: ${log.exerciseMinutes} minutes\n`;
-        }
-        if (log.temperature) {
-          report += `  🌡️ Temperature: ${log.temperature}°C\n`;
-        }
-        if (log.medications && log.medications.length > 0) {
-          const takenMeds = log.medications.filter(m => m.taken);
-          if (takenMeds.length > 0) {
-            report += `  💊 Medications: ${takenMeds.map(m => m.name).join(', ')}\n`;
-          }
-        }
-        if (log.notes) {
-          report += `  📝 Notes: ${log.notes}\n`;
-        }
-        report += '\n';
+      toast({
+        title: "Report generated",
+        description: "Your health report has been downloaded.",
       });
+    } catch (error) {
+      console.error('PDF generation failed:', error);
+      toast({
+        title: "Generation failed",
+        description: "Could not generate the health report.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGenerating(false);
     }
-
-    if (options.includeSymptoms && Object.keys(reportData.symptomCounts).length > 0) {
-      report += `
-═══════════════════════════════════════════════════════════════
-                      SYMPTOM FREQUENCY
-═══════════════════════════════════════════════════════════════
-
-`;
-      Object.entries(reportData.symptomCounts)
-        .sort((a, b) => b[1] - a[1])
-        .forEach(([symptom, count]) => {
-          const bar = '█'.repeat(Math.min(count, 20));
-          report += `${symptom.replace('_', ' ').padEnd(20)} ${bar} (${count} days)\n`;
-        });
-    }
-
-    if (options.includeMoods && Object.keys(reportData.moodCounts).length > 0) {
-      report += `
-═══════════════════════════════════════════════════════════════
-                       MOOD PATTERNS
-═══════════════════════════════════════════════════════════════
-
-`;
-      Object.entries(reportData.moodCounts)
-        .sort((a, b) => b[1] - a[1])
-        .forEach(([mood, count]) => {
-          const bar = '█'.repeat(Math.min(count, 20));
-          report += `${mood.padEnd(20)} ${bar} (${count} days)\n`;
-        });
-    }
-
-    if (options.includeMedications && Object.keys(reportData.medicationLogs).length > 0) {
-      report += `
-═══════════════════════════════════════════════════════════════
-                    MEDICATION TRACKING
-═══════════════════════════════════════════════════════════════
-
-`;
-      Object.entries(reportData.medicationLogs)
-        .forEach(([med, count]) => {
-          report += `${med.padEnd(20)} Taken ${count} days\n`;
-        });
-    }
-
-    if (options.includeSleep && reportData.avgSleep > 0) {
-      report += `
-═══════════════════════════════════════════════════════════════
-                      SLEEP PATTERNS
-═══════════════════════════════════════════════════════════════
-
-Average Sleep: ${reportData.avgSleep} hours per night
-
-`;
-    }
-
-    if (options.includeWater && reportData.avgWater > 0) {
-      report += `
-═══════════════════════════════════════════════════════════════
-                   HYDRATION & EXERCISE
-═══════════════════════════════════════════════════════════════
-
-Average Water Intake: ${reportData.avgWater} glasses per day
-Average Exercise: ${reportData.avgExercise} minutes per day
-
-`;
-    }
-
-    report += `
-═══════════════════════════════════════════════════════════════
-                         NOTES
-═══════════════════════════════════════════════════════════════
-
-This report was generated by Flow Index Period Tracker. 
-The data is based on user-entered information and should not 
-be considered medical advice. Please consult with your 
-healthcare provider for any medical concerns.
-
-───────────────────────────────────────────────────────────────
-                    End of Report
-───────────────────────────────────────────────────────────────
-`;
-
-    // Download as text file
-    const blob = new Blob([report], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `flowindex-health-report-${format(new Date(), 'yyyy-MM-dd')}.txt`;
-    a.click();
-    URL.revokeObjectURL(url);
-    
-    setIsGenerating(false);
-    toast({
-      title: "Report generated",
-      description: "Your health report has been downloaded.",
-    });
   };
 
   const containerVariants = {
@@ -447,7 +243,7 @@ healthcare provider for any medical concerns.
           {isGenerating ? 'Generating...' : 'Download Health Report'}
         </Button>
         <p className="text-xs text-muted-foreground text-center mt-2">
-          Report will be downloaded as a text file
+          Report will be downloaded as a PDF file
         </p>
       </motion.div>
     </motion.div>
