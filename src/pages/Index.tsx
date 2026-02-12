@@ -74,6 +74,7 @@ const Index = () => {
     updateProfile,
     resetSettings,
     exportData,
+    exportDataPdf,
   } = useSupabaseSettings();
 
   const {
@@ -386,6 +387,7 @@ const Index = () => {
                 onUpdateSettings={updateSettings}
                 onUpdateNotifications={updateNotifications}
                 onExportData={exportData}
+                onExportPdf={exportDataPdf}
                 onResetSettings={resetSettings}
               />
             </motion.div>
