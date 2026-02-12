@@ -3,6 +3,7 @@ import { format, parseISO, subDays, startOfDay, endOfDay, startOfWeek, endOfWeek
 import { CyclePrediction, CycleStats, DayLog, Mood, Symptom } from '@/types/period';
 import { CyclePhase } from '@/types/settings';
 import { moodLabels, symptomLabels, getPhaseInfoForPdf } from '@/data/phaseData';
+import type { JournalEntry } from '@/hooks/useWellnessJournal';
 
 // Beautiful color palette matching the app
 export const colors = {
@@ -51,6 +52,7 @@ export interface PdfData {
   currentCycleDay: number | null;
   logs: DayLog[];
   userName?: string;
+  journalEntries?: JournalEntry[];
   shareSettings: {
     showPeriodDates: boolean;
     showFertileWindow: boolean;
@@ -776,6 +778,193 @@ export async function generatePartnerSharePdf(data: PdfData, logoBase64?: string
     });
     
     yPos += 48;
+  }
+
+  // ===== WELLNESS JOURNAL SECTION =====
+  const journalEntries = data.journalEntries || [];
+  if (journalEntries.length > 0) {
+    // Recent journal entries (last 7)
+    const recentJournal = journalEntries.slice(0, 7);
+
+    // Calculate mood trend data
+    const moodRatings = recentJournal.filter(e => e.mood_rating).map(e => e.mood_rating!);
+    const energyRatings = recentJournal.filter(e => e.energy_level).map(e => e.energy_level!);
+    const avgMood = moodRatings.length > 0 ? Math.round((moodRatings.reduce((a, b) => a + b, 0) / moodRatings.length) * 10) / 10 : null;
+    const avgEnergy = energyRatings.length > 0 ? Math.round((energyRatings.reduce((a, b) => a + b, 0) / energyRatings.length) * 10) / 10 : null;
+    const selfCareDays = recentJournal.filter(e => e.self_care_done).length;
+
+    // Collect all tags
+    const tagCounts: Record<string, number> = {};
+    recentJournal.forEach(e => (e.tags || []).forEach(t => { tagCounts[t] = (tagCounts[t] || 0) + 1; }));
+    const topTags = Object.entries(tagCounts).sort(([,a],[,b]) => b - a).slice(0, 5);
+
+    // Calculate journal streak
+    let streak = 0;
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    for (let i = 0; i < journalEntries.length; i++) {
+      const expected = format(subDays(new Date(), i), 'yyyy-MM-dd');
+      if (journalEntries[i].date === expected) { streak++; } else { break; }
+    }
+
+    // Section header
+    checkNewPage(100);
+    
+    pdf.setTextColor(...colors.text);
+    pdf.setFontSize(14);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('Wellness Journal', margin, yPos + 4);
+    pdf.setFontSize(9);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setTextColor(...colors.textMuted);
+    pdf.text('Daily reflections and emotional well-being', margin, yPos + 12);
+    yPos += 20;
+
+    // Stats row
+    const jStatWidth = (contentWidth - 12) / 4;
+    const moodLabelsMap = ['', 'Rough', 'Low', 'Okay', 'Good', 'Great'];
+    const energyLabelsMap = ['', 'Drained', 'Low', 'Moderate', 'Energized', 'Vibrant'];
+
+    const journalStats = [
+      { label: 'Avg Mood', value: avgMood ? moodLabelsMap[Math.round(avgMood)] : '-', color: colors.lavenderLight },
+      { label: 'Avg Energy', value: avgEnergy ? energyLabelsMap[Math.round(avgEnergy)] : '-', color: colors.peachLight },
+      { label: 'Self-Care', value: `${selfCareDays}/${recentJournal.length}`, color: colors.sageLight },
+      { label: 'Streak', value: streak > 0 ? `${streak}d` : '-', color: colors.coralLight },
+    ];
+
+    journalStats.forEach((stat, i) => {
+      const xOffset = margin + i * (jStatWidth + 4);
+      drawRoundedRect(pdf, xOffset, yPos, jStatWidth, 24, 5, stat.color);
+      pdf.setFontSize(13);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(...colors.text);
+      pdf.text(stat.value, xOffset + 8, yPos + 14);
+      pdf.setFontSize(7);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(...colors.textMuted);
+      pdf.text(stat.label, xOffset + jStatWidth - 6, yPos + 18, { align: 'right' });
+    });
+    yPos += 32;
+
+    // Mood trend mini-chart (7 days)
+    if (moodRatings.length >= 2) {
+      checkNewPage(50);
+      drawRoundedRect(pdf, margin, yPos, contentWidth, 40, 5, colors.cardBg, colors.border);
+
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(...colors.text);
+      pdf.text('Mood & Energy Trend (Recent)', margin + 10, yPos + 10);
+
+      const chartX = margin + 15;
+      const chartW = contentWidth - 30;
+      const chartY = yPos + 14;
+      const chartH = 20;
+
+      // Grid
+      pdf.setDrawColor(230, 230, 240);
+      pdf.setLineWidth(0.1);
+      for (let i = 0; i <= 4; i++) {
+        const gy = chartY + chartH - (i / 4) * chartH;
+        pdf.line(chartX, gy, chartX + chartW, gy);
+      }
+
+      // Mood line (pink)
+      const moodEntries = recentJournal.filter(e => e.mood_rating).reverse();
+      if (moodEntries.length >= 2) {
+        pdf.setDrawColor(220, 80, 140);
+        pdf.setLineWidth(0.7);
+        let px: number | null = null, py: number | null = null;
+        moodEntries.forEach((e, i) => {
+          const x = chartX + (i / (moodEntries.length - 1)) * chartW;
+          const y = chartY + chartH - ((e.mood_rating! - 1) / 4) * chartH;
+          if (px !== null && py !== null) pdf.line(px, py, x, y);
+          pdf.setFillColor(220, 80, 140);
+          pdf.circle(x, y, 0.9, 'F');
+          px = x; py = y;
+        });
+      }
+
+      // Energy line (amber)
+      const energyEntries = recentJournal.filter(e => e.energy_level).reverse();
+      if (energyEntries.length >= 2) {
+        pdf.setDrawColor(245, 158, 11);
+        pdf.setLineWidth(0.7);
+        let px: number | null = null, py: number | null = null;
+        energyEntries.forEach((e, i) => {
+          const x = chartX + (i / (energyEntries.length - 1)) * chartW;
+          const y = chartY + chartH - ((e.energy_level! - 1) / 4) * chartH;
+          if (px !== null && py !== null) pdf.line(px, py, x, y);
+          pdf.setFillColor(245, 158, 11);
+          pdf.circle(x, y, 0.9, 'F');
+          px = x; py = y;
+        });
+      }
+
+      // Legend
+      pdf.setFillColor(220, 80, 140);
+      pdf.circle(margin + 15, yPos + 37, 1.5, 'F');
+      pdf.setFontSize(7);
+      pdf.setTextColor(...colors.textMuted);
+      pdf.text('Mood', margin + 19, yPos + 38.5);
+
+      pdf.setFillColor(245, 158, 11);
+      pdf.circle(margin + 40, yPos + 37, 1.5, 'F');
+      pdf.text('Energy', margin + 44, yPos + 38.5);
+
+      yPos += 46;
+    }
+
+    // Top wellness tags
+    if (topTags.length > 0) {
+      checkNewPage(25);
+      drawRoundedRect(pdf, margin, yPos, contentWidth, 20, 5, colors.cardBg, colors.border);
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(...colors.text);
+      pdf.text('Top Wellness Tags:', margin + 8, yPos + 8);
+      
+      let tagX = margin + 50;
+      topTags.forEach(([tag, count]) => {
+        drawRoundedRect(pdf, tagX, yPos + 10, pdf.getTextWidth(tag) + 14, 7, 3, colors.lavenderLight);
+        pdf.setFontSize(7);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setTextColor(...colors.text);
+        pdf.text(`${tag} (${count})`, tagX + 4, yPos + 14.5);
+        tagX += pdf.getTextWidth(`${tag} (${count})`) + 18;
+      });
+      yPos += 26;
+    }
+
+    // Recent gratitude highlights
+    const gratitudeEntries = recentJournal.filter(e => e.gratitude).slice(0, 3);
+    if (gratitudeEntries.length > 0) {
+      checkNewPage(20 + gratitudeEntries.length * 14);
+      
+      drawRoundedRect(pdf, margin, yPos, contentWidth, 12 + gratitudeEntries.length * 14, 5, colors.cardBg, colors.border);
+      drawRoundedRect(pdf, margin, yPos, 5, 12 + gratitudeEntries.length * 14, 5, colors.sage);
+      
+      pdf.setFontSize(11);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(...colors.text);
+      pdf.text('Gratitude Highlights', margin + 12, yPos + 10);
+
+      gratitudeEntries.forEach((entry, i) => {
+        const entryY = yPos + 18 + i * 14;
+        pdf.setFontSize(7);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(...colors.textMuted);
+        pdf.text(format(new Date(entry.date), 'MMM d'), margin + 12, entryY);
+        pdf.setFontSize(9);
+        pdf.setFont('helvetica', 'italic');
+        pdf.setTextColor(...colors.text);
+        const gratText = (entry.gratitude || '').length > 80 ? (entry.gratitude || '').substring(0, 77) + '...' : (entry.gratitude || '');
+        pdf.text(`"${gratText}"`, margin + 12, entryY + 7);
+      });
+
+      yPos += 20 + gratitudeEntries.length * 14;
+    }
+
+    yPos += 8;
   }
 
   // ===== PARTNER TIPS =====
