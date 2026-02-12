@@ -15,6 +15,7 @@ import {
   Mail,
   ExternalLink,
   HeadphonesIcon,
+  FileText,
 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -48,7 +49,7 @@ interface SettingsViewProps {
   settings: UserSettings;
   onUpdateSettings: (updates: Partial<UserSettings>) => void;
   onUpdateNotifications: (updates: Partial<UserSettings['notifications']>) => void;
-  onExportData: () => void;
+  onExportPdf: () => Promise<void>;
   onResetSettings: () => void;
 }
 
@@ -56,12 +57,13 @@ export function SettingsView({
   settings,
   onUpdateSettings,
   onUpdateNotifications,
-  onExportData,
+  onExportPdf,
   onResetSettings,
 }: SettingsViewProps) {
   const { signOut } = useAuth();
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   const handleDeleteAccount = async () => {
@@ -359,15 +361,22 @@ export function SettingsView({
           <Button
             variant="outline"
             className="w-full justify-between"
-            onClick={onExportData}
+            onClick={async () => {
+              setIsExporting(true);
+              try {
+                await onExportPdf();
+              } finally {
+                setIsExporting(false);
+              }
+            }}
+            disabled={isExporting}
           >
             <span className="flex items-center gap-2">
-              <Download className="h-4 w-4" />
+              {isExporting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
               Export Data
             </span>
             <ChevronRight className="h-4 w-4" />
           </Button>
-
 
           <Button
             variant="outline"
