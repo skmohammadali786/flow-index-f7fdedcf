@@ -12,6 +12,9 @@ import {
   Trash2,
   AlertTriangle,
   Loader2,
+  Mail,
+  ExternalLink,
+  HeadphonesIcon,
 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -383,6 +386,32 @@ export function SettingsView({
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
+      </motion.section>
+
+      {/* Contact Support */}
+      <motion.section variants={itemVariants} className="bg-card rounded-2xl p-5 shadow-card">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 rounded-lg bg-primary/10">
+            <HeadphonesIcon className="h-5 w-5 text-primary" />
+          </div>
+          <h2 className="font-semibold">Contact Support</h2>
+        </div>
+
+        <p className="text-sm text-muted-foreground mb-4">
+          Need help or have feedback? Reach out to our support team and we'll get back to you as soon as possible.
+        </p>
+
+        <Button
+          variant="outline"
+          className="w-full justify-between"
+          onClick={() => window.open('mailto:connect@skmohammadali.in?subject=Flow%20Index%20Support', '_blank')}
+        >
+          <span className="flex items-center gap-2">
+            <Mail className="h-4 w-4" />
+            connect@skmohammadali.in
+          </span>
+          <ExternalLink className="h-4 w-4" />
+        </Button>
       </motion.section>
 
       {/* Danger Zone */}
