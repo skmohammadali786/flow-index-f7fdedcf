@@ -18,13 +18,14 @@ const OnboardingFlow = lazy(() => import('@/components/period/OnboardingFlow').t
 const HealthReportGenerator = lazy(() => import('@/components/period/HealthReportGenerator').then(module => ({ default: module.HealthReportGenerator })));
 const BrainForecastView = lazy(() => import('@/components/period/BrainForecastView').then(module => ({ default: module.BrainForecastView })));
 const ClinicalEvidenceView = lazy(() => import('@/components/period/ClinicalEvidenceView').then(module => ({ default: module.ClinicalEvidenceView })));
+const WellnessJournalView = lazy(() => import('@/components/period/WellnessJournalView').then(module => ({ default: module.WellnessJournalView })));
 import { useSupabasePeriodTracker } from '@/hooks/useSupabasePeriodTracker';
 import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
 import { useSymptomAnalytics } from '@/hooks/useSymptomAnalytics';
 import { useAuth } from '@/contexts/AuthContext';
 import { startOfDay } from 'date-fns';
 
-type TabType = 'calendar' | 'insights' | 'history' | 'tips' | 'analytics' | 'charts' | 'share' | 'report' | 'brain' | 'clinical' | 'settings' | 'profile';
+type TabType = 'calendar' | 'insights' | 'history' | 'tips' | 'analytics' | 'charts' | 'share' | 'report' | 'brain' | 'clinical' | 'journal' | 'settings' | 'profile';
 
 const ONBOARDING_KEY = 'period_tracker_onboarding_complete';
 
@@ -336,6 +337,19 @@ const Index = () => {
                 cycles={cycles}
                 stats={stats}
               />
+            </motion.div>
+          )}
+
+          {activeTab === 'journal' && (
+            <motion.div
+              key="journal"
+              variants={pageVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              transition={{ duration: 0.2 }}
+            >
+              <WellnessJournalView />
             </motion.div>
           )}
 

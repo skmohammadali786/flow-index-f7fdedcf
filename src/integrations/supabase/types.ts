@@ -230,6 +230,51 @@ export type Database = {
         }
         Relationships: []
       }
+      wellness_journal: {
+        Row: {
+          affirmation: string | null
+          created_at: string
+          date: string
+          energy_level: number | null
+          gratitude: string | null
+          id: string
+          mood_rating: number | null
+          reflection: string | null
+          self_care_done: boolean | null
+          tags: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          affirmation?: string | null
+          created_at?: string
+          date?: string
+          energy_level?: number | null
+          gratitude?: string | null
+          id?: string
+          mood_rating?: number | null
+          reflection?: string | null
+          self_care_done?: boolean | null
+          tags?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          affirmation?: string | null
+          created_at?: string
+          date?: string
+          energy_level?: number | null
+          gratitude?: string | null
+          id?: string
+          mood_rating?: number | null
+          reflection?: string | null
+          self_care_done?: boolean | null
+          tags?: string[] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

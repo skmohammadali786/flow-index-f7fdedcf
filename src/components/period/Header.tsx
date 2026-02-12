@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { User, Settings, Lightbulb, Share2, FileText, Brain, Stethoscope, Calendar, TrendingUp, BarChart3, Activity, History } from 'lucide-react';
+import { User, Settings, Lightbulb, Share2, FileText, Brain, Stethoscope, Calendar, TrendingUp, BarChart3, Activity, History, BookHeart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 
-type TabType = 'calendar' | 'insights' | 'history' | 'tips' | 'analytics' | 'charts' | 'share' | 'report' | 'brain' | 'clinical' | 'settings' | 'profile';
+type TabType = 'calendar' | 'insights' | 'history' | 'tips' | 'analytics' | 'charts' | 'share' | 'report' | 'brain' | 'clinical' | 'journal' | 'settings' | 'profile';
 
 interface HeaderProps {
   activeTab: TabType;
@@ -31,6 +31,7 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
     { id: 'tips' as const, label: 'Health Tips', icon: Lightbulb },
     { id: 'share' as const, label: 'Partner Share', icon: Share2 },
     { id: 'report' as const, label: 'Health Report', icon: FileText },
+    { id: 'journal' as const, label: 'Wellness Journal', icon: BookHeart },
   ];
 
   const isMoreTab = moreOptions.some(t => t.id === activeTab);
