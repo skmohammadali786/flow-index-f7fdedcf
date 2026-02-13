@@ -31,10 +31,12 @@ export interface UserProfile {
 
 export type CyclePhase = 'menstrual' | 'follicular' | 'ovulation' | 'luteal';
 
+export type TipCategory = CyclePhase | 'fertility' | 'pregnancy' | 'postpartum';
+
 export interface HealthTip {
   id: string;
-  phase: CyclePhase;
-  category: 'nutrition' | 'exercise' | 'wellness' | 'mood' | 'sleep';
+  phase: TipCategory;
+  category: 'nutrition' | 'exercise' | 'wellness' | 'mood' | 'sleep' | 'lifestyle';
   title: string;
   description: string;
   icon: string;

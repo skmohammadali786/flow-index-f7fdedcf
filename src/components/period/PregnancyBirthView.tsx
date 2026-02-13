@@ -51,7 +51,11 @@ const getBabySize = (week: number) => {
   return 'Tiny!';
 };
 
-export function PregnancyBirthView() {
+interface PregnancyBirthViewProps {
+  initialTab?: string;
+}
+
+export function PregnancyBirthView({ initialTab }: PregnancyBirthViewProps) {
   const {
     pregnancies,
     pregnancyLogs,
@@ -200,7 +204,7 @@ export function PregnancyBirthView() {
 
   return (
     <div className="space-y-6">
-      <Tabs defaultValue={activePregnancy ? 'pregnancy' : latestBirth ? 'postpartum' : 'pregnancy'} className="w-full">
+      <Tabs defaultValue={initialTab || (activePregnancy ? 'pregnancy' : latestBirth ? 'postpartum' : 'pregnancy')} className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="pregnancy">Pregnancy</TabsTrigger>
           <TabsTrigger value="birth">Birth</TabsTrigger>

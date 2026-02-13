@@ -1,6 +1,84 @@
-import { HealthTip, CyclePhase } from '@/types/settings';
+import { HealthTip, CyclePhase, TipCategory } from '@/types/settings';
 
 export const healthTips: HealthTip[] = [
+  // Fertility Phase
+  {
+    id: 'fert-1',
+    phase: 'fertility',
+    category: 'nutrition',
+    title: 'Folic Acid',
+    description: 'Ensure you are taking 400mcg of folic acid daily to support healthy development.',
+    icon: '💊',
+  },
+  {
+    id: 'fert-2',
+    phase: 'fertility',
+    category: 'wellness',
+    title: 'Track Ovulation',
+    description: 'Monitor your basal body temperature and cervical mucus to identify your most fertile days.',
+    icon: '📉',
+  },
+  {
+    id: 'fert-3',
+    phase: 'fertility',
+    category: 'lifestyle',
+    title: 'Limit Caffeine',
+    description: 'Try to limit caffeine intake to 200mg per day (about one 12oz cup of coffee).',
+    icon: '☕',
+  },
+
+  // Pregnancy Phase
+  {
+    id: 'preg-1',
+    phase: 'pregnancy',
+    category: 'nutrition',
+    title: 'Hydration',
+    description: 'Your blood volume is increasing. Drink plenty of water to support you and your baby.',
+    icon: '💧',
+  },
+  {
+    id: 'preg-2',
+    phase: 'pregnancy',
+    category: 'wellness',
+    title: 'Prenatal Vitamins',
+    description: 'Take your prenatal vitamins daily with a meal to reduce nausea.',
+    icon: '💊',
+  },
+  {
+    id: 'preg-3',
+    phase: 'pregnancy',
+    category: 'exercise',
+    title: 'Safe Movement',
+    description: 'Walking and swimming are excellent low-impact exercises during pregnancy.',
+    icon: '🏊‍♀️',
+  },
+  {
+    id: 'preg-4',
+    phase: 'pregnancy',
+    category: 'sleep',
+    title: 'Side Sleeping',
+    description: 'Try sleeping on your side (preferably left) for better blood flow to the baby.',
+    icon: '🛌',
+  },
+
+  // Postpartum Phase
+  {
+    id: 'post-1',
+    phase: 'postpartum',
+    category: 'wellness',
+    title: 'Rest When Baby Rests',
+    description: 'Prioritize sleep whenever possible. Housework can wait.',
+    icon: '😴',
+  },
+  {
+    id: 'post-2',
+    phase: 'postpartum',
+    category: 'nutrition',
+    title: 'Nutrient Dense Meals',
+    description: 'Focus on protein and healthy fats to support recovery and breastfeeding.',
+    icon: '🥑',
+  },
+
   // Menstrual Phase
   {
     id: 'mens-1',
@@ -206,4 +284,8 @@ export const getPhaseInfo = (phase: CyclePhase) => {
 
 export const getTipsForPhase = (phase: CyclePhase): HealthTip[] => {
   return healthTips.filter((tip) => tip.phase === phase);
+};
+
+export const getTipsForCategory = (category: TipCategory): HealthTip[] => {
+  return healthTips.filter((tip) => tip.phase === category);
 };
