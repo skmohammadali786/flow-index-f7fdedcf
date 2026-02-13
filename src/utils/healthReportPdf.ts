@@ -18,6 +18,7 @@ export interface HealthReportOptions {
   includeMedications: boolean;
   includeSleep: boolean;
   includeWater: boolean;
+  includeBirthHistory: boolean;
 }
 
 interface HealthReportData {
@@ -193,7 +194,7 @@ export async function generateHealthReportPdf(data: HealthReportData, logoBase64
   }
 
   // Birth History
-  if (data.birthRecords && data.birthRecords.length > 0) {
+  if (data.options.includeBirthHistory && data.birthRecords && data.birthRecords.length > 0) {
     checkNewPage(40);
     drawRoundedRect(pdf, margin, yPos, contentWidth, 35, 5, colors.cardBg, colors.border);
     pdf.setFontSize(12);

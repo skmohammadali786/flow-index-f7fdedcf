@@ -43,6 +43,7 @@ interface ShareSettings {
   showCurrentPhase: boolean;
   showMoodInsights: boolean;
   showSymptomInsights: boolean;
+  showBirthHistory: boolean;
 }
 
 // UI-specific icon and color mappings for phases
@@ -97,6 +98,7 @@ export function PartnerShareView({
     showCurrentPhase: true,
     showMoodInsights: true,
     showSymptomInsights: true,
+    showBirthHistory: true,
   });
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   
@@ -338,9 +340,17 @@ export function PartnerShareView({
         lines.push(`• ${tip.replace(/^[^\s]+ /, '')}`);
       });
     }
+
+    if (shareSettings.showBirthHistory && birthRecords.length > 0) {
+      const latestBirth = birthRecords[0];
+      lines.push('');
+      lines.push('👶 Birth History:');
+      lines.push(`   ${latestBirth.baby_name || 'Baby'} born on ${latestBirth.birth_date}`);
+      if (latestBirth.baby_weight) lines.push(`   Weight: ${latestBirth.baby_weight}lbs`);
+    }
     
     return lines.join('\n');
-  }, [shareSettings, predictions, currentPhaseInfo, currentCycleDay, daysUntilNextPeriod, recentInsights, personalizedSuggestions]);
+  }, [shareSettings, predictions, currentPhaseInfo, currentCycleDay, daysUntilNextPeriod, recentInsights, personalizedSuggestions, birthRecords]);
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(shareableText);
@@ -919,6 +929,19 @@ export function PartnerShareView({
                     }
                   />
                 </div>
+
+                {birthRecords.length > 0 && (
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="birth-history" className="flex-1">Birth History</Label>
+                    <Switch
+                      id="birth-history"
+                      checked={shareSettings.showBirthHistory}
+                      onCheckedChange={(checked) =>
+                        setShareSettings(prev => ({ ...prev, showBirthHistory: checked }))
+                      }
+                    />
+                  </div>
+                )}
               </CardContent>
             </Card>
           </motion.div>
@@ -982,6 +1005,9 @@ export function PartnerShareView({
                     <Badge variant="secondary">Weekly Summary</Badge>
                     <Badge variant="secondary">Cycle Stats</Badge>
                     <Badge variant="secondary">Care Tips</Badge>
+                    {shareSettings.showBirthHistory && birthRecords.length > 0 && (
+                      <Badge variant="secondary">Birth History</Badge>
+                    )}
                   </div>
                   
                   <Button 

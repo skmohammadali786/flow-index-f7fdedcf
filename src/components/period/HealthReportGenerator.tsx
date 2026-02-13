@@ -37,6 +37,7 @@ export function HealthReportGenerator({ logs, cycles, stats, userName: propUserN
     includeMedications: true,
     includeSleep: false,
     includeWater: false,
+    includeBirthHistory: true,
   });
 
   const userName = propUserName || user?.user_metadata?.name || user?.email?.split('@')[0];
@@ -189,6 +190,20 @@ export function HealthReportGenerator({ logs, cycles, stats, userName: propUserN
             <div className="space-y-3">
               <Label>Include in Report</Label>
               
+              <div className="flex items-center gap-3">
+                <Checkbox
+                  id="birth-history"
+                  checked={options.includeBirthHistory}
+                  onCheckedChange={(checked) =>
+                    setOptions(prev => ({ ...prev, includeBirthHistory: !!checked }))
+                  }
+                />
+                <Label htmlFor="birth-history" className="flex items-center gap-2 cursor-pointer">
+                  <span role="img" aria-label="baby">👶</span>
+                  Birth History
+                </Label>
+              </div>
+
               <div className="flex items-center gap-3">
                 <Checkbox
                   id="cycles"

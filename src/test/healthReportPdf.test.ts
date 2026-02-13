@@ -60,6 +60,7 @@ describe('generateHealthReportPdf', () => {
       includeMedications: true,
       includeSleep: true,
       includeWater: true,
+      includeBirthHistory: true,
     };
 
     await generateHealthReportPdf({
