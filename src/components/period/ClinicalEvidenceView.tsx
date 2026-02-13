@@ -36,6 +36,8 @@ import { generateClinicalReportPdf } from '@/utils/clinicalReportPdf';
 import { loadLogo } from '@/utils/pdfUtils';
 import logoSrc from '@/assets/logo.png';
 import { useAuth } from '@/contexts/AuthContext';
+import { useFertilityTracker } from '@/hooks/useFertilityTracker';
+import { useReportDraft } from '@/contexts/ReportDraftContext';
 
 interface ClinicalEvidenceViewProps {
   logs: DayLog[];
@@ -104,6 +106,8 @@ export function ClinicalEvidenceView({ logs, cycles, stats, userName: propUserNa
   const [isGenerating, setIsGenerating] = useState(false);
   const { assessment, historicalAssessments, isLoading, isSaving, updateVasScale, updateNotes } = useClinicalAssessments();
   const { user } = useAuth();
+  const { fertilityLogs, pregnancyLogs } = useFertilityTracker();
+  const { fertilityDrafts, pregnancyDrafts } = useReportDraft();
 
   const userName = propUserName || user?.user_metadata?.name || user?.email?.split('@')[0];
 
@@ -282,13 +286,32 @@ export function ClinicalEvidenceView({ logs, cycles, stats, userName: propUserNa
     try {
       const logoBase64 = await loadLogo(logoSrc);
 
+      // Merge drafts
+      const mergedFertilityLogs = [...fertilityLogs];
+      Object.entries(fertilityDrafts).forEach(([date, draft]) => {
+        const idx = mergedFertilityLogs.findIndex(l => l.date === date);
+        if (idx >= 0) mergedFertilityLogs[idx] = { ...mergedFertilityLogs[idx], ...draft };
+        else mergedFertilityLogs.push({ id: `draft-${date}`, date, ...draft } as any);
+      });
+      mergedFertilityLogs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+      const mergedPregnancyLogs = [...pregnancyLogs];
+      Object.entries(pregnancyDrafts).forEach(([date, draft]) => {
+        const idx = mergedPregnancyLogs.findIndex(l => l.date === date);
+        if (idx >= 0) mergedPregnancyLogs[idx] = { ...mergedPregnancyLogs[idx], ...draft };
+        else mergedPregnancyLogs.push({ id: `draft-${date}`, date, ...draft } as any);
+      });
+      mergedPregnancyLogs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
       await generateClinicalReportPdf({
         logs,
         cycles,
         stats,
         assessment,
-        userName
-      }, logoBase64);
+        userName,
+        fertilityLogs: mergedFertilityLogs,
+        pregnancyLogs: mergedPregnancyLogs,
+      } as any, logoBase64);
 
       toast.success('Report downloaded');
     } catch (error) {
