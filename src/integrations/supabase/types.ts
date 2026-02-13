@@ -14,6 +14,77 @@ export type Database = {
   }
   public: {
     Tables: {
+      birth_records: {
+        Row: {
+          apgar_1min: number | null
+          apgar_5min: number | null
+          baby_gender: string | null
+          baby_length: number | null
+          baby_name: string | null
+          baby_weight: number | null
+          birth_date: string
+          birth_location: string | null
+          birth_notes: string | null
+          birth_plan: Json | null
+          birth_time: string | null
+          birth_type: string | null
+          complications: string | null
+          created_at: string
+          id: string
+          pregnancy_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          apgar_1min?: number | null
+          apgar_5min?: number | null
+          baby_gender?: string | null
+          baby_length?: number | null
+          baby_name?: string | null
+          baby_weight?: number | null
+          birth_date: string
+          birth_location?: string | null
+          birth_notes?: string | null
+          birth_plan?: Json | null
+          birth_time?: string | null
+          birth_type?: string | null
+          complications?: string | null
+          created_at?: string
+          id?: string
+          pregnancy_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          apgar_1min?: number | null
+          apgar_5min?: number | null
+          baby_gender?: string | null
+          baby_length?: number | null
+          baby_name?: string | null
+          baby_weight?: number | null
+          birth_date?: string
+          birth_location?: string | null
+          birth_notes?: string | null
+          birth_plan?: Json | null
+          birth_time?: string | null
+          birth_type?: string | null
+          complications?: string | null
+          created_at?: string
+          id?: string
+          pregnancy_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "birth_records_pregnancy_id_fkey"
+            columns: ["pregnancy_id"]
+            isOneToOne: false
+            referencedRelation: "pregnancy_tracking"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clinical_assessments: {
         Row: {
           additional_notes: string | null
@@ -83,6 +154,54 @@ export type Database = {
         }
         Relationships: []
       }
+      fertility_logs: {
+        Row: {
+          cervical_mucus: string | null
+          cervix_firmness: string | null
+          cervix_position: string | null
+          created_at: string
+          date: string
+          id: string
+          intercourse: boolean | null
+          intercourse_protected: boolean | null
+          lh_level: number | null
+          notes: string | null
+          opk_result: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cervical_mucus?: string | null
+          cervix_firmness?: string | null
+          cervix_position?: string | null
+          created_at?: string
+          date: string
+          id?: string
+          intercourse?: boolean | null
+          intercourse_protected?: boolean | null
+          lh_level?: number | null
+          notes?: string | null
+          opk_result?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cervical_mucus?: string | null
+          cervix_firmness?: string | null
+          cervix_position?: string | null
+          created_at?: string
+          date?: string
+          id?: string
+          intercourse?: boolean | null
+          intercourse_protected?: boolean | null
+          lh_level?: number | null
+          notes?: string | null
+          opk_result?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       period_logs: {
         Row: {
           created_at: string
@@ -137,6 +256,175 @@ export type Database = {
           updated_at?: string
           user_id?: string
           water_intake?: number | null
+        }
+        Relationships: []
+      }
+      postpartum_logs: {
+        Row: {
+          anxiety_level: number | null
+          birth_record_id: string | null
+          bleeding_intensity: string | null
+          breastfeeding: boolean | null
+          breastfeeding_issues: string | null
+          created_at: string
+          date: string
+          emotional_symptoms: string[] | null
+          id: string
+          mood_rating: number | null
+          notes: string | null
+          pain_level: number | null
+          physical_symptoms: string[] | null
+          sleep_hours: number | null
+          support_received: boolean | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          anxiety_level?: number | null
+          birth_record_id?: string | null
+          bleeding_intensity?: string | null
+          breastfeeding?: boolean | null
+          breastfeeding_issues?: string | null
+          created_at?: string
+          date: string
+          emotional_symptoms?: string[] | null
+          id?: string
+          mood_rating?: number | null
+          notes?: string | null
+          pain_level?: number | null
+          physical_symptoms?: string[] | null
+          sleep_hours?: number | null
+          support_received?: boolean | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          anxiety_level?: number | null
+          birth_record_id?: string | null
+          bleeding_intensity?: string | null
+          breastfeeding?: boolean | null
+          breastfeeding_issues?: string | null
+          created_at?: string
+          date?: string
+          emotional_symptoms?: string[] | null
+          id?: string
+          mood_rating?: number | null
+          notes?: string | null
+          pain_level?: number | null
+          physical_symptoms?: string[] | null
+          sleep_hours?: number | null
+          support_received?: boolean | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "postpartum_logs_birth_record_id_fkey"
+            columns: ["birth_record_id"]
+            isOneToOne: false
+            referencedRelation: "birth_records"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pregnancy_logs: {
+        Row: {
+          appointment_notes: string | null
+          baby_movements: number | null
+          blood_pressure_diastolic: number | null
+          blood_pressure_systolic: number | null
+          created_at: string
+          date: string
+          id: string
+          mood: string | null
+          notes: string | null
+          pregnancy_id: string
+          symptoms: string[] | null
+          updated_at: string
+          user_id: string
+          week_number: number | null
+          weight: number | null
+        }
+        Insert: {
+          appointment_notes?: string | null
+          baby_movements?: number | null
+          blood_pressure_diastolic?: number | null
+          blood_pressure_systolic?: number | null
+          created_at?: string
+          date: string
+          id?: string
+          mood?: string | null
+          notes?: string | null
+          pregnancy_id: string
+          symptoms?: string[] | null
+          updated_at?: string
+          user_id: string
+          week_number?: number | null
+          weight?: number | null
+        }
+        Update: {
+          appointment_notes?: string | null
+          baby_movements?: number | null
+          blood_pressure_diastolic?: number | null
+          blood_pressure_systolic?: number | null
+          created_at?: string
+          date?: string
+          id?: string
+          mood?: string | null
+          notes?: string | null
+          pregnancy_id?: string
+          symptoms?: string[] | null
+          updated_at?: string
+          user_id?: string
+          week_number?: number | null
+          weight?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pregnancy_logs_pregnancy_id_fkey"
+            columns: ["pregnancy_id"]
+            isOneToOne: false
+            referencedRelation: "pregnancy_tracking"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pregnancy_tracking: {
+        Row: {
+          conception_date: string | null
+          created_at: string
+          due_date: string
+          id: string
+          is_active: boolean | null
+          last_period_date: string | null
+          notes: string | null
+          pregnancy_confirmed: boolean | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          conception_date?: string | null
+          created_at?: string
+          due_date: string
+          id?: string
+          is_active?: boolean | null
+          last_period_date?: string | null
+          notes?: string | null
+          pregnancy_confirmed?: boolean | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          conception_date?: string | null
+          created_at?: string
+          due_date?: string
+          id?: string
+          is_active?: boolean | null
+          last_period_date?: string | null
+          notes?: string | null
+          pregnancy_confirmed?: boolean | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

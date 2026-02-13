@@ -13,11 +13,12 @@ import {
   endOfWeek,
   isToday
 } from 'date-fns';
-import { ChevronLeft, ChevronRight, Droplets } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Droplets, Heart, TestTube } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { DayLog, FlowIntensity } from '@/types/period';
 import { CrimsonGraph } from './CrimsonGraph';
+import { useFertilityTracker, FertilityLog } from '@/hooks/useFertilityTracker';
 
 interface CycleCalendarProps {
   logs: DayLog[];
@@ -39,6 +40,7 @@ export function CycleCalendar({
   getLogForDate,
 }: CycleCalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const { getFertilityLogForDate } = useFertilityTracker();
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
@@ -105,6 +107,7 @@ export function CycleCalendar({
         <AnimatePresence mode="wait">
           {days.map((day, idx) => {
             const log = getLogForDate(day);
+            const fertLog = getFertilityLogForDate(day);
             const isPeriod = log?.isPeriod;
             const isFertile = isInFertileWindow(day);
             const isOvulation = isOvulationDay(day);
@@ -151,17 +154,24 @@ export function CycleCalendar({
                   )}
                 </div>
 
-                {/* Symptom/mood indicator */}
-                {log && (log.symptoms.length > 0 || log.moods.length > 0) && (
-                  <div className="absolute bottom-1 right-1 flex gap-0.5">
-                    {log.symptoms.length > 0 && (
-                      <div className="w-1.5 h-1.5 rounded-full bg-peach" />
-                    )}
-                    {log.moods.length > 0 && (
-                      <div className="w-1.5 h-1.5 rounded-full bg-sage" />
-                    )}
-                  </div>
-                )}
+                {/* Fertility + symptom indicators */}
+                <div className="absolute bottom-0.5 left-0.5 right-0.5 flex justify-center gap-0.5">
+                  {fertLog?.intercourse && (
+                    <div className="w-1.5 h-1.5 rounded-full bg-coral" title="Intercourse" />
+                  )}
+                  {fertLog?.opk_result === 'peak' && (
+                    <div className="w-1.5 h-1.5 rounded-full bg-primary" title="OPK Peak" />
+                  )}
+                  {fertLog?.opk_result === 'high' && (
+                    <div className="w-1.5 h-1.5 rounded-full bg-peach" title="OPK High" />
+                  )}
+                  {log && log.symptoms.length > 0 && !fertLog?.intercourse && !fertLog?.opk_result && (
+                    <div className="w-1.5 h-1.5 rounded-full bg-peach" />
+                  )}
+                  {log && log.moods.length > 0 && !fertLog?.intercourse && !fertLog?.opk_result && (
+                    <div className="w-1.5 h-1.5 rounded-full bg-sage" />
+                  )}
+                </div>
               </motion.button>
             );
           })}
@@ -169,22 +179,30 @@ export function CycleCalendar({
       </div>
 
       {/* Legend */}
-      <div className="mt-6 flex flex-wrap gap-4 justify-center text-sm">
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded bg-coral" />
+      <div className="mt-6 flex flex-wrap gap-3 justify-center text-xs">
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded bg-coral" />
           <span className="text-muted-foreground">Period</span>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded border-2 border-dashed border-coral/50" />
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded border-2 border-dashed border-coral/50" />
           <span className="text-muted-foreground">Predicted</span>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded bg-lavender-light" />
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded bg-lavender-light" />
           <span className="text-muted-foreground">Fertile</span>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-4 h-4 rounded bg-lavender" />
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded bg-lavender" />
           <span className="text-muted-foreground">Ovulation</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-2 h-2 rounded-full bg-coral" />
+          <span className="text-muted-foreground">Intercourse</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-2 h-2 rounded-full bg-primary" />
+          <span className="text-muted-foreground">OPK Peak</span>
         </div>
       </div>
 

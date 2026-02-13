@@ -19,13 +19,15 @@ const HealthReportGenerator = lazy(() => import('@/components/period/HealthRepor
 const BrainForecastView = lazy(() => import('@/components/period/BrainForecastView').then(module => ({ default: module.BrainForecastView })));
 const ClinicalEvidenceView = lazy(() => import('@/components/period/ClinicalEvidenceView').then(module => ({ default: module.ClinicalEvidenceView })));
 const WellnessJournalView = lazy(() => import('@/components/period/WellnessJournalView').then(module => ({ default: module.WellnessJournalView })));
+const FertilityTrackingView = lazy(() => import('@/components/period/FertilityTrackingView').then(module => ({ default: module.FertilityTrackingView })));
+const PregnancyBirthView = lazy(() => import('@/components/period/PregnancyBirthView').then(module => ({ default: module.PregnancyBirthView })));
 import { useSupabasePeriodTracker } from '@/hooks/useSupabasePeriodTracker';
 import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
 import { useSymptomAnalytics } from '@/hooks/useSymptomAnalytics';
 import { useAuth } from '@/contexts/AuthContext';
 import { startOfDay } from 'date-fns';
 
-type TabType = 'calendar' | 'insights' | 'history' | 'tips' | 'analytics' | 'charts' | 'share' | 'report' | 'brain' | 'clinical' | 'journal' | 'settings' | 'profile';
+type TabType = 'calendar' | 'insights' | 'history' | 'tips' | 'analytics' | 'charts' | 'share' | 'report' | 'brain' | 'clinical' | 'journal' | 'fertility' | 'pregnancy' | 'settings' | 'profile';
 
 const ONBOARDING_KEY = 'period_tracker_onboarding_complete';
 
@@ -347,17 +349,43 @@ const Index = () => {
           )}
 
           {activeTab === 'journal' && (
-            <motion.div
-              key="journal"
-              variants={pageVariants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              transition={{ duration: 0.2 }}
-            >
-              <WellnessJournalView />
-            </motion.div>
-          )}
+              <motion.div
+                key="journal"
+                variants={pageVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                transition={{ duration: 0.2 }}
+              >
+                <WellnessJournalView />
+              </motion.div>
+            )}
+
+            {activeTab === 'fertility' && (
+              <motion.div
+                key="fertility"
+                variants={pageVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                transition={{ duration: 0.2 }}
+              >
+                <FertilityTrackingView periodLogs={logs} />
+              </motion.div>
+            )}
+
+            {activeTab === 'pregnancy' && (
+              <motion.div
+                key="pregnancy"
+                variants={pageVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                transition={{ duration: 0.2 }}
+              >
+                <PregnancyBirthView />
+              </motion.div>
+            )}
 
           {activeTab === 'history' && (
             <motion.div
