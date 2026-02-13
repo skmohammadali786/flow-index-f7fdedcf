@@ -1,7 +1,7 @@
 import jsPDF from 'jspdf';
 import { format, parseISO, subMonths } from 'date-fns';
 import { DayLog, CycleData, CycleStats } from '@/types/period';
-import type { FertilityLog, PregnancyLog } from '@/hooks/useFertilityTracker';
+import type { FertilityLog, PregnancyLog, BirthRecord } from '@/hooks/useFertilityTracker';
 import {
   colors,
   drawRoundedRect,
@@ -27,6 +27,7 @@ interface HealthReportData {
   options: HealthReportOptions;
   fertilityLogs?: FertilityLog[];
   pregnancyLogs?: PregnancyLog[];
+  birthRecords?: BirthRecord[];
   userName?: string;
 }
 
@@ -187,6 +188,37 @@ export async function generateHealthReportPdf(data: HealthReportData, logoBase64
        pdf.setTextColor(...colors.textMuted);
        pdf.text(s.label, cx, cy + 5);
        cx += (contentWidth - 20) / 4;
+    });
+    yPos += 45;
+  }
+
+  // Birth History
+  if (data.birthRecords && data.birthRecords.length > 0) {
+    checkNewPage(40);
+    drawRoundedRect(pdf, margin, yPos, contentWidth, 35, 5, colors.cardBg, colors.border);
+    pdf.setFontSize(12);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(...colors.text);
+    pdf.text('Birth History', margin + 10, yPos + 10);
+
+    const latestBirth = data.birthRecords[0]; // Assuming sorted descending
+    const bStats = [
+      { label: 'Date', value: latestBirth.birth_date },
+      { label: 'Type', value: latestBirth.birth_type?.replace(/_/g, ' ') || '-' },
+      { label: 'Weight', value: latestBirth.baby_weight ? `${latestBirth.baby_weight} lbs` : '-' },
+      { label: 'Baby', value: latestBirth.baby_name || 'Baby' },
+    ];
+
+    let bx = margin + 10;
+    let by = yPos + 20;
+    bStats.forEach((s, i) => {
+       pdf.setFontSize(10);
+       pdf.setTextColor(...colors.text);
+       pdf.text(s.value, bx, by);
+       pdf.setFontSize(8);
+       pdf.setTextColor(...colors.textMuted);
+       pdf.text(s.label, bx, by + 5);
+       bx += (contentWidth - 20) / 4;
     });
     yPos += 45;
   }
