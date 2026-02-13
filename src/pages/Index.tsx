@@ -45,6 +45,8 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState<TabType>('calendar');
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [fertilityViewDate, setFertilityViewDate] = useState<Date | null>(null);
+  const [pregnancyViewTab, setPregnancyViewTab] = useState<string | undefined>(undefined);
   
   const {
     logs,
@@ -91,6 +93,7 @@ const Index = () => {
   const {
     fertilityLogs,
     pregnancyLogs,
+    birthRecords,
     getActivePregnancy,
     getFertilityLogForDate,
   } = useFertilityTracker();
@@ -144,7 +147,19 @@ const Index = () => {
   const displayName = profile.name || user?.user_metadata?.name || user?.email?.split('@')[0];
 
   const handleDayClick = (date: Date) => {
-    setSelectedDate(date);
+    const dateStr = format(date, 'yyyy-MM-dd');
+    const hasBirth = birthRecords.some(b => b.birth_date === dateStr);
+    const hasFertilityLog = fertilityLogs.some(l => l.date === dateStr);
+
+    if (hasBirth) {
+      setPregnancyViewTab('birth');
+      setActiveTab('pregnancy');
+    } else if (hasFertilityLog) {
+      setFertilityViewDate(date);
+      setActiveTab('fertility');
+    } else {
+      setSelectedDate(date);
+    }
   };
 
   const getPregnancyLogForDate = (date: Date) => {
@@ -231,6 +246,7 @@ const Index = () => {
                 logs={logs}
                 fertilityLogs={fertilityLogs}
                 pregnancyLogs={pregnancyLogs}
+                birthRecords={birthRecords}
                 onDayClick={handleDayClick}
                 selectedDate={selectedDate}
                 isInFertileWindow={settings.showFertileWindow ? isInFertileWindow : () => false}
@@ -403,7 +419,7 @@ const Index = () => {
                 exit="exit"
                 transition={{ duration: 0.2 }}
               >
-                <FertilityTrackingView periodLogs={logs} />
+                <FertilityTrackingView periodLogs={logs} initialDate={fertilityViewDate || undefined} />
               </motion.div>
             )}
 
@@ -416,7 +432,7 @@ const Index = () => {
                 exit="exit"
                 transition={{ duration: 0.2 }}
               >
-                <PregnancyBirthView />
+                <PregnancyBirthView defaultTab={pregnancyViewTab} />
               </motion.div>
             )}
 

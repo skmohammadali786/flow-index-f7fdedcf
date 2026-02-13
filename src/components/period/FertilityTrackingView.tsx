@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { format, subDays, startOfDay } from 'date-fns';
 import { Egg, Droplets, TestTube, Heart, TrendingUp, AlertCircle, ThermometerSun } from 'lucide-react';
@@ -17,6 +17,7 @@ import { DayLog } from '@/types/period';
 
 interface FertilityTrackingViewProps {
   periodLogs: DayLog[];
+  initialDate?: Date;
 }
 
 const OPK_OPTIONS = [
@@ -37,7 +38,7 @@ const CM_OPTIONS = [
 const CERVIX_POS = ['low', 'medium', 'high'];
 const CERVIX_FIRM = ['firm', 'medium', 'soft'];
 
-export function FertilityTrackingView({ periodLogs }: FertilityTrackingViewProps) {
+export function FertilityTrackingView({ periodLogs, initialDate }: FertilityTrackingViewProps) {
   const {
     fertilityLogs,
     saveFertilityLog,
@@ -46,7 +47,15 @@ export function FertilityTrackingView({ periodLogs }: FertilityTrackingViewProps
     detectBBTShift,
   } = useFertilityTracker();
 
-  const [selectedDate, setSelectedDate] = useState(startOfDay(new Date()));
+  const [selectedDate, setSelectedDate] = useState(initialDate ? startOfDay(initialDate) : startOfDay(new Date()));
+
+  // Update selectedDate when initialDate changes
+  useEffect(() => {
+    if (initialDate) {
+      setSelectedDate(startOfDay(initialDate));
+    }
+  }, [initialDate]);
+
   const currentLog = getFertilityLogForDate(selectedDate);
 
   const [opk, setOpk] = useState(currentLog?.opk_result || '');

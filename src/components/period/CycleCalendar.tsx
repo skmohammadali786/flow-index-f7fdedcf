@@ -18,12 +18,13 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { DayLog, FlowIntensity } from '@/types/period';
 import { CrimsonGraph } from './CrimsonGraph';
-import { FertilityLog, PregnancyLog } from '@/hooks/useFertilityTracker';
+import { FertilityLog, PregnancyLog, BirthRecord } from '@/hooks/useFertilityTracker';
 
 interface CycleCalendarProps {
   logs: DayLog[];
   fertilityLogs?: FertilityLog[];
   pregnancyLogs?: PregnancyLog[];
+  birthRecords?: BirthRecord[];
   onDayClick: (date: Date) => void;
   selectedDate: Date | null;
   isInFertileWindow: (date: Date) => boolean;
@@ -36,6 +37,7 @@ export function CycleCalendar({
   logs,
   fertilityLogs = [],
   pregnancyLogs = [],
+  birthRecords = [],
   onDayClick,
   selectedDate,
   isInFertileWindow,
@@ -53,6 +55,11 @@ export function CycleCalendar({
   const getPregnancyLogForDate = (date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
     return pregnancyLogs?.find(l => l.date === dateStr);
+  };
+
+  const getBirthRecordForDate = (date: Date) => {
+    const dateStr = format(date, 'yyyy-MM-dd');
+    return birthRecords?.find(r => r.birth_date === dateStr);
   };
 
   const monthStart = startOfMonth(currentMonth);
@@ -122,12 +129,15 @@ export function CycleCalendar({
             const log = getLogForDate(day);
             const fertLog = getFertilityLogForDate(day);
             const pregLog = getPregnancyLogForDate(day);
+            const birthRecord = getBirthRecordForDate(day);
             const isPeriod = log?.isPeriod;
             const isFertile = isInFertileWindow(day);
             const isOvulation = isOvulationDay(day);
             const isPredicted = isPredictedPeriod(day);
             const isSelected = selectedDate && isSameDay(day, selectedDate);
             const isCurrentMonth = isSameMonth(day, currentMonth);
+
+            const hasFertilityLog = !!fertLog;
 
             return (
               <motion.button
@@ -145,15 +155,17 @@ export function CycleCalendar({
               >
                 <div className={cn(
                   "w-full h-full rounded-lg flex flex-col items-center justify-center",
-                  isPeriod && getFlowColor(log?.flowIntensity),
-                  !isPeriod && isPredicted && "border-2 border-dashed border-coral/50",
-                  !isPeriod && !isPredicted && isFertile && "bg-lavender-light",
-                  isOvulation && !isPeriod && "bg-lavender ring-2 ring-lavender",
-                  isToday(day) && !isPeriod && !isFertile && "bg-peach-light",
+                  birthRecord && "bg-green-600 hover:bg-green-700 text-white",
+                  !birthRecord && hasFertilityLog && "bg-blue-700 hover:bg-blue-800 text-white",
+                  !birthRecord && !hasFertilityLog && isPeriod && getFlowColor(log?.flowIntensity),
+                  !birthRecord && !hasFertilityLog && !isPeriod && isPredicted && "border-2 border-dashed border-coral/50",
+                  !birthRecord && !hasFertilityLog && !isPeriod && !isPredicted && isFertile && "bg-lavender-light",
+                  !birthRecord && !hasFertilityLog && isOvulation && !isPeriod && "bg-lavender ring-2 ring-lavender",
+                  !birthRecord && !hasFertilityLog && isToday(day) && !isPeriod && !isFertile && "bg-peach-light",
                 )}>
                   <span className={cn(
                     "text-sm font-medium",
-                    isPeriod && "text-primary-foreground",
+                    (isPeriod || birthRecord || hasFertilityLog) && "text-primary-foreground",
                     isToday(day) && "font-bold",
                   )}>
                     {format(day, 'd')}
