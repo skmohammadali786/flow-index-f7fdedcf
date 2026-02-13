@@ -46,11 +46,6 @@ describe('generateHealthReportPdf', () => {
         exerciseMinutes: 30,
         isPeriod: true,
         flowIntensity: 'medium',
-        mood_rating: 4,
-        energy_level: 3,
-        tags: [],
-        self_care_done: false,
-        gratitude: '',
         notes: '',
         medications: [],
         temperature: 0
