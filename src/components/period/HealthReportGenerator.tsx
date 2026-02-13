@@ -26,8 +26,8 @@ interface HealthReportGeneratorProps {
 export function HealthReportGenerator({ logs, cycles, stats, userName: propUserName }: HealthReportGeneratorProps) {
   const { toast } = useToast();
   const { user } = useAuth();
-  const { fertilityLogs, pregnancyLogs } = useFertilityTracker();
-  const { fertilityDrafts, pregnancyDrafts } = useReportDraft();
+  const { fertilityLogs, pregnancyLogs, birthRecords: fetchedBirthRecords } = useFertilityTracker();
+  const { fertilityDrafts, pregnancyDrafts, birthDraft } = useReportDraft();
   const [isGenerating, setIsGenerating] = useState(false);
   const [options, setOptions] = useState<HealthReportOptions>({
     period: '3',
@@ -77,6 +77,12 @@ export function HealthReportGenerator({ logs, cycles, stats, userName: propUserN
       });
       mergedPregnancyLogs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
+      // Merge birth draft
+      const birthRecords = [...fetchedBirthRecords];
+      if (birthDraft && birthDraft.birth_date) {
+        birthRecords.unshift(birthDraft as any);
+      }
+
       await generateHealthReportPdf({
         logs,
         cycles,
@@ -85,6 +91,7 @@ export function HealthReportGenerator({ logs, cycles, stats, userName: propUserN
         userName,
         fertilityLogs: mergedFertilityLogs,
         pregnancyLogs: mergedPregnancyLogs,
+        birthRecords,
       } as any, logoBase64);
 
       toast({

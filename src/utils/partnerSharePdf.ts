@@ -4,7 +4,7 @@ import { CyclePrediction, CycleStats, DayLog, Mood, Symptom } from '@/types/peri
 import { CyclePhase } from '@/types/settings';
 import { getPhaseInfoForPdf } from '@/data/phaseData';
 import type { JournalEntry } from '@/hooks/useWellnessJournal';
-import type { FertilityLog } from '@/hooks/useFertilityTracker';
+import type { FertilityLog, BirthRecord } from '@/hooks/useFertilityTracker';
 import {
   colors,
   phaseStyles,
@@ -27,6 +27,7 @@ export interface PdfData {
   currentCycleDay: number | null;
   logs: DayLog[];
   fertilityLogs?: FertilityLog[];
+  birthRecords?: BirthRecord[];
   userName?: string;
   journalEntries?: JournalEntry[];
   shareSettings: {
@@ -482,6 +483,37 @@ export async function generatePartnerSharePdf(data: PdfData, logoBase64?: string
     });
 
     yPos += tableHeight + 10;
+  }
+
+  // ===== BIRTH & POSTPARTUM =====
+  if (data.birthRecords && data.birthRecords.length > 0) {
+    checkNewPage(40);
+
+    drawRoundedRect(pdf, margin, yPos, contentWidth, 38, 5, colors.cardBg, colors.border);
+
+    pdf.setTextColor(...colors.text);
+    pdf.setFontSize(13);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('Birth History', margin + 10, yPos + 12);
+
+    const latestBirth = data.birthRecords[0];
+
+    pdf.setFontSize(10);
+    pdf.setTextColor(...colors.text);
+    pdf.text(`${latestBirth.baby_name || 'Baby'} born on ${latestBirth.birth_date}`, margin + 10, yPos + 22);
+
+    pdf.setFontSize(9);
+    pdf.setTextColor(...colors.textMuted);
+    let details = [];
+    if (latestBirth.birth_time) details.push(`Time: ${latestBirth.birth_time}`);
+    if (latestBirth.baby_weight) details.push(`Weight: ${latestBirth.baby_weight}lbs`);
+    if (latestBirth.baby_length) details.push(`Length: ${latestBirth.baby_length}in`);
+
+    if (details.length > 0) {
+      pdf.text(details.join(' | '), margin + 10, yPos + 30);
+    }
+
+    yPos += 48;
   }
 
   // ===== MOOD PATTERNS =====

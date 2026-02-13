@@ -85,8 +85,8 @@ export function PartnerShareView({
   const { toast } = useToast();
   const { user } = useAuth();
   const { entries: journalEntries } = useWellnessJournal();
-  const { fertilityLogs: fetchedFertilityLogs } = useFertilityTracker();
-  const { fertilityDrafts } = useReportDraft();
+  const { fertilityLogs: fetchedFertilityLogs, birthRecords: fetchedBirthRecords } = useFertilityTracker();
+  const { fertilityDrafts, birthDraft } = useReportDraft();
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
@@ -118,6 +118,14 @@ export function PartnerShareView({
     });
     return logs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [fetchedFertilityLogs, fertilityDrafts]);
+
+  const birthRecords = useMemo(() => {
+    const records = [...fetchedBirthRecords];
+    if (birthDraft && birthDraft.birth_date) {
+      records.unshift(birthDraft as any);
+    }
+    return records;
+  }, [fetchedBirthRecords, birthDraft]);
 
   // Calculate recent mood and symptom insights (last 7 days)
   const recentInsights = useMemo(() => {
@@ -398,6 +406,7 @@ export function PartnerShareView({
         journalEntries,
         shareSettings,
         fertilityLogs,
+        birthRecords,
       } as any, logoBase64);
 
       toast({
