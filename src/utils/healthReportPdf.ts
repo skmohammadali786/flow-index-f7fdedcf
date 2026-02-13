@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import { format, parseISO, subMonths } from 'date-fns';
 import { DayLog, CycleData, CycleStats } from '@/types/period';
+import type { FertilityLog, PregnancyLog } from '@/hooks/useFertilityTracker';
 import {
   colors,
   drawRoundedRect,
@@ -24,6 +25,8 @@ interface HealthReportData {
   cycles: CycleData[];
   stats: CycleStats | null;
   options: HealthReportOptions;
+  fertilityLogs?: FertilityLog[];
+  pregnancyLogs?: PregnancyLog[];
   userName?: string;
 }
 
@@ -271,6 +274,23 @@ export async function generateHealthReportPdf(data: HealthReportData, logoBase64
       if (log.symptoms.length) details.push(`Symptoms: ${log.symptoms.map(s => s.replace(/_/g, ' ')).join(', ')}`);
       if (log.sleepHours) details.push(`Sleep: ${log.sleepHours}h`);
       if (log.waterIntake) details.push(`Water: ${log.waterIntake}`);
+
+      // Fertility details
+      const fertLog = data.fertilityLogs?.find(fl => fl.date === log.date);
+      if (fertLog) {
+        if (fertLog.opk_result) details.push(`OPK: ${fertLog.opk_result}`);
+        if (fertLog.cervical_mucus) details.push(`CM: ${fertLog.cervical_mucus.replace(/_/g, ' ')}`);
+        if (fertLog.lh_level) details.push(`LH: ${fertLog.lh_level}`);
+        if (fertLog.intercourse) details.push(`Intercourse: ${fertLog.intercourse_protected ? 'Protected' : 'Unprotected'}`);
+      }
+
+      // Pregnancy details
+      const pregLog = data.pregnancyLogs?.find(pl => pl.date === log.date);
+      if (pregLog) {
+        if (pregLog.week_number) details.push(`Week ${pregLog.week_number}`);
+        if (pregLog.weight) details.push(`Weight: ${pregLog.weight}`);
+        if (pregLog.baby_movements) details.push(`Kicks: ${pregLog.baby_movements}`);
+      }
 
       const detailsText = details.join(' | ');
       const splitDetails = pdf.splitTextToSize(detailsText, contentWidth - 40);

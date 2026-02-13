@@ -14,6 +14,7 @@ import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
 import { useFertilityTracker, PregnancyRecord, BirthRecord, PostpartumLog } from '@/hooks/useFertilityTracker';
+import { useReportDraft } from '@/contexts/ReportDraftContext';
 import { startOfDay } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -110,6 +111,56 @@ export function PregnancyBirthView({ defaultTab }: PregnancyBirthViewProps) {
   const [ppPhysical, setPpPhysical] = useState<string[]>([]);
   const [ppEmotional, setPpEmotional] = useState<string[]>([]);
   const [ppNotes, setPpNotes] = useState('');
+
+  const { setPregnancyDraft, setBirthDraft, setPostpartumDraft } = useReportDraft();
+
+  // Sync Pregnancy Log Draft
+  useEffect(() => {
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    setPregnancyDraft(todayStr, {
+      weight: pregWeight ? parseFloat(pregWeight) : null,
+      blood_pressure_systolic: bpSys ? parseInt(bpSys) : null,
+      blood_pressure_diastolic: bpDia ? parseInt(bpDia) : null,
+      baby_movements: babyMoves ? parseInt(babyMoves) : null,
+      symptoms: pregSymptoms,
+      mood: pregMood || null,
+      appointment_notes: apptNotes?.slice(0, 500) || null,
+      notes: pregNotes?.slice(0, 500) || null,
+    });
+  }, [pregWeight, bpSys, bpDia, babyMoves, pregSymptoms, pregMood, apptNotes, pregNotes, setPregnancyDraft]);
+
+  // Sync Birth Draft
+  useEffect(() => {
+    if (showBirthForm) {
+      setBirthDraft({
+        birth_date: birthDate,
+        birth_time: birthTime || null,
+        birth_type: birthType as any || null,
+        baby_name: babyName?.slice(0, 100) || null,
+        baby_weight: babyWeight ? parseFloat(babyWeight) : null,
+        baby_length: babyLength ? parseFloat(babyLength) : null,
+        baby_gender: babyGender as any || null,
+        birth_location: birthLoc?.slice(0, 200) || null,
+        birth_notes: birthNotes?.slice(0, 500) || null,
+      });
+    }
+  }, [showBirthForm, birthDate, birthTime, birthType, babyName, babyWeight, babyLength, babyGender, birthLoc, birthNotes, setBirthDraft]);
+
+  // Sync Postpartum Draft
+  useEffect(() => {
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    setPostpartumDraft(todayStr, {
+      mood_rating: ppMood[0],
+      anxiety_level: ppAnxiety[0],
+      sleep_hours: ppSleep ? parseFloat(ppSleep) : null,
+      bleeding_intensity: ppBleeding as any || null,
+      pain_level: ppPain[0],
+      breastfeeding: ppBreastfeeding,
+      physical_symptoms: ppPhysical,
+      emotional_symptoms: ppEmotional,
+      notes: ppNotes?.slice(0, 500) || null,
+    });
+  }, [ppMood, ppAnxiety, ppSleep, ppBleeding, ppPain, ppBreastfeeding, ppPhysical, ppEmotional, ppNotes, setPostpartumDraft]);
 
   const handleCreatePregnancy = async () => {
     if (!lpDate && !conDate) { toast.error('Enter last period or conception date'); return; }

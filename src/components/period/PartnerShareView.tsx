@@ -22,6 +22,8 @@ import { generatePartnerSharePdf } from '@/utils/partnerSharePdf';
 import { phaseInfo, moodLabels, symptomLabels } from '@/data/phaseData';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWellnessJournal } from '@/hooks/useWellnessJournal';
+import { useFertilityTracker } from '@/hooks/useFertilityTracker';
+import { useReportDraft } from '@/contexts/ReportDraftContext';
 import logoSrc from '@/assets/logo.png';
 
 interface PartnerShareViewProps {
@@ -83,6 +85,8 @@ export function PartnerShareView({
   const { toast } = useToast();
   const { user } = useAuth();
   const { entries: journalEntries } = useWellnessJournal();
+  const { fertilityLogs: fetchedFertilityLogs } = useFertilityTracker();
+  const { fertilityDrafts } = useReportDraft();
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
@@ -101,6 +105,19 @@ export function PartnerShareView({
 
   const currentPhaseInfo = phaseInfo[currentPhase];
   const currentPhaseUI = phaseUIConfig[currentPhase];
+
+  const fertilityLogs = useMemo(() => {
+    const logs = [...fetchedFertilityLogs];
+    Object.entries(fertilityDrafts).forEach(([date, draft]) => {
+      const idx = logs.findIndex(l => l.date === date);
+      if (idx >= 0) {
+        logs[idx] = { ...logs[idx], ...draft };
+      } else {
+        logs.push({ id: 'draft', date, ...draft } as any);
+      }
+    });
+    return logs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }, [fetchedFertilityLogs, fertilityDrafts]);
 
   // Calculate recent mood and symptom insights (last 7 days)
   const recentInsights = useMemo(() => {
@@ -379,8 +396,9 @@ export function PartnerShareView({
         logs,
         userName,
         journalEntries,
-        shareSettings
-      }, logoBase64);
+        shareSettings,
+        fertilityLogs,
+      } as any, logoBase64);
 
       toast({
         title: "PDF Downloaded",

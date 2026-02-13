@@ -13,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Area, AreaChart, CartesianGrid, Legend } from 'recharts';
 import { FertilityLog, useFertilityTracker } from '@/hooks/useFertilityTracker';
+import { useReportDraft } from '@/contexts/ReportDraftContext';
 import { DayLog } from '@/types/period';
 
 interface FertilityTrackingViewProps {
@@ -47,6 +48,8 @@ export function FertilityTrackingView({ periodLogs, initialDate }: FertilityTrac
     detectBBTShift,
   } = useFertilityTracker();
 
+  const { setFertilityDraft } = useReportDraft();
+
   const [selectedDate, setSelectedDate] = useState(initialDate ? startOfDay(initialDate) : startOfDay(new Date()));
 
   // Update selectedDate when initialDate changes
@@ -66,6 +69,21 @@ export function FertilityTrackingView({ periodLogs, initialDate }: FertilityTrac
   const [cervixPos, setCervixPos] = useState(currentLog?.cervix_position || '');
   const [cervixFirm, setCervixFirm] = useState(currentLog?.cervix_firmness || '');
   const [notes, setNotes] = useState(currentLog?.notes || '');
+
+  // Sync draft state for PDF reports
+  useEffect(() => {
+    const dateStr = format(selectedDate, 'yyyy-MM-dd');
+    setFertilityDraft(dateStr, {
+      opk_result: opk as any || null,
+      cervical_mucus: cm as any || null,
+      lh_level: lh ? parseFloat(lh) : null,
+      intercourse,
+      intercourse_protected: intercourse ? intercourseProt : null,
+      cervix_position: cervixPos as any || null,
+      cervix_firmness: cervixFirm as any || null,
+      notes: notes?.slice(0, 500) || null,
+    });
+  }, [selectedDate, opk, cm, lh, intercourse, intercourseProt, cervixPos, cervixFirm, notes, setFertilityDraft]);
 
   // Update form when date changes
   const handleDateChange = (days: number) => {

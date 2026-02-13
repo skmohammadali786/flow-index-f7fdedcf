@@ -4,6 +4,7 @@ import { CyclePrediction, CycleStats, DayLog, Mood, Symptom } from '@/types/peri
 import { CyclePhase } from '@/types/settings';
 import { getPhaseInfoForPdf } from '@/data/phaseData';
 import type { JournalEntry } from '@/hooks/useWellnessJournal';
+import type { FertilityLog } from '@/hooks/useFertilityTracker';
 import {
   colors,
   phaseStyles,
@@ -25,6 +26,7 @@ export interface PdfData {
   daysUntilNextPeriod: number | null;
   currentCycleDay: number | null;
   logs: DayLog[];
+  fertilityLogs?: FertilityLog[];
   userName?: string;
   journalEntries?: JournalEntry[];
   shareSettings: {
@@ -418,6 +420,68 @@ export async function generatePartnerSharePdf(data: PdfData, logoBase64?: string
     });
 
     yPos += 10;
+  }
+
+  // ===== FERTILITY SIGNS =====
+  const recentFertilityLogs = data.fertilityLogs?.filter(log => {
+    const logDate = parseISO(log.date);
+    return logDate >= sevenDaysAgo && logDate <= today;
+  }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+  if (recentFertilityLogs && recentFertilityLogs.length > 0) {
+    const tableHeight = 25 + recentFertilityLogs.length * 10;
+    checkNewPage(tableHeight);
+
+    drawRoundedRect(pdf, margin, yPos, contentWidth, tableHeight, 5, colors.cardBg, colors.border);
+
+    pdf.setTextColor(...colors.text);
+    pdf.setFontSize(13);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('Fertility Signs (Recent)', margin + 10, yPos + 10);
+
+    // Header
+    const fY = yPos + 18;
+    pdf.setFontSize(8);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(...colors.textMuted);
+
+    const fCols = [
+      { label: 'Date', x: margin + 10 },
+      { label: 'OPK', x: margin + 40 },
+      { label: 'CM', x: margin + 70 },
+      { label: 'LH Level', x: margin + 100 },
+      { label: 'BBT', x: margin + 130 },
+      { label: 'Intercourse', x: margin + 160 },
+    ];
+
+    fCols.forEach(col => pdf.text(col.label, col.x, fY));
+
+    let rowY = fY + 8;
+    pdf.setFontSize(9);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setTextColor(...colors.text);
+
+    recentFertilityLogs.forEach(log => {
+      const bbt = data.logs.find(l => l.date === log.date)?.temperature;
+
+      pdf.text(format(parseISO(log.date), 'MMM d'), fCols[0].x, rowY);
+      pdf.text(log.opk_result ? log.opk_result.toUpperCase() : '-', fCols[1].x, rowY);
+      pdf.text(log.cervical_mucus ? log.cervical_mucus.replace(/_/g, ' ') : '-', fCols[2].x, rowY);
+      pdf.text(log.lh_level ? log.lh_level.toString() : '-', fCols[3].x, rowY);
+      pdf.text(bbt ? `${bbt}°` : '-', fCols[4].x, rowY);
+
+      if (log.intercourse) {
+        pdf.setTextColor(...colors.coral);
+        pdf.text('Yes', fCols[5].x, rowY);
+        pdf.setTextColor(...colors.text);
+      } else {
+        pdf.text('-', fCols[5].x, rowY);
+      }
+
+      rowY += 10;
+    });
+
+    yPos += tableHeight + 10;
   }
 
   // ===== MOOD PATTERNS =====

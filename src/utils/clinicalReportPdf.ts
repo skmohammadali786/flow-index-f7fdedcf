@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { DayLog, CycleData, CycleStats, Symptom, Mood } from '@/types/period';
+import type { FertilityLog, PregnancyLog } from '@/hooks/useFertilityTracker';
 import {
   colors,
   drawRoundedRect,
@@ -22,6 +23,8 @@ export interface ClinicalReportData {
   cycles: CycleData[];
   stats: CycleStats | null;
   assessment: ClinicalAssessment;
+  fertilityLogs?: FertilityLog[];
+  pregnancyLogs?: PregnancyLog[];
   userName?: string;
 }
 
@@ -200,6 +203,33 @@ export async function generateClinicalReportPdf(data: ClinicalReportData, logoBa
        pdf.text(s.label, cx, cy + 5);
        cx += (contentWidth - 20) / 4;
     });
+    yPos += 48;
+  }
+
+  // Fertility & Pregnancy Highlights
+  if ((data.fertilityLogs && data.fertilityLogs.length > 0) || (data.pregnancyLogs && data.pregnancyLogs.length > 0)) {
+    checkNewPage(45);
+    drawRoundedRect(pdf, margin, yPos, contentWidth, 38, 5, colors.cardBg, colors.border);
+    pdf.setFontSize(12);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(...colors.text);
+    pdf.text('Fertility & Pregnancy Highlights', margin + 10, yPos + 10);
+
+    let summaryText = "";
+    if (data.pregnancyLogs && data.pregnancyLogs.length > 0) {
+      summaryText += `Pregnancy Logs: ${data.pregnancyLogs.length} entries. `;
+      const lastPregLog = data.pregnancyLogs[0]; // Assumes sorted
+      if (lastPregLog.week_number) summaryText += `Latest: Week ${lastPregLog.week_number}. `;
+    }
+    if (data.fertilityLogs && data.fertilityLogs.length > 0) {
+      const positiveOPKs = data.fertilityLogs.filter(l => l.opk_result === 'positive' || l.opk_result === 'peak').length;
+      summaryText += `Fertility Logs: ${data.fertilityLogs.length} entries. Positive/Peak OPKs: ${positiveOPKs}.`;
+    }
+
+    pdf.setFontSize(9);
+    pdf.setFont('helvetica', 'normal');
+    pdf.text(summaryText, margin + 10, yPos + 20);
+
     yPos += 48;
   }
 

@@ -184,12 +184,12 @@ export function useSupabaseSettings() {
     }
   }, [user]);
 
-  const exportDataPdf = useCallback(async () => {
+  const exportDataPdf = useCallback(async (draftData?: any) => {
     if (!user) return;
 
     try {
       // Fetch logs, cycles, assessments (raw DB data)
-      const [logsResult, cyclesResult, clinicalResult] = await Promise.all([
+      const [logsResult, cyclesResult, clinicalResult, fertilityResult, pregnancyLogsResult, birthResult] = await Promise.all([
         supabase
           .from('period_logs')
           .select('*')
@@ -205,7 +205,58 @@ export function useSupabaseSettings() {
           .select('*')
           .eq('user_id', user.id)
           .order('date', { ascending: false }),
+        supabase
+          .from('fertility_logs')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('date', { ascending: false }),
+        supabase
+          .from('pregnancy_logs')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('date', { ascending: false }),
+        supabase
+          .from('birth_records')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('birth_date', { ascending: false }),
       ]);
+
+      // Merge drafts if provided
+      let fertilityLogs = (fertilityResult.data || []) as any[];
+      if (draftData?.fertilityDrafts) {
+        Object.entries(draftData.fertilityDrafts).forEach(([date, draft]: [string, any]) => {
+          const idx = fertilityLogs.findIndex(l => l.date === date);
+          if (idx >= 0) {
+            fertilityLogs[idx] = { ...fertilityLogs[idx], ...draft };
+          } else {
+            fertilityLogs.push({ date, ...draft });
+          }
+        });
+        fertilityLogs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      }
+
+      let pregnancyLogs = (pregnancyLogsResult.data || []) as any[];
+      if (draftData?.pregnancyDrafts) {
+        Object.entries(draftData.pregnancyDrafts).forEach(([date, draft]: [string, any]) => {
+          const idx = pregnancyLogs.findIndex(l => l.date === date);
+          if (idx >= 0) {
+            pregnancyLogs[idx] = { ...pregnancyLogs[idx], ...draft };
+          } else {
+            pregnancyLogs.push({ date, ...draft });
+          }
+        });
+        pregnancyLogs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      }
+
+      let birthRecords = (birthResult.data || []) as any[];
+      if (draftData?.birthDraft) {
+        // If birth draft exists, append or replace? Birth draft usually implies a new birth record being created.
+        // We'll append it if it has a birth_date.
+        if (draftData.birthDraft.birth_date) {
+           birthRecords.unshift(draftData.birthDraft);
+        }
+      }
 
       const logoBase64 = await loadLogo(logoSrc);
 
@@ -217,7 +268,10 @@ export function useSupabaseSettings() {
         logs: (logsResult.data || []) as any[],
         cycles: (cyclesResult.data || []) as any[],
         assessments: (clinicalResult.data || []) as any[],
-      }, logoBase64);
+        fertilityLogs,
+        pregnancyLogs,
+        birthRecords,
+      } as any, logoBase64);
 
       toast.success("Data export downloaded successfully");
     } catch (error) {

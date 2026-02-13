@@ -13,6 +13,8 @@ import { generateHealthReportPdf, HealthReportOptions } from '@/utils/healthRepo
 import { loadLogo } from '@/utils/pdfUtils';
 import logoSrc from '@/assets/logo.png';
 import { useAuth } from '@/contexts/AuthContext';
+import { useFertilityTracker } from '@/hooks/useFertilityTracker';
+import { useReportDraft } from '@/contexts/ReportDraftContext';
 
 interface HealthReportGeneratorProps {
   logs: DayLog[];
@@ -24,6 +26,8 @@ interface HealthReportGeneratorProps {
 export function HealthReportGenerator({ logs, cycles, stats, userName: propUserName }: HealthReportGeneratorProps) {
   const { toast } = useToast();
   const { user } = useAuth();
+  const { fertilityLogs, pregnancyLogs } = useFertilityTracker();
+  const { fertilityDrafts, pregnancyDrafts } = useReportDraft();
   const [isGenerating, setIsGenerating] = useState(false);
   const [options, setOptions] = useState<HealthReportOptions>({
     period: '3',
@@ -56,13 +60,32 @@ export function HealthReportGenerator({ logs, cycles, stats, userName: propUserN
     try {
       const logoBase64 = await loadLogo(logoSrc);
 
+      // Merge drafts
+      const mergedFertilityLogs = [...fertilityLogs];
+      Object.entries(fertilityDrafts).forEach(([date, draft]) => {
+        const idx = mergedFertilityLogs.findIndex(l => l.date === date);
+        if (idx >= 0) mergedFertilityLogs[idx] = { ...mergedFertilityLogs[idx], ...draft };
+        else mergedFertilityLogs.push({ id: `draft-${date}`, date, ...draft } as any);
+      });
+      mergedFertilityLogs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+      const mergedPregnancyLogs = [...pregnancyLogs];
+      Object.entries(pregnancyDrafts).forEach(([date, draft]) => {
+        const idx = mergedPregnancyLogs.findIndex(l => l.date === date);
+        if (idx >= 0) mergedPregnancyLogs[idx] = { ...mergedPregnancyLogs[idx], ...draft };
+        else mergedPregnancyLogs.push({ id: `draft-${date}`, date, ...draft } as any);
+      });
+      mergedPregnancyLogs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
       await generateHealthReportPdf({
         logs,
         cycles,
         stats,
         options,
-        userName
-      }, logoBase64);
+        userName,
+        fertilityLogs: mergedFertilityLogs,
+        pregnancyLogs: mergedPregnancyLogs,
+      } as any, logoBase64);
 
       toast({
         title: "Report generated",

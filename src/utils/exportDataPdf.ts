@@ -7,6 +7,7 @@ import {
   addPageFooter,
   drawDecoCircle
 } from './pdfUtils';
+import type { FertilityLog, PregnancyLog, BirthRecord } from '@/hooks/useFertilityTracker';
 
 // Define Raw DB Interfaces based on Supabase tables
 export interface DBPeriodLog {
@@ -54,6 +55,9 @@ interface ExportDataPdfProps {
   logs: DBPeriodLog[];
   cycles: DBCycle[];
   assessments: DBClinicalAssessment[];
+  fertilityLogs?: FertilityLog[];
+  pregnancyLogs?: PregnancyLog[];
+  birthRecords?: BirthRecord[];
   userName?: string;
 }
 
@@ -267,6 +271,163 @@ export async function generateExportDataPdf(data: ExportDataPdfProps, logoBase64
       yPos += 10;
     });
     yPos += 10;
+  }
+
+  // ===== FERTILITY LOGS =====
+  if (data.fertilityLogs && data.fertilityLogs.length > 0) {
+    checkNewPage(40);
+
+    pdf.setFontSize(14);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(...colors.text);
+    pdf.text('Fertility Logs', margin, yPos);
+    yPos += 8;
+
+    const fertCols = [
+      { header: 'Date', width: 30 },
+      { header: 'OPK', width: 20 },
+      { header: 'CM', width: 25 },
+      { header: 'LH', width: 20 },
+      { header: 'Sex', width: 20 },
+      { header: 'Notes', width: 50 },
+    ];
+
+    const drawFertHeader = () => {
+      drawRoundedRect(pdf, margin, yPos, contentWidth, 8, 2, colors.lavenderLight);
+      let x = margin + 5;
+      pdf.setFontSize(9);
+      fertCols.forEach(col => {
+        pdf.text(col.header, x, yPos + 5);
+        x += col.width + 5;
+      });
+      yPos += 10;
+    };
+
+    drawFertHeader();
+
+    pdf.setFont('helvetica', 'normal');
+    data.fertilityLogs.forEach((log, i) => {
+      checkNewPage(12, drawFertHeader);
+
+      if (i % 2 === 1) {
+        pdf.setFillColor(250, 250, 252);
+        pdf.rect(margin, yPos - 2, contentWidth, 10, 'F');
+      }
+
+      let x = margin + 5;
+      pdf.text(log.date, x, yPos + 3); x += fertCols[0].width + 5;
+      pdf.text(log.opk_result ? log.opk_result : '-', x, yPos + 3); x += fertCols[1].width + 5;
+      pdf.text(log.cervical_mucus ? log.cervical_mucus.replace(/_/g, ' ') : '-', x, yPos + 3); x += fertCols[2].width + 5;
+      pdf.text(log.lh_level ? log.lh_level.toString() : '-', x, yPos + 3); x += fertCols[3].width + 5;
+
+      const sex = log.intercourse ? (log.intercourse_protected ? 'Prot' : 'Unprot') : '-';
+      pdf.text(sex, x, yPos + 3); x += fertCols[4].width + 5;
+
+      const notes = log.notes || '-';
+      pdf.text(notes.length > 30 ? notes.substring(0, 27) + '...' : notes, x, yPos + 3);
+
+      yPos += 10;
+    });
+    yPos += 10;
+  }
+
+  // ===== PREGNANCY LOGS =====
+  if (data.pregnancyLogs && data.pregnancyLogs.length > 0) {
+    checkNewPage(40);
+
+    pdf.setFontSize(14);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(...colors.text);
+    pdf.text('Pregnancy Logs', margin, yPos);
+    yPos += 8;
+
+    const pregCols = [
+      { header: 'Date', width: 30 },
+      { header: 'Week', width: 15 },
+      { header: 'Weight', width: 20 },
+      { header: 'BP', width: 20 },
+      { header: 'Symptoms', width: 80 },
+    ];
+
+    const drawPregHeader = () => {
+      drawRoundedRect(pdf, margin, yPos, contentWidth, 8, 2, colors.peachLight);
+      let x = margin + 5;
+      pdf.setFontSize(9);
+      pregCols.forEach(col => {
+        pdf.text(col.header, x, yPos + 5);
+        x += col.width + 5;
+      });
+      yPos += 10;
+    };
+
+    drawPregHeader();
+
+    pdf.setFont('helvetica', 'normal');
+    data.pregnancyLogs.forEach((log, i) => {
+      checkNewPage(12, drawPregHeader);
+
+      if (i % 2 === 1) {
+        pdf.setFillColor(250, 250, 252);
+        pdf.rect(margin, yPos - 2, contentWidth, 10, 'F');
+      }
+
+      let x = margin + 5;
+      pdf.text(log.date, x, yPos + 3); x += pregCols[0].width + 5;
+      pdf.text(log.week_number ? `W${log.week_number}` : '-', x, yPos + 3); x += pregCols[1].width + 5;
+      pdf.text(log.weight ? log.weight.toString() : '-', x, yPos + 3); x += pregCols[2].width + 5;
+
+      const bp = (log.blood_pressure_systolic && log.blood_pressure_diastolic)
+        ? `${log.blood_pressure_systolic}/${log.blood_pressure_diastolic}`
+        : '-';
+      pdf.text(bp, x, yPos + 3); x += pregCols[3].width + 5;
+
+      const symp = (log.symptoms || []).join(', ').replace(/_/g, ' ');
+      pdf.text(symp.length > 50 ? symp.substring(0, 47) + '...' : (symp || '-'), x, yPos + 3);
+
+      yPos += 10;
+    });
+    yPos += 10;
+  }
+
+  // ===== BIRTH RECORDS =====
+  if (data.birthRecords && data.birthRecords.length > 0) {
+    checkNewPage(40);
+
+    pdf.setFontSize(14);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(...colors.text);
+    pdf.text('Birth Records', margin, yPos);
+    yPos += 8;
+
+    data.birthRecords.forEach((record) => {
+      checkNewPage(40);
+      drawRoundedRect(pdf, margin, yPos, contentWidth, 35, 5, colors.sageLight);
+
+      pdf.setFontSize(11);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(`${record.baby_name || 'Baby'} - ${record.birth_date}`, margin + 10, yPos + 10);
+
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'normal');
+      let detailsY = yPos + 18;
+
+      const details = [
+        `Time: ${record.birth_time || '-'}`,
+        `Type: ${record.birth_type ? record.birth_type.replace('_', ' ') : '-'}`,
+        `Weight: ${record.baby_weight ? record.baby_weight + ' lbs' : '-'}`,
+        `Length: ${record.baby_length ? record.baby_length + ' in' : '-'}`,
+        `Gender: ${record.baby_gender || '-'}`,
+      ];
+
+      let x = margin + 10;
+      details.forEach((d, i) => {
+        if (i === 3) { x = margin + 10; detailsY += 6; } // New line
+        pdf.text(d, x, detailsY);
+        x += 50;
+      });
+
+      yPos += 45;
+    });
   }
 
   // ===== PERIOD LOGS =====

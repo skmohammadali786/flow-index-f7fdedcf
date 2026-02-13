@@ -25,6 +25,7 @@ import { useSupabasePeriodTracker } from '@/hooks/useSupabasePeriodTracker';
 import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
 import { useFertilityTracker } from '@/hooks/useFertilityTracker';
 import { useSymptomAnalytics } from '@/hooks/useSymptomAnalytics';
+import { useReportDraft } from '@/contexts/ReportDraftContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { getTipsForCategory, getTipsForPhase } from '@/data/healthTips';
 import { startOfDay, format } from 'date-fns';
@@ -97,6 +98,16 @@ const Index = () => {
     getActivePregnancy,
     getFertilityLogForDate,
   } = useFertilityTracker();
+
+  const { fertilityDrafts, pregnancyDrafts, birthDraft } = useReportDraft();
+
+  const handleExportPdf = async () => {
+    await exportDataPdf({
+      fertilityDrafts,
+      pregnancyDrafts,
+      birthDraft,
+    });
+  };
 
   // Check if onboarding is needed - only for new signups
   useEffect(() => {
@@ -462,8 +473,8 @@ const Index = () => {
                 settings={settings}
                 onUpdateSettings={updateSettings}
                 onUpdateNotifications={updateNotifications}
-                onExportData={exportDataPdf}
-                onExportPdf={exportDataPdf}
+                onExportData={handleExportPdf}
+                onExportPdf={handleExportPdf}
                 onResetSettings={resetSettings}
               />
             </motion.div>
