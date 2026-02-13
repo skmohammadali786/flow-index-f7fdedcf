@@ -69,6 +69,37 @@ vi.mock('@/hooks/useWellnessJournal', () => ({
   })
 }));
 
+// Mock useFertilityTracker
+vi.mock('@/hooks/useFertilityTracker', () => ({
+  useFertilityTracker: () => ({
+    fertilityLogs: [],
+    pregnancyLogs: [],
+    birthRecords: [],
+    pregnancies: [],
+    postpartumLogs: [],
+    isLoaded: true
+  })
+}));
+
+// Mock useReportDraft
+vi.mock('@/contexts/ReportDraftContext', () => ({
+  useReportDraft: () => ({
+    fertilityDrafts: {},
+    pregnancyDrafts: {},
+    birthDraft: {},
+    postpartumDrafts: {},
+    updateFertilityDraft: vi.fn(),
+    updatePregnancyDraft: vi.fn(),
+    updateBirthDraft: vi.fn(),
+    updatePostpartumDraft: vi.fn(),
+    saveFertilityDraft: vi.fn(),
+    savePregnancyDraft: vi.fn(),
+    saveBirthDraft: vi.fn(),
+    savePostpartumDraft: vi.fn(),
+    clearDrafts: vi.fn()
+  })
+}));
+
 // Mock ResizeObserver which is used by some UI components
 global.ResizeObserver = class ResizeObserver {
   observe() {}

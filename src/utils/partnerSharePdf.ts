@@ -37,6 +37,7 @@ export interface PdfData {
     showCurrentPhase: boolean;
     showMoodInsights: boolean;
     showSymptomInsights: boolean;
+    showBirthHistory?: boolean;
   };
 }
 
@@ -486,7 +487,7 @@ export async function generatePartnerSharePdf(data: PdfData, logoBase64?: string
   }
 
   // ===== BIRTH & POSTPARTUM =====
-  if (data.birthRecords && data.birthRecords.length > 0) {
+  if (data.shareSettings.showBirthHistory !== false && data.birthRecords && data.birthRecords.length > 0) {
     checkNewPage(40);
 
     drawRoundedRect(pdf, margin, yPos, contentWidth, 38, 5, colors.cardBg, colors.border);
