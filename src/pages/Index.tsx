@@ -23,9 +23,11 @@ const FertilityTrackingView = lazy(() => import('@/components/period/FertilityTr
 const PregnancyBirthView = lazy(() => import('@/components/period/PregnancyBirthView').then(module => ({ default: module.PregnancyBirthView })));
 import { useSupabasePeriodTracker } from '@/hooks/useSupabasePeriodTracker';
 import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
+import { useFertilityTracker } from '@/hooks/useFertilityTracker';
 import { useSymptomAnalytics } from '@/hooks/useSymptomAnalytics';
 import { useAuth } from '@/contexts/AuthContext';
-import { startOfDay } from 'date-fns';
+import { getTipsForCategory, getTipsForPhase } from '@/data/healthTips';
+import { startOfDay, format } from 'date-fns';
 
 type TabType = 'calendar' | 'insights' | 'history' | 'tips' | 'analytics' | 'charts' | 'share' | 'report' | 'brain' | 'clinical' | 'journal' | 'fertility' | 'pregnancy' | 'settings' | 'profile';
 
@@ -86,6 +88,13 @@ const Index = () => {
     currentPhase,
   } = useSymptomAnalytics(logs, cycles);
 
+  const {
+    fertilityLogs,
+    pregnancyLogs,
+    getActivePregnancy,
+    getFertilityLogForDate,
+  } = useFertilityTracker();
+
   // Check if onboarding is needed - only for new signups
   useEffect(() => {
     if (isLoaded && settingsLoaded && user) {
@@ -136,6 +145,28 @@ const Index = () => {
 
   const handleDayClick = (date: Date) => {
     setSelectedDate(date);
+  };
+
+  const getPregnancyLogForDate = (date: Date) => {
+    const dateStr = format(date, 'yyyy-MM-dd');
+    return pregnancyLogs.find(l => l.date === dateStr);
+  };
+
+  const getRelevantTips = () => {
+    const activePregnancy = getActivePregnancy();
+    if (activePregnancy) {
+      return getTipsForCategory('pregnancy');
+    }
+
+    if (selectedDate && isInFertileWindow(selectedDate)) {
+      return getTipsForCategory('fertility');
+    }
+
+    if (currentPhase) {
+      return getTipsForPhase(currentPhase);
+    }
+
+    return [];
   };
 
   const handleQuickLog = () => {
@@ -198,6 +229,8 @@ const Index = () => {
             >
               <CycleCalendar
                 logs={logs}
+                fertilityLogs={fertilityLogs}
+                pregnancyLogs={pregnancyLogs}
                 onDayClick={handleDayClick}
                 selectedDate={selectedDate}
                 isInFertileWindow={settings.showFertileWindow ? isInFertileWindow : () => false}
@@ -445,6 +478,9 @@ const Index = () => {
       <DayDetailSheet
         date={selectedDate}
         log={selectedDate ? getLogForDate(selectedDate) : undefined}
+        fertilityLog={selectedDate ? getFertilityLogForDate(selectedDate) : undefined}
+        pregnancyLog={selectedDate ? getPregnancyLogForDate(selectedDate) : undefined}
+        tips={getRelevantTips()}
         isOpen={selectedDate !== null}
         onClose={() => setSelectedDate(null)}
         onLogPeriod={logPeriodDay}
