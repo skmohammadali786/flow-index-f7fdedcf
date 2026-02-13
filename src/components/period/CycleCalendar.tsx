@@ -18,13 +18,12 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { DayLog, FlowIntensity } from '@/types/period';
 import { CrimsonGraph } from './CrimsonGraph';
-import { FertilityLog, PregnancyLog, BirthRecord } from '@/hooks/useFertilityTracker';
+import { FertilityLog, PregnancyLog } from '@/hooks/useFertilityTracker';
 
 interface CycleCalendarProps {
   logs: DayLog[];
   fertilityLogs?: FertilityLog[];
   pregnancyLogs?: PregnancyLog[];
-  birthRecords?: BirthRecord[];
   onDayClick: (date: Date) => void;
   selectedDate: Date | null;
   isInFertileWindow: (date: Date) => boolean;
@@ -37,7 +36,6 @@ export function CycleCalendar({
   logs,
   fertilityLogs = [],
   pregnancyLogs = [],
-  birthRecords = [],
   onDayClick,
   selectedDate,
   isInFertileWindow,
@@ -55,11 +53,6 @@ export function CycleCalendar({
   const getPregnancyLogForDate = (date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
     return pregnancyLogs?.find(l => l.date === dateStr);
-  };
-
-  const getBirthRecordForDate = (date: Date) => {
-    const dateStr = format(date, 'yyyy-MM-dd');
-    return birthRecords?.find(r => r.birth_date === dateStr);
   };
 
   const monthStart = startOfMonth(currentMonth);
@@ -129,7 +122,6 @@ export function CycleCalendar({
             const log = getLogForDate(day);
             const fertLog = getFertilityLogForDate(day);
             const pregLog = getPregnancyLogForDate(day);
-            const birthRecord = getBirthRecordForDate(day);
             const isPeriod = log?.isPeriod;
             const isFertile = isInFertileWindow(day);
             const isOvulation = isOvulationDay(day);

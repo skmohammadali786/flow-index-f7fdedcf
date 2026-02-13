@@ -92,7 +92,6 @@ const Index = () => {
   const {
     fertilityLogs,
     pregnancyLogs,
-    birthRecords,
     getActivePregnancy,
     getFertilityLogForDate,
   } = useFertilityTracker();
