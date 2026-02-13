@@ -73,7 +73,6 @@ const Index = () => {
     updateNotifications,
     updateProfile,
     resetSettings,
-    exportData,
     exportDataPdf,
   } = useSupabaseSettings();
 
@@ -386,7 +385,7 @@ const Index = () => {
                 settings={settings}
                 onUpdateSettings={updateSettings}
                 onUpdateNotifications={updateNotifications}
-                onExportData={exportData}
+                onExportData={exportDataPdf}
                 onExportPdf={exportDataPdf}
                 onResetSettings={resetSettings}
               />
