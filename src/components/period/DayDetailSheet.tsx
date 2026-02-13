@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
-import { X, Droplets, Heart, Activity, FileText, GlassWater, Pill, Moon, Dumbbell, Thermometer } from 'lucide-react';
+import { X, Droplets, Heart, Activity, FileText, GlassWater, Pill, Moon, Dumbbell, Thermometer, TestTube, Baby, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
@@ -9,10 +9,15 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
 import { DayLog, FlowIntensity, Mood, Symptom, Medication, SleepQuality } from '@/types/period';
+import { FertilityLog, PregnancyLog } from '@/hooks/useFertilityTracker';
+import { HealthTip } from '@/types/settings';
 
 interface DayDetailSheetProps {
   date: Date | null;
   log: DayLog | undefined;
+  fertilityLog?: FertilityLog;
+  pregnancyLog?: PregnancyLog;
+  tips?: HealthTip[];
   isOpen: boolean;
   onClose: () => void;
   onLogPeriod: (date: Date, isPeriod: boolean, intensity?: FlowIntensity) => void;
@@ -24,6 +29,7 @@ interface DayDetailSheetProps {
   onLogSleep?: (date: Date, hours: number, quality?: SleepQuality) => void;
   onLogExercise?: (date: Date, minutes: number) => void;
   onLogTemperature?: (date: Date, temp: number) => void;
+  tips?: HealthTip[];
 }
 
 const flowOptions: { value: FlowIntensity; label: string; icon: string }[] = [
@@ -101,6 +107,9 @@ function useDebouncedCallback<T extends (...args: any[]) => void>(
 export function DayDetailSheet({
   date,
   log,
+  fertilityLog,
+  pregnancyLog,
+  tips,
   isOpen,
   onClose,
   onLogPeriod,
@@ -516,6 +525,120 @@ export function DayDetailSheet({
               {localNotes.length}/500 characters
             </p>
           </section>
+
+          {/* Fertility Log Details */}
+          {fertilityLog && (
+            <section>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="p-2 rounded-lg bg-lavender-light">
+                  <TestTube className="h-5 w-5 text-lavender" />
+                </div>
+                <h3 className="font-semibold text-lg">Fertility Details</h3>
+              </div>
+              <div className="space-y-3 bg-muted/50 p-4 rounded-xl">
+                {fertilityLog.opk_result && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">OPK Result</span>
+                    <span className="text-sm bg-card px-2 py-1 rounded shadow-sm capitalize">
+                      {fertilityLog.opk_result}
+                    </span>
+                  </div>
+                )}
+                {fertilityLog.cervical_mucus && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">Cervical Mucus</span>
+                    <span className="text-sm bg-card px-2 py-1 rounded shadow-sm capitalize">
+                      {fertilityLog.cervical_mucus.replace('_', ' ')}
+                    </span>
+                  </div>
+                )}
+                {fertilityLog.intercourse && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">Intercourse</span>
+                    <span className="text-sm bg-card px-2 py-1 rounded shadow-sm text-coral">
+                      Logged ❤️
+                    </span>
+                  </div>
+                )}
+                {fertilityLog.notes && (
+                  <div className="mt-2 pt-2 border-t border-border">
+                    <p className="text-xs text-muted-foreground italic">"{fertilityLog.notes}"</p>
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
+
+          {/* Pregnancy Log Details */}
+          {pregnancyLog && (
+            <section>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="p-2 rounded-lg bg-teal-100">
+                  <Baby className="h-5 w-5 text-teal-600" />
+                </div>
+                <h3 className="font-semibold text-lg">Pregnancy Details</h3>
+              </div>
+              <div className="space-y-3 bg-muted/50 p-4 rounded-xl">
+                {pregnancyLog.week_number && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">Week</span>
+                    <span className="text-sm bg-card px-2 py-1 rounded shadow-sm">
+                      Week {pregnancyLog.week_number}
+                    </span>
+                  </div>
+                )}
+                {pregnancyLog.symptoms && pregnancyLog.symptoms.length > 0 && (
+                  <div className="flex flex-col gap-2">
+                    <span className="text-sm font-medium">Symptoms</span>
+                    <div className="flex flex-wrap gap-1">
+                      {pregnancyLog.symptoms.map(s => (
+                        <span key={s} className="text-xs bg-card px-2 py-1 rounded shadow-sm capitalize">
+                          {s}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {pregnancyLog.weight && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">Weight</span>
+                    <span className="text-sm bg-card px-2 py-1 rounded shadow-sm">
+                      {pregnancyLog.weight} kg
+                    </span>
+                  </div>
+                )}
+                {pregnancyLog.notes && (
+                  <div className="mt-2 pt-2 border-t border-border">
+                    <p className="text-xs text-muted-foreground italic">"{pregnancyLog.notes}"</p>
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
+
+          {/* Health Tips */}
+          {tips && tips.length > 0 && (
+            <section>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="p-2 rounded-lg bg-yellow-100">
+                  <Sparkles className="h-5 w-5 text-yellow-600" />
+                </div>
+                <h3 className="font-semibold text-lg">Health Tips</h3>
+              </div>
+              <div className="space-y-3">
+                {tips.slice(0, 3).map((tip) => (
+                  <div key={tip.id} className="bg-card p-4 rounded-xl border shadow-sm">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-xl">{tip.icon}</span>
+                      <h4 className="font-medium text-sm">{tip.title}</h4>
+                    </div>
+                    <p className="text-sm text-muted-foreground">{tip.description}</p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
         </div>
       </SheetContent>
     </Sheet>

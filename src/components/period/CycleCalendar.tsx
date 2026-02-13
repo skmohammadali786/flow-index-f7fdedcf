@@ -18,10 +18,12 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { DayLog, FlowIntensity } from '@/types/period';
 import { CrimsonGraph } from './CrimsonGraph';
-import { useFertilityTracker, FertilityLog } from '@/hooks/useFertilityTracker';
+import { FertilityLog, PregnancyLog } from '@/hooks/useFertilityTracker';
 
 interface CycleCalendarProps {
   logs: DayLog[];
+  fertilityLogs?: FertilityLog[];
+  pregnancyLogs?: PregnancyLog[];
   onDayClick: (date: Date) => void;
   selectedDate: Date | null;
   isInFertileWindow: (date: Date) => boolean;
@@ -32,6 +34,8 @@ interface CycleCalendarProps {
 
 export function CycleCalendar({
   logs,
+  fertilityLogs = [],
+  pregnancyLogs = [],
   onDayClick,
   selectedDate,
   isInFertileWindow,
@@ -40,7 +44,16 @@ export function CycleCalendar({
   getLogForDate,
 }: CycleCalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const { getFertilityLogForDate } = useFertilityTracker();
+
+  const getFertilityLogForDate = (date: Date) => {
+    const dateStr = format(date, 'yyyy-MM-dd');
+    return fertilityLogs?.find(l => l.date === dateStr);
+  };
+
+  const getPregnancyLogForDate = (date: Date) => {
+    const dateStr = format(date, 'yyyy-MM-dd');
+    return pregnancyLogs?.find(l => l.date === dateStr);
+  };
 
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
@@ -108,6 +121,7 @@ export function CycleCalendar({
           {days.map((day, idx) => {
             const log = getLogForDate(day);
             const fertLog = getFertilityLogForDate(day);
+            const pregLog = getPregnancyLogForDate(day);
             const isPeriod = log?.isPeriod;
             const isFertile = isInFertileWindow(day);
             const isOvulation = isOvulationDay(day);
@@ -168,7 +182,10 @@ export function CycleCalendar({
                   {log && log.symptoms.length > 0 && !fertLog?.intercourse && !fertLog?.opk_result && (
                     <div className="w-1.5 h-1.5 rounded-full bg-peach" />
                   )}
-                  {log && log.moods.length > 0 && !fertLog?.intercourse && !fertLog?.opk_result && (
+                  {pregLog && (
+                    <div className="w-1.5 h-1.5 rounded-full bg-teal-400" title="Pregnancy Log" />
+                  )}
+                  {log && log.moods.length > 0 && !fertLog?.intercourse && !fertLog?.opk_result && !pregLog && (
                     <div className="w-1.5 h-1.5 rounded-full bg-sage" />
                   )}
                 </div>
@@ -203,6 +220,10 @@ export function CycleCalendar({
         <div className="flex items-center gap-1.5">
           <div className="w-2 h-2 rounded-full bg-primary" />
           <span className="text-muted-foreground">OPK Peak</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-2 h-2 rounded-full bg-teal-400" />
+          <span className="text-muted-foreground">Pregnancy</span>
         </div>
       </div>
 
