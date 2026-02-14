@@ -29,7 +29,6 @@ interface DayDetailSheetProps {
   onLogSleep?: (date: Date, hours: number, quality?: SleepQuality) => void;
   onLogExercise?: (date: Date, minutes: number) => void;
   onLogTemperature?: (date: Date, temp: number) => void;
-  tips?: HealthTip[];
 }
 
 const flowOptions: { value: FlowIntensity; label: string; icon: string }[] = [

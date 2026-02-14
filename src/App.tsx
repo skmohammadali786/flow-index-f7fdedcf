@@ -1,4 +1,5 @@
 import { Toaster } from "@/components/ui/toaster";
+import { CuteLoader } from "@/components/period/CuteLoader";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -20,10 +21,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   if (loading) {
     return (
       <div className="min-h-screen gradient-soft flex items-center justify-center">
-        <div className="flex flex-col items-center">
-          <div className="w-12 h-12 rounded-full gradient-primary animate-pulse" />
-          <p className="mt-4 text-muted-foreground">Loading...</p>
-        </div>
+        <CuteLoader message="Getting things ready..." />
       </div>
     );
   }
@@ -42,10 +40,7 @@ function AuthRoute({ children }: { children: React.ReactNode }) {
   if (loading) {
     return (
       <div className="min-h-screen gradient-soft flex items-center justify-center">
-        <div className="flex flex-col items-center">
-          <div className="w-12 h-12 rounded-full gradient-primary animate-pulse" />
-          <p className="mt-4 text-muted-foreground">Loading...</p>
-        </div>
+        <CuteLoader message="Checking your session..." />
       </div>
     );
   }
