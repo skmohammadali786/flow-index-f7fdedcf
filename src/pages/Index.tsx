@@ -1,4 +1,5 @@
 import { useState, useEffect, lazy, Suspense } from 'react';
+import { CuteLoader } from '@/components/period/CuteLoader';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Header } from '@/components/period/Header';
 import { DayDetailSheet } from '@/components/period/DayDetailSheet';
@@ -35,10 +36,7 @@ type TabType = 'calendar' | 'insights' | 'history' | 'tips' | 'analytics' | 'cha
 const ONBOARDING_KEY = 'period_tracker_onboarding_complete';
 
 const TabLoadingFallback = () => (
-  <div className="flex flex-col items-center justify-center py-12">
-    <div className="w-10 h-10 rounded-full gradient-primary animate-pulse-soft" />
-    <p className="mt-4 text-muted-foreground">Loading view...</p>
-  </div>
+  <CuteLoader message="Loading view..." />
 );
 
 const Index = () => {

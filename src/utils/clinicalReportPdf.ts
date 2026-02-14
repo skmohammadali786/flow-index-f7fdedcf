@@ -223,7 +223,7 @@ export async function generateClinicalReportPdf(data: ClinicalReportData, logoBa
       if (lastPregLog.week_number) summaryText += `Latest: Week ${lastPregLog.week_number}. `;
     }
     if (data.fertilityLogs && data.fertilityLogs.length > 0) {
-      const positiveOPKs = data.fertilityLogs.filter(l => l.opk_result === 'positive' || l.opk_result === 'peak').length;
+      const positiveOPKs = data.fertilityLogs.filter(l => l.opk_result === 'high' || l.opk_result === 'peak').length;
       summaryText += `Fertility Logs: ${data.fertilityLogs.length} entries. Positive/Peak OPKs: ${positiveOPKs}.`;
     }
 
