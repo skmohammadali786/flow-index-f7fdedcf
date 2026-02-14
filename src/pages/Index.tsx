@@ -93,6 +93,7 @@ const Index = () => {
     fertilityLogs,
     pregnancyLogs,
     birthRecords,
+    postpartumLogs,
     getActivePregnancy,
     getFertilityLogForDate,
   } = useFertilityTracker();
@@ -159,9 +160,17 @@ const Index = () => {
     const dateStr = format(date, 'yyyy-MM-dd');
     const hasBirth = birthRecords.some(b => b.birth_date === dateStr);
     const hasFertilityLog = fertilityLogs.some(l => l.date === dateStr);
+    const hasPregnancyLog = pregnancyLogs.some(l => l.date === dateStr);
+    const hasPostpartumLog = postpartumLogs.some(l => l.date === dateStr);
 
     if (hasBirth) {
       setPregnancyViewTab('birth');
+      setActiveTab('pregnancy');
+    } else if (hasPostpartumLog) {
+      setPregnancyViewTab('postpartum');
+      setActiveTab('pregnancy');
+    } else if (hasPregnancyLog) {
+      setPregnancyViewTab('pregnancy');
       setActiveTab('pregnancy');
     } else if (hasFertilityLog) {
       setFertilityViewDate(date);
@@ -248,6 +257,7 @@ const Index = () => {
                 logs={logs}
                 fertilityLogs={fertilityLogs}
                 pregnancyLogs={pregnancyLogs}
+                postpartumLogs={postpartumLogs}
                 birthRecords={birthRecords}
                 onDayClick={handleDayClick}
                 selectedDate={selectedDate}

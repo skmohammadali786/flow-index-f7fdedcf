@@ -18,12 +18,13 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { DayLog, FlowIntensity } from '@/types/period';
 import { CrimsonGraph } from './CrimsonGraph';
-import { FertilityLog, PregnancyLog, BirthRecord } from '@/hooks/useFertilityTracker';
+import { FertilityLog, PregnancyLog, BirthRecord, PostpartumLog } from '@/hooks/useFertilityTracker';
 
 interface CycleCalendarProps {
   logs: DayLog[];
   fertilityLogs?: FertilityLog[];
   pregnancyLogs?: PregnancyLog[];
+  postpartumLogs?: PostpartumLog[];
   birthRecords?: BirthRecord[];
   onDayClick: (date: Date) => void;
   selectedDate: Date | null;
@@ -37,6 +38,7 @@ export function CycleCalendar({
   logs,
   fertilityLogs = [],
   pregnancyLogs = [],
+  postpartumLogs = [],
   birthRecords = [],
   onDayClick,
   selectedDate,
@@ -55,6 +57,11 @@ export function CycleCalendar({
   const getPregnancyLogForDate = (date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
     return pregnancyLogs?.find(l => l.date === dateStr);
+  };
+
+  const getPostpartumLogForDate = (date: Date) => {
+    const dateStr = format(date, 'yyyy-MM-dd');
+    return postpartumLogs?.find(l => l.date === dateStr);
   };
 
   const getBirthRecordForDate = (date: Date) => {
@@ -129,6 +136,7 @@ export function CycleCalendar({
             const log = getLogForDate(day);
             const fertLog = getFertilityLogForDate(day);
             const pregLog = getPregnancyLogForDate(day);
+            const ppLog = getPostpartumLogForDate(day);
             const birthRecord = getBirthRecordForDate(day);
             const isPeriod = log?.isPeriod;
             const isFertile = isInFertileWindow(day);
@@ -156,16 +164,19 @@ export function CycleCalendar({
                 <div className={cn(
                   "w-full h-full rounded-lg flex flex-col items-center justify-center",
                   birthRecord && "bg-birth hover:bg-birth/90 text-white",
-                  !birthRecord && hasFertilityLog && "bg-fertility hover:bg-fertility/90 text-white",
-                  !birthRecord && !hasFertilityLog && isPeriod && getFlowColor(log?.flowIntensity),
-                  !birthRecord && !hasFertilityLog && !isPeriod && isPredicted && "border-2 border-dashed border-coral/50",
-                  !birthRecord && !hasFertilityLog && !isPeriod && !isPredicted && isFertile && "bg-lavender-light",
-                  !birthRecord && !hasFertilityLog && isOvulation && !isPeriod && "bg-lavender ring-2 ring-lavender",
-                  !birthRecord && !hasFertilityLog && isToday(day) && !isPeriod && !isFertile && "bg-peach-light",
+                  !birthRecord && ppLog && "bg-postpartum-log hover:bg-postpartum-log/90 text-foreground",
+                  !birthRecord && !ppLog && pregLog && "bg-pregnancy-log hover:bg-pregnancy-log/90 text-foreground",
+                  !birthRecord && !ppLog && !pregLog && hasFertilityLog && "bg-fertility hover:bg-fertility/90 text-white",
+                  !birthRecord && !ppLog && !pregLog && !hasFertilityLog && isPeriod && getFlowColor(log?.flowIntensity),
+                  !birthRecord && !ppLog && !pregLog && !hasFertilityLog && !isPeriod && isPredicted && "border-2 border-dashed border-coral/50",
+                  !birthRecord && !ppLog && !pregLog && !hasFertilityLog && !isPeriod && !isPredicted && isFertile && "bg-lavender-light",
+                  !birthRecord && !ppLog && !pregLog && !hasFertilityLog && !isPeriod && !isPredicted && isOvulation && !isPeriod && "bg-lavender ring-2 ring-lavender",
+                  !birthRecord && !ppLog && !pregLog && !hasFertilityLog && isToday(day) && !isPeriod && !isFertile && "bg-peach-light",
                 )}>
                   <span className={cn(
                     "text-sm font-medium",
-                    (isPeriod || birthRecord || hasFertilityLog) && "text-primary-foreground",
+                    (isPeriod || birthRecord || hasFertilityLog) && !ppLog && !pregLog && "text-primary-foreground",
+                    (ppLog || pregLog) && "text-foreground",
                     isToday(day) && "font-bold",
                   )}>
                     {format(day, 'd')}
@@ -194,10 +205,7 @@ export function CycleCalendar({
                   {log && log.symptoms.length > 0 && !fertLog?.intercourse && !fertLog?.opk_result && (
                     <div className="w-1.5 h-1.5 rounded-full bg-peach" />
                   )}
-                  {pregLog && (
-                    <div className="w-1.5 h-1.5 rounded-full bg-birth-light" title="Pregnancy Log" />
-                  )}
-                  {log && log.moods.length > 0 && !fertLog?.intercourse && !fertLog?.opk_result && !pregLog && (
+                  {!ppLog && !pregLog && log && log.moods.length > 0 && !fertLog?.intercourse && !fertLog?.opk_result && (
                     <div className="w-1.5 h-1.5 rounded-full bg-sage" />
                   )}
                 </div>
@@ -234,16 +242,20 @@ export function CycleCalendar({
           <span className="text-muted-foreground">Birth</span>
         </div>
         <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded bg-pregnancy-log" />
+          <span className="text-muted-foreground">Pregnancy</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded bg-postpartum-log" />
+          <span className="text-muted-foreground">Postpartum</span>
+        </div>
+        <div className="flex items-center gap-1.5">
           <div className="w-2 h-2 rounded-full bg-coral" />
           <span className="text-muted-foreground">Intercourse</span>
         </div>
         <div className="flex items-center gap-1.5">
           <div className="w-2 h-2 rounded-full bg-primary" />
           <span className="text-muted-foreground">OPK Peak</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-2 h-2 rounded-full bg-birth-light" />
-          <span className="text-muted-foreground">Pregnancy</span>
         </div>
       </div>
 
