@@ -24,12 +24,22 @@ export function useSupabaseSettings() {
 
     const fetchData = async () => {
       try {
-        // Fetch profile
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('user_id', user.id)
-          .maybeSingle();
+        // Fetch profile and settings in parallel
+        const [profileResult, settingsResult] = await Promise.all([
+          supabase
+            .from('profiles')
+            .select('*')
+            .eq('user_id', user.id)
+            .maybeSingle(),
+          supabase
+            .from('user_settings')
+            .select('*')
+            .eq('user_id', user.id)
+            .maybeSingle(),
+        ]);
+
+        const { data: profileData, error: profileError } = profileResult;
+        const { data: settingsData, error: settingsError } = settingsResult;
 
         if (profileError && profileError.code !== 'PGRST116') {
           throw profileError;
@@ -43,13 +53,6 @@ export function useSupabaseSettings() {
             lastBackup: undefined,
           });
         }
-
-        // Fetch settings
-        const { data: settingsData, error: settingsError } = await supabase
-          .from('user_settings')
-          .select('*')
-          .eq('user_id', user.id)
-          .maybeSingle();
 
         if (settingsError && settingsError.code !== 'PGRST116') {
           throw settingsError;
