@@ -46,6 +46,10 @@
     --sage: 140 30% 70%;
     --sage-light: 140 30% 92%;
     --cream: 30 50% 98%;
+    --fertility: 207 82% 75%;
+    --fertility-light: 207 82% 92%;
+    --birth: 146 60% 55%;
+    --birth-light: 146 60% 90%;
     
     --gradient-primary: linear-gradient(135deg, hsl(355 70% 65%), hsl(25 80% 75%));
     --gradient-secondary: linear-gradient(135deg, hsl(280 40% 75%), hsl(355 70% 65%));

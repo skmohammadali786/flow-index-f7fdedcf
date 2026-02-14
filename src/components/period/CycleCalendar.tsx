@@ -155,8 +155,8 @@ export function CycleCalendar({
               >
                 <div className={cn(
                   "w-full h-full rounded-lg flex flex-col items-center justify-center",
-                  birthRecord && "bg-green-600 hover:bg-green-700 text-white",
-                  !birthRecord && hasFertilityLog && "bg-blue-700 hover:bg-blue-800 text-white",
+                  birthRecord && "bg-birth hover:bg-birth/90 text-white",
+                  !birthRecord && hasFertilityLog && "bg-fertility hover:bg-fertility/90 text-white",
                   !birthRecord && !hasFertilityLog && isPeriod && getFlowColor(log?.flowIntensity),
                   !birthRecord && !hasFertilityLog && !isPeriod && isPredicted && "border-2 border-dashed border-coral/50",
                   !birthRecord && !hasFertilityLog && !isPeriod && !isPredicted && isFertile && "bg-lavender-light",
@@ -195,7 +195,7 @@ export function CycleCalendar({
                     <div className="w-1.5 h-1.5 rounded-full bg-peach" />
                   )}
                   {pregLog && (
-                    <div className="w-1.5 h-1.5 rounded-full bg-teal-400" title="Pregnancy Log" />
+                    <div className="w-1.5 h-1.5 rounded-full bg-birth-light" title="Pregnancy Log" />
                   )}
                   {log && log.moods.length > 0 && !fertLog?.intercourse && !fertLog?.opk_result && !pregLog && (
                     <div className="w-1.5 h-1.5 rounded-full bg-sage" />
@@ -226,6 +226,14 @@ export function CycleCalendar({
           <span className="text-muted-foreground">Ovulation</span>
         </div>
         <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded bg-fertility" />
+          <span className="text-muted-foreground">Fertility</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-3 h-3 rounded bg-birth" />
+          <span className="text-muted-foreground">Birth</span>
+        </div>
+        <div className="flex items-center gap-1.5">
           <div className="w-2 h-2 rounded-full bg-coral" />
           <span className="text-muted-foreground">Intercourse</span>
         </div>
@@ -234,7 +242,7 @@ export function CycleCalendar({
           <span className="text-muted-foreground">OPK Peak</span>
         </div>
         <div className="flex items-center gap-1.5">
-          <div className="w-2 h-2 rounded-full bg-teal-400" />
+          <div className="w-2 h-2 rounded-full bg-birth-light" />
           <span className="text-muted-foreground">Pregnancy</span>
         </div>
       </div>

@@ -73,6 +73,14 @@ export default {
           light: "hsl(var(--sage-light))",
         },
         cream: "hsl(var(--cream))",
+        fertility: {
+          DEFAULT: "hsl(var(--fertility))",
+          light: "hsl(var(--fertility-light))",
+        },
+        birth: {
+          DEFAULT: "hsl(var(--birth))",
+          light: "hsl(var(--birth-light))",
+        },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
