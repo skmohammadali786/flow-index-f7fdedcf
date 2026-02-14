@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import { format, parseISO, differenceInDays } from 'date-fns';
+import { format, parseISO, differenceInDays, subDays } from 'date-fns';
 import { DayLog, CycleData, CycleStats, Symptom, Mood } from '@/types/period';
 import type { FertilityLog, PregnancyLog } from '@/hooks/useFertilityTracker';
 import {
@@ -7,7 +7,8 @@ import {
   drawRoundedRect,
   drawProgressBar,
   drawDecoCircle,
-  addPageFooter
+  addPageFooter,
+  drawFertilityChart
 } from './pdfUtils';
 
 export interface ClinicalAssessment {
@@ -231,6 +232,25 @@ export async function generateClinicalReportPdf(data: ClinicalReportData, logoBa
     pdf.text(summaryText, margin + 10, yPos + 20);
 
     yPos += 48;
+  }
+
+  // Fertility Chart
+  if (data.fertilityLogs && data.fertilityLogs.length > 0) {
+    const hasRecentData = data.fertilityLogs.some(l => {
+        const d = parseISO(l.date);
+        return d >= subDays(new Date(), 30);
+    });
+
+    if (hasRecentData) {
+        checkNewPage(80);
+        pdf.setFontSize(12);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(...colors.text);
+        pdf.text('Fertility Overview (30 Days)', margin + 10, yPos + 10);
+
+        drawFertilityChart(pdf, margin, yPos + 15, contentWidth, 60, data.logs, data.fertilityLogs, 30);
+        yPos += 80;
+    }
   }
 
   // VAS Assessments
