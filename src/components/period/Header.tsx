@@ -30,10 +30,10 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
   const moreOptions = [
     { id: 'fertility' as const, label: 'Fertility Tracking', icon: Egg },
     { id: 'pregnancy' as const, label: 'Pregnancy & Birth', icon: Baby },
-    { id: 'tips' as const, label: 'Health Tips', icon: Lightbulb },
     { id: 'share' as const, label: 'Partner Share', icon: Share2 },
     { id: 'report' as const, label: 'Health Report', icon: FileText },
     { id: 'journal' as const, label: 'Wellness Journal', icon: BookHeart },
+    { id: 'tips' as const, label: 'Health Tips', icon: Lightbulb },
   ];
 
   const isMoreTab = moreOptions.some(t => t.id === activeTab);
