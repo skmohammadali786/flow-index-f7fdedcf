@@ -1,11 +1,23 @@
 import { motion } from 'framer-motion';
 import { ArrowLeft, Shield } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuth } from '@/contexts/AuthContext';
 import logo from '@/assets/logo.png';
 
 const Privacy = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const handleBack = () => {
+    if (user) {
+      navigate('/');
+    } else {
+      navigate('/auth');
+    }
+  };
+
   return (
     <div className="min-h-screen gradient-soft py-8 px-4">
       <div className="max-w-3xl mx-auto">
@@ -16,11 +28,9 @@ const Privacy = () => {
           transition={{ duration: 0.5 }}
           className="flex items-center gap-4 mb-8"
         >
-          <Link to="/auth">
-            <Button variant="ghost" size="icon" className="rounded-full">
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-          </Link>
+          <Button variant="ghost" size="icon" className="rounded-full" onClick={handleBack}>
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl overflow-hidden shadow-sm">
               <img src={logo} alt="Flow Index" className="w-full h-full object-cover" />
@@ -149,12 +159,10 @@ const Privacy = () => {
               </section>
 
               <div className="pt-4 border-t border-border">
-                <Link to="/auth">
-                  <Button variant="outline" className="w-full">
-                    <ArrowLeft className="h-4 w-4 mr-2" />
-                    Back to Sign Up
-                  </Button>
-                </Link>
+                <Button variant="outline" className="w-full" onClick={handleBack}>
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  {user ? 'Back to App' : 'Back to Sign Up'}
+                </Button>
               </div>
             </CardContent>
           </Card>
