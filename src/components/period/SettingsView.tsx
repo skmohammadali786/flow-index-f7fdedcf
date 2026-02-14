@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   Settings, 
@@ -16,6 +17,9 @@ import {
   ExternalLink,
   HeadphonesIcon,
   FileText,
+  Info,
+  Shield,
+  ScrollText,
 } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -63,6 +67,7 @@ export function SettingsView({
   onResetSettings,
 }: SettingsViewProps) {
   const { signOut } = useAuth();
+  const navigate = useNavigate();
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
@@ -427,6 +432,42 @@ export function SettingsView({
           </span>
           <ExternalLink className="h-4 w-4" />
         </Button>
+      </motion.section>
+
+      {/* About & Legal */}
+      <motion.section variants={itemVariants} className="bg-card rounded-2xl p-5 shadow-card">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 rounded-lg bg-lavender-light">
+            <Info className="h-5 w-5 text-lavender" />
+          </div>
+          <h2 className="font-semibold">About</h2>
+        </div>
+
+        <div className="space-y-3">
+          <Button
+            variant="outline"
+            className="w-full justify-between"
+            onClick={() => navigate('/privacy')}
+          >
+            <span className="flex items-center gap-2">
+              <Shield className="h-4 w-4" />
+              Privacy Policy
+            </span>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+
+          <Button
+            variant="outline"
+            className="w-full justify-between"
+            onClick={() => navigate('/terms')}
+          >
+            <span className="flex items-center gap-2">
+              <ScrollText className="h-4 w-4" />
+              Terms & Conditions
+            </span>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
       </motion.section>
 
       {/* Danger Zone */}
