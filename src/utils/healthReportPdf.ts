@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import { format, parseISO, subMonths } from 'date-fns';
+import { format, parseISO, subMonths, subDays } from 'date-fns';
 import { DayLog, CycleData, CycleStats } from '@/types/period';
 import type { FertilityLog, PregnancyLog, BirthRecord } from '@/hooks/useFertilityTracker';
 import {
@@ -7,7 +7,8 @@ import {
   drawRoundedRect,
   drawProgressBar,
   drawDecoCircle,
-  addPageFooter
+  addPageFooter,
+  drawFertilityChart
 } from './pdfUtils';
 
 export interface HealthReportOptions {
@@ -191,6 +192,25 @@ export async function generateHealthReportPdf(data: HealthReportData, logoBase64
        cx += (contentWidth - 20) / 4;
     });
     yPos += 45;
+  }
+
+  // Fertility Chart (Last 30 Days)
+  if (data.fertilityLogs && data.fertilityLogs.length > 0) {
+    const hasRecentData = data.fertilityLogs.some(l => {
+        const d = parseISO(l.date);
+        return d >= subDays(new Date(), 30);
+    });
+
+    if (hasRecentData) {
+        checkNewPage(80);
+        pdf.setFontSize(12);
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(...colors.text);
+        pdf.text('Fertility Chart (Last 30 Days)', margin + 10, yPos + 10);
+
+        drawFertilityChart(pdf, margin, yPos + 15, contentWidth, 60, data.logs, data.fertilityLogs, 30);
+        yPos += 85;
+    }
   }
 
   // Birth History

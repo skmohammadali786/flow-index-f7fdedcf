@@ -13,7 +13,8 @@ import {
   drawRoundedRect,
   drawProgressBar,
   drawDecoCircle,
-  addPageFooter
+  addPageFooter,
+  drawFertilityChart
 } from './pdfUtils';
 
 // Re-export for backward compatibility
@@ -425,6 +426,25 @@ export async function generatePartnerSharePdf(data: PdfData, logoBase64?: string
   }
 
   // ===== FERTILITY SIGNS =====
+  // Check for fertility data in last 30 days for chart
+  const thirtyDaysAgo = subDays(today, 30);
+  const hasFertilityData = data.fertilityLogs?.some(l => {
+    const d = parseISO(l.date);
+    return d >= thirtyDaysAgo && d <= today;
+  });
+
+  if (hasFertilityData) {
+    checkNewPage(80);
+
+    pdf.setTextColor(...colors.text);
+    pdf.setFontSize(13);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('Fertility Overview (30 Days)', margin + 10, yPos + 10);
+
+    drawFertilityChart(pdf, margin, yPos + 15, contentWidth, 60, data.logs, data.fertilityLogs || [], 30);
+    yPos += 85;
+  }
+
   const recentFertilityLogs = data.fertilityLogs?.filter(log => {
     const logDate = parseISO(log.date);
     return logDate >= sevenDaysAgo && logDate <= today;
@@ -439,7 +459,7 @@ export async function generatePartnerSharePdf(data: PdfData, logoBase64?: string
     pdf.setTextColor(...colors.text);
     pdf.setFontSize(13);
     pdf.setFont('helvetica', 'bold');
-    pdf.text('Fertility Signs (Recent)', margin + 10, yPos + 10);
+    pdf.text('Recent Fertility Details', margin + 10, yPos + 10);
 
     // Header
     const fY = yPos + 18;
