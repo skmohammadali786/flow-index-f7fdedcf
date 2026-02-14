@@ -22,6 +22,7 @@ import {
   AlertTriangle,
   Loader2
 } from 'lucide-react';
+import { CuteLoader } from '@/components/period/CuteLoader';
 import { CyclePhase } from '@/types/settings';
 import { DayLog, CycleData } from '@/types/period';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -156,7 +157,7 @@ export function BrainForecastView({ currentPhase, currentCycleDay, logs, cycles 
   if (assessmentsLoading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <CuteLoader size="sm" message="Loading forecast..." />
       </div>
     );
   }

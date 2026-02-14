@@ -19,6 +19,7 @@ import {
   Loader2,
   TrendingUp
 } from 'lucide-react';
+import { CuteLoader } from '@/components/period/CuteLoader';
 import { DayLog, CycleData, CycleStats, Symptom, Mood } from '@/types/period';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -376,7 +377,7 @@ export function ClinicalEvidenceView({ logs, cycles, stats, userName: propUserNa
               <CardContent className="space-y-6">
                 {isLoading ? (
                   <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    <CuteLoader size="sm" message="Loading assessments..." />
                   </div>
                 ) : (
                   vasScaleDisplays.map((scale) => {

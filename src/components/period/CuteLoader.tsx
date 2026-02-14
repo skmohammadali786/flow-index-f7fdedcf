@@ -122,9 +122,11 @@ const FloatingRing = ({ delay, size }: { delay: number; size: number }) => (
   />
 );
 
-export const CuteLoader = ({ message = 'Loading...' }: { message?: string }) => (
-  <div className="flex flex-col items-center justify-center py-16 gap-5">
-    <div className="relative flex items-center justify-center" style={{ width: 120, height: 80 }}>
+export const CuteLoader = ({ message = 'Loading...', size = 'default' }: { message?: string; size?: 'sm' | 'default' }) => {
+  const isSmall = size === 'sm';
+  return (
+  <div className={`flex flex-col items-center justify-center ${isSmall ? 'py-6 gap-3' : 'py-16 gap-5'}`}>
+    <div className="relative flex items-center justify-center" style={{ width: isSmall ? 80 : 120, height: isSmall ? 50 : 80 }}>
       {/* Expanding rings */}
       <FloatingRing delay={0} size={60} />
       <FloatingRing delay={0.8} size={60} />
@@ -139,9 +141,9 @@ export const CuteLoader = ({ message = 'Loading...' }: { message?: string }) => 
 
       {/* Three bouncing blob friends */}
       <div className="flex items-end gap-2">
-        <BlobCharacter delay={0} size={30} color="hsl(var(--primary))" />
-        <BlobCharacter delay={0.2} size={38} color="hsl(var(--accent))" />
-        <BlobCharacter delay={0.4} size={30} color="hsl(var(--secondary))" />
+        <BlobCharacter delay={0} size={isSmall ? 20 : 30} color="hsl(var(--primary))" />
+        <BlobCharacter delay={0.2} size={isSmall ? 26 : 38} color="hsl(var(--accent))" />
+        <BlobCharacter delay={0.4} size={isSmall ? 20 : 30} color="hsl(var(--secondary))" />
       </div>
     </div>
 
@@ -160,4 +162,5 @@ export const CuteLoader = ({ message = 'Loading...' }: { message?: string }) => 
       </span>
     </div>
   </div>
-);
+  );
+};

@@ -205,14 +205,7 @@ const Index = () => {
   if (!isLoaded || !settingsLoaded) {
     return (
       <div className="min-h-screen gradient-soft flex items-center justify-center">
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="flex flex-col items-center"
-        >
-          <div className="w-12 h-12 rounded-full gradient-primary animate-pulse-soft" />
-          <p className="mt-4 text-muted-foreground">Loading...</p>
-        </motion.div>
+        <CuteLoader message="Loading your data..." />
       </div>
     );
   }
