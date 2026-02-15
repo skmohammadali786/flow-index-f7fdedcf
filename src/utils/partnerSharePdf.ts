@@ -5,6 +5,7 @@ import { CyclePhase } from '@/types/settings';
 import { getPhaseInfoForPdf } from '@/data/phaseData';
 import type { JournalEntry } from '@/hooks/useWellnessJournal';
 import type { FertilityLog, BirthRecord } from '@/hooks/useFertilityTracker';
+import type { ClinicalAssessment } from '@/hooks/useClinicalAssessments';
 import {
   colors,
   phaseStyles,
@@ -29,6 +30,7 @@ export interface PdfData {
   logs: DayLog[];
   fertilityLogs?: FertilityLog[];
   birthRecords?: BirthRecord[];
+  clinicalAssessments?: ClinicalAssessment[];
   userName?: string;
   journalEntries?: JournalEntry[];
   shareSettings: {
@@ -701,6 +703,108 @@ export async function generatePartnerSharePdf(data: PdfData, logoBase64?: string
   });
 
   yPos += graphH + 30;
+
+  // ===== COMPREHENSIVE DASHBOARD GRAPH =====
+  {
+    const clinicalAssessmentsData = data.clinicalAssessments || [];
+    const journalEntriesData = data.journalEntries || [];
+    const allFertilityData = data.fertilityLogs || [];
+
+    const clinicalMapC = new Map(clinicalAssessmentsData.map(a => [a.date, a]));
+    const journalMapC = new Map(journalEntriesData.map(e => [e.date, e]));
+    const fertilityMapC = new Map(allFertilityData.map(f => [f.date, f]));
+
+    const hasExtraData = clinicalAssessmentsData.length > 0 || journalEntriesData.length > 0 || allFertilityData.length > 0;
+
+    if (hasExtraData) {
+      checkNewPage(100);
+
+      pdf.setTextColor(...colors.text);
+      pdf.setFontSize(14);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text('Complete Health Dashboard (30 Days)', margin, yPos + 4);
+      yPos += 12;
+
+      const cGX = margin + 10;
+      const cGY = yPos;
+      const cGW = contentWidth - 20;
+      const cGH = 65;
+
+      drawRoundedRect(pdf, margin, yPos - 4, contentWidth, cGH + 28, 5, colors.cardBg, colors.border);
+
+      pdf.setDrawColor(230, 230, 240);
+      pdf.setLineWidth(0.15);
+      for (let i = 0; i <= 5; i++) {
+        const gy = cGY + cGH - (i / 5) * cGH;
+        pdf.line(cGX, gy, cGX + cGW, gy);
+      }
+
+      const dateStrs: string[] = [];
+      for (let i = 29; i >= 0; i--) {
+        dateStrs.push(format(subDays(startOfDay(new Date()), i), 'yyyy-MM-dd'));
+      }
+
+      pdf.setFontSize(6);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(...colors.textMuted);
+      dateStrs.forEach((_, i) => {
+        if (i % 5 === 0 || i === dateStrs.length - 1) {
+          const x = cGX + (i / (dateStrs.length - 1)) * cGW;
+          pdf.text(graphData[i]?.date || '', x, cGY + cGH + 5, { align: 'center' });
+        }
+      });
+
+      const extConfigs: { color: [number, number, number]; label: string; maxScale: number; getValue: (d: string, i: number) => number }[] = [
+        { color: [220, 60, 80], label: 'Flow', maxScale: 4, getValue: (_, i) => graphData[i]?.flow || 0 },
+        { color: [140, 100, 220], label: 'Sleep', maxScale: 12, getValue: (_, i) => graphData[i]?.sleep || 0 },
+        { color: [60, 150, 220], label: 'Water', maxScale: 12, getValue: (_, i) => graphData[i]?.water || 0 },
+        { color: [220, 40, 40], label: 'Pain', maxScale: 10, getValue: (d) => clinicalMapC.get(d)?.painVas || 0 },
+        { color: [240, 150, 40], label: 'Fatigue', maxScale: 10, getValue: (d) => clinicalMapC.get(d)?.fatigueVas || 0 },
+        { color: [250, 180, 20], label: 'Energy', maxScale: 5, getValue: (d) => (journalMapC.get(d)?.energy_level as number) || 0 },
+        { color: [220, 80, 140], label: 'J.Mood', maxScale: 5, getValue: (d) => (journalMapC.get(d)?.mood_rating as number) || 0 },
+        { color: [40, 180, 200], label: 'LH', maxScale: 100, getValue: (d) => (fertilityMapC.get(d)?.lh_level as number) || 0 },
+      ];
+
+      extConfigs.forEach(config => {
+        pdf.setDrawColor(...config.color);
+        pdf.setLineWidth(0.5);
+        let pX: number | null = null;
+        let pY: number | null = null;
+
+        dateStrs.forEach((dateStr, i) => {
+          const val = config.getValue(dateStr, i);
+          const x = cGX + (i / (dateStrs.length - 1)) * cGW;
+          const y = cGY + cGH - (val / config.maxScale) * cGH;
+
+          if (pX !== null && pY !== null && val > 0) {
+            pdf.line(pX, pY, x, y);
+          }
+          if (val > 0) {
+            pdf.setFillColor(...config.color);
+            pdf.circle(x, y, 0.6, 'F');
+            pX = x;
+            pY = y;
+          } else {
+            pX = null;
+            pY = null;
+          }
+        });
+      });
+
+      const cLY = cGY + cGH + 12;
+      const cLS = contentWidth / extConfigs.length;
+      extConfigs.forEach((config, i) => {
+        const lx = margin + 4 + i * cLS;
+        pdf.setFillColor(...config.color);
+        pdf.circle(lx, cLY, 1.2, 'F');
+        pdf.setFontSize(5.5);
+        pdf.setTextColor(...colors.textMuted);
+        pdf.text(config.label, lx + 3, cLY + 1.2);
+      });
+
+      yPos += cGH + 36;
+    }
+  }
 
   // ===== WEEKLY & MONTHLY SUMMARY =====
   checkNewPage(65);
