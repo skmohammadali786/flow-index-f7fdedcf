@@ -23,6 +23,7 @@ const WellnessJournalView = lazy(() => import('@/components/period/WellnessJourn
 const FertilityTrackingView = lazy(() => import('@/components/period/FertilityTrackingView').then(module => ({ default: module.FertilityTrackingView })));
 const PregnancyBirthView = lazy(() => import('@/components/period/PregnancyBirthView').then(module => ({ default: module.PregnancyBirthView })));
 const DashboardView = lazy(() => import('@/components/period/DashboardView').then(module => ({ default: module.DashboardView })));
+const BodySimulationView = lazy(() => import('@/components/period/BodySimulationView').then(module => ({ default: module.BodySimulationView })));
 import { useSupabasePeriodTracker } from '@/hooks/useSupabasePeriodTracker';
 import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
 import { useFertilityTracker } from '@/hooks/useFertilityTracker';
@@ -34,7 +35,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getTipsForCategory, getTipsForPhase } from '@/data/healthTips';
 import { startOfDay, format } from 'date-fns';
 
-type TabType = 'calendar' | 'insights' | 'history' | 'tips' | 'analytics' | 'charts' | 'share' | 'report' | 'brain' | 'clinical' | 'journal' | 'fertility' | 'pregnancy' | 'dashboard' | 'settings' | 'profile';
+type TabType = 'calendar' | 'insights' | 'history' | 'tips' | 'analytics' | 'charts' | 'share' | 'report' | 'brain' | 'clinical' | 'journal' | 'fertility' | 'pregnancy' | 'dashboard' | 'settings' | 'profile' | 'ar-body';
 
 const ONBOARDING_KEY = 'period_tracker_onboarding_complete';
 
@@ -270,6 +271,22 @@ const Index = () => {
                 isOvulationDay={settings.showOvulation ? isOvulationDay : () => false}
                 isPredictedPeriod={isPredictedPeriod}
                 getLogForDate={getLogForDate}
+              />
+            </motion.div>
+          )}
+
+          {activeTab === 'ar-body' && (
+            <motion.div
+              key="ar-body"
+              variants={pageVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              transition={{ duration: 0.2 }}
+            >
+              <BodySimulationView
+                currentCycleDay={currentCycleDay}
+                cycleLength={settings.cycleLength}
               />
             </motion.div>
           )}
