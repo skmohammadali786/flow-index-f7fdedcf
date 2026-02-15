@@ -22,6 +22,7 @@ import { generatePartnerSharePdf } from '@/utils/partnerSharePdf';
 import { phaseInfo, moodLabels, symptomLabels } from '@/data/phaseData';
 import { useAuth } from '@/contexts/AuthContext';
 import { useWellnessJournal } from '@/hooks/useWellnessJournal';
+import { useClinicalAssessments } from '@/hooks/useClinicalAssessments';
 import { useFertilityTracker } from '@/hooks/useFertilityTracker';
 import { useReportDraft } from '@/contexts/ReportDraftContext';
 import logoSrc from '@/assets/logo.png';
@@ -88,6 +89,7 @@ export function PartnerShareView({
   const { entries: journalEntries } = useWellnessJournal();
   const { fertilityLogs: fetchedFertilityLogs, birthRecords: fetchedBirthRecords } = useFertilityTracker();
   const { fertilityDrafts, birthDraft } = useReportDraft();
+  const { historicalAssessments: clinicalAssessments } = useClinicalAssessments();
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
@@ -417,6 +419,7 @@ export function PartnerShareView({
         shareSettings,
         fertilityLogs,
         birthRecords,
+        clinicalAssessments,
       } as any, logoBase64);
 
       toast({

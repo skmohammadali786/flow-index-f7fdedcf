@@ -22,16 +22,19 @@ const ClinicalEvidenceView = lazy(() => import('@/components/period/ClinicalEvid
 const WellnessJournalView = lazy(() => import('@/components/period/WellnessJournalView').then(module => ({ default: module.WellnessJournalView })));
 const FertilityTrackingView = lazy(() => import('@/components/period/FertilityTrackingView').then(module => ({ default: module.FertilityTrackingView })));
 const PregnancyBirthView = lazy(() => import('@/components/period/PregnancyBirthView').then(module => ({ default: module.PregnancyBirthView })));
+const DashboardView = lazy(() => import('@/components/period/DashboardView').then(module => ({ default: module.DashboardView })));
 import { useSupabasePeriodTracker } from '@/hooks/useSupabasePeriodTracker';
 import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
 import { useFertilityTracker } from '@/hooks/useFertilityTracker';
 import { useSymptomAnalytics } from '@/hooks/useSymptomAnalytics';
+import { useClinicalAssessments } from '@/hooks/useClinicalAssessments';
+import { useWellnessJournal } from '@/hooks/useWellnessJournal';
 import { useReportDraft } from '@/contexts/ReportDraftContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { getTipsForCategory, getTipsForPhase } from '@/data/healthTips';
 import { startOfDay, format } from 'date-fns';
 
-type TabType = 'calendar' | 'insights' | 'history' | 'tips' | 'analytics' | 'charts' | 'share' | 'report' | 'brain' | 'clinical' | 'journal' | 'fertility' | 'pregnancy' | 'settings' | 'profile';
+type TabType = 'calendar' | 'insights' | 'history' | 'tips' | 'analytics' | 'charts' | 'share' | 'report' | 'brain' | 'clinical' | 'journal' | 'fertility' | 'pregnancy' | 'dashboard' | 'settings' | 'profile';
 
 const ONBOARDING_KEY = 'period_tracker_onboarding_complete';
 
@@ -99,6 +102,8 @@ const Index = () => {
   } = useFertilityTracker();
 
   const { fertilityDrafts, pregnancyDrafts, birthDraft } = useReportDraft();
+  const { historicalAssessments: clinicalAssessments } = useClinicalAssessments();
+  const { entries: journalEntries } = useWellnessJournal();
 
   const handleExportPdf = async () => {
     await exportDataPdf({
@@ -458,6 +463,25 @@ const Index = () => {
               transition={{ duration: 0.2 }}
             >
               <HistoryView cycles={cycles} logs={logs} />
+            </motion.div>
+           )}
+
+          {activeTab === 'dashboard' && (
+            <motion.div
+              key="dashboard"
+              variants={pageVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              transition={{ duration: 0.2 }}
+            >
+              <DashboardView
+                logs={logs}
+                clinicalAssessments={clinicalAssessments}
+                journalEntries={journalEntries}
+                fertilityLogs={fertilityLogs}
+                currentPhase={currentPhase}
+              />
             </motion.div>
           )}
 

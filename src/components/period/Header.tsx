@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { User, Settings, Lightbulb, Share2, FileText, Brain, Stethoscope, Calendar, TrendingUp, BarChart3, Activity, History, BookHeart, Egg, Baby } from 'lucide-react';
+import { User, Settings, Lightbulb, Share2, FileText, Brain, Stethoscope, Calendar, TrendingUp, BarChart3, Activity, History, BookHeart, Egg, Baby, LayoutDashboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 
-type TabType = 'calendar' | 'insights' | 'history' | 'tips' | 'analytics' | 'charts' | 'share' | 'report' | 'brain' | 'clinical' | 'journal' | 'fertility' | 'pregnancy' | 'settings' | 'profile';
+type TabType = 'calendar' | 'insights' | 'history' | 'tips' | 'analytics' | 'charts' | 'share' | 'report' | 'brain' | 'clinical' | 'journal' | 'fertility' | 'pregnancy' | 'dashboard' | 'settings' | 'profile';
 
 interface HeaderProps {
   activeTab: TabType;
@@ -25,6 +25,7 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
     { id: 'clinical' as const, label: 'Clin', fullLabel: 'Clinical', icon: Stethoscope },
     { id: 'brain' as const, label: 'Brain', fullLabel: 'Brain Forecast', icon: Brain },
     { id: 'history' as const, label: 'Hist', fullLabel: 'History', icon: History },
+    { id: 'dashboard' as const, label: 'Dash', fullLabel: 'Dashboard', icon: LayoutDashboard },
   ];
 
   const moreOptions = [
@@ -102,7 +103,7 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
           </div>
         </div>
 
-        <nav className="grid grid-cols-7 gap-1 bg-muted rounded-xl p-1">
+        <nav className="grid grid-cols-8 gap-1 bg-muted rounded-xl p-1">
           {mainTabs.map((tab) => {
             const Icon = tab.icon;
             return (
