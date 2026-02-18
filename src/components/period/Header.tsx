@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { User, Settings, Lightbulb, Share2, FileText, Brain, Stethoscope, Calendar, TrendingUp, BarChart3, Activity, History, BookHeart, Egg, Baby, LayoutDashboard } from 'lucide-react';
+import { User, Settings, Lightbulb, Share2, FileText, Brain, Stethoscope, Calendar, TrendingUp, BarChart3, Activity, History, BookHeart, Egg, Baby, LayoutDashboard, Dumbbell } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 
-type TabType = 'calendar' | 'insights' | 'history' | 'tips' | 'analytics' | 'charts' | 'share' | 'report' | 'brain' | 'clinical' | 'journal' | 'fertility' | 'pregnancy' | 'dashboard' | 'settings' | 'profile';
+type TabType = 'calendar' | 'insights' | 'history' | 'tips' | 'analytics' | 'charts' | 'share' | 'report' | 'brain' | 'clinical' | 'journal' | 'fertility' | 'pregnancy' | 'dashboard' | 'workout' | 'settings' | 'profile';
 
 interface HeaderProps {
   activeTab: TabType;
@@ -29,6 +29,7 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
   ];
 
   const moreOptions = [
+    { id: 'workout' as const, label: 'Workout Tracker', icon: Dumbbell },
     { id: 'fertility' as const, label: 'Fertility Tracking', icon: Egg },
     { id: 'pregnancy' as const, label: 'Pregnancy & Birth', icon: Baby },
     { id: 'share' as const, label: 'Partner Share', icon: Share2 },
