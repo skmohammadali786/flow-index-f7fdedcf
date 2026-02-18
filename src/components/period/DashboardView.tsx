@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { format, subDays, startOfDay, parseISO } from 'date-fns';
+import { useState, useMemo } from 'react';
+import { format, subDays, startOfDay } from 'date-fns';
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
   CartesianGrid, Legend, RadarChart, Radar, PolarGrid, PolarAngleAxis,
@@ -7,14 +7,13 @@ import {
 } from 'recharts';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { DayLog } from '@/types/period';
 import { CyclePhase } from '@/types/settings';
 import type { ClinicalAssessment } from '@/hooks/useClinicalAssessments';
 import type { JournalEntry } from '@/hooks/useWellnessJournal';
 import type { FertilityLog } from '@/hooks/useFertilityTracker';
 import {
-  LayoutDashboard, TrendingUp, Heart, Droplets, Moon, Dumbbell,
+  LayoutDashboard, TrendingUp, TrendingDown, Minus, Heart, Droplets, Moon, Dumbbell,
   Thermometer, Brain, Activity, Sparkles,
 } from 'lucide-react';
 
@@ -72,67 +71,132 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   );
 };
 
+type RangeOption = 7 | 30 | 90;
+
+function buildChartData(
+  logs: DayLog[], clinicalAssessments: ClinicalAssessment[],
+  journalEntries: JournalEntry[], fertilityLogs: FertilityLog[], days: number
+) {
+  const today = startOfDay(new Date());
+  const logMap = new Map(logs.map(l => [l.date, l]));
+  const clinicalMap = new Map(clinicalAssessments.map(a => [a.date, a]));
+  const journalMap = new Map(journalEntries.map(e => [e.date, e]));
+  const fertilityMap = new Map(fertilityLogs.map(f => [f.date, f]));
+
+  const data = [];
+  for (let i = days - 1; i >= 0; i--) {
+    const day = subDays(today, i);
+    const dateStr = format(day, 'yyyy-MM-dd');
+    const log = logMap.get(dateStr);
+    const clinical = clinicalMap.get(dateStr);
+    const journal = journalMap.get(dateStr);
+    const fertility = fertilityMap.get(dateStr);
+
+    data.push({
+      date: format(day, 'MMM d'),
+      Flow: flowToValue(log),
+      Moods: log?.moods?.length || 0,
+      Symptoms: log?.symptoms?.length || 0,
+      Sleep: log?.sleepHours || 0,
+      Water: log?.waterIntake || 0,
+      Exercise: (log?.exerciseMinutes || 0) / 10,
+      'BBT': log?.temperature ? log.temperature - 36 : 0,
+      Pain: clinical?.painVas || 0,
+      Fatigue: clinical?.fatigueVas || 0,
+      'Clinical Mood': clinical?.moodVas || 0,
+      Bloating: clinical?.bloatingVas || 0,
+      'Journal Mood': journal?.mood_rating || 0,
+      Energy: journal?.energy_level || 0,
+      'LH Level': fertility?.lh_level || 0,
+    });
+  }
+  return data;
+}
+
+function computeAvg(data: any[], key: string): number {
+  const vals = data.filter(d => d[key] > 0);
+  if (vals.length === 0) return 0;
+  return vals.reduce((s, d) => s + d[key], 0) / vals.length;
+}
+
+interface TrendStat {
+  label: string;
+  thisWeek: number;
+  lastWeek: number;
+  unit: string;
+  icon: any;
+  color: string;
+  invert?: boolean; // true = lower is better (pain, symptoms)
+}
+
+function TrendCard({ stat }: { stat: TrendStat }) {
+  const diff = stat.thisWeek - stat.lastWeek;
+  const pct = stat.lastWeek > 0 ? Math.abs(diff / stat.lastWeek * 100) : 0;
+  const isUp = diff > 0;
+  const isNeutral = Math.abs(diff) < 0.05;
+
+  // For inverted metrics (pain, symptoms), up = bad, down = good
+  const isPositive = stat.invert ? !isUp : isUp;
+
+  const Icon = isNeutral ? Minus : isUp ? TrendingUp : TrendingDown;
+  const trendColor = isNeutral
+    ? 'text-muted-foreground'
+    : isPositive ? 'text-birth' : 'text-destructive';
+
+  return (
+    <Card className="p-3 border-border/50 relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-16 h-16 rounded-full opacity-5" style={{ backgroundColor: stat.color, transform: 'translate(30%, -30%)' }} />
+      <div className="flex items-center gap-2 mb-1">
+        <stat.icon className="h-4 w-4" style={{ color: stat.color }} />
+        <span className="text-[10px] text-muted-foreground font-medium">{stat.label}</span>
+      </div>
+      <p className="text-xl font-bold">{stat.thisWeek.toFixed(1)}<span className="text-xs font-normal text-muted-foreground ml-0.5">{stat.unit}</span></p>
+      <div className={`flex items-center gap-1 mt-1 ${trendColor}`}>
+        <Icon className="h-3 w-3" />
+        <span className="text-[10px] font-medium">
+          {isNeutral ? 'No change' : `${pct.toFixed(0)}% vs last wk`}
+        </span>
+      </div>
+    </Card>
+  );
+}
+
 export function DashboardView({
-  logs,
-  clinicalAssessments,
-  journalEntries,
-  fertilityLogs,
-  currentPhase,
-  days = 30,
+  logs, clinicalAssessments, journalEntries, fertilityLogs, currentPhase,
 }: DashboardViewProps) {
-  const chartData = useMemo(() => {
-    const today = startOfDay(new Date());
-    const logMap = new Map(logs.map(l => [l.date, l]));
-    const clinicalMap = new Map(clinicalAssessments.map(a => [a.date, a]));
-    const journalMap = new Map(journalEntries.map(e => [e.date, e]));
-    const fertilityMap = new Map(fertilityLogs.map(f => [f.date, f]));
+  const [range, setRange] = useState<RangeOption>(30);
 
-    const data = [];
-    for (let i = days - 1; i >= 0; i--) {
-      const day = subDays(today, i);
-      const dateStr = format(day, 'yyyy-MM-dd');
-      const log = logMap.get(dateStr);
-      const clinical = clinicalMap.get(dateStr);
-      const journal = journalMap.get(dateStr);
-      const fertility = fertilityMap.get(dateStr);
+  const chartData = useMemo(() =>
+    buildChartData(logs, clinicalAssessments, journalEntries, fertilityLogs, range),
+    [logs, clinicalAssessments, journalEntries, fertilityLogs, range]
+  );
 
-      data.push({
-        date: format(day, 'MMM d'),
-        Flow: flowToValue(log),
-        Moods: log?.moods?.length || 0,
-        Symptoms: log?.symptoms?.length || 0,
-        Sleep: log?.sleepHours || 0,
-        Water: log?.waterIntake || 0,
-        Exercise: (log?.exerciseMinutes || 0) / 10, // Scale down for visibility
-        'BBT': log?.temperature ? log.temperature - 36 : 0, // Offset for visibility
-        Pain: clinical?.painVas || 0,
-        Fatigue: clinical?.fatigueVas || 0,
-        'Clinical Mood': clinical?.moodVas || 0,
-        Bloating: clinical?.bloatingVas || 0,
-        'Journal Mood': journal?.mood_rating || 0,
-        Energy: journal?.energy_level || 0,
-        'LH Level': fertility?.lh_level || 0,
-      });
-    }
-    return data;
-  }, [logs, clinicalAssessments, journalEntries, fertilityLogs, days]);
+  // Trend comparison: this week vs last week (always 7-day windows)
+  const trendStats = useMemo<TrendStat[]>(() => {
+    const thisWeekData = buildChartData(logs, clinicalAssessments, journalEntries, fertilityLogs, 7);
+    const twoWeekData = buildChartData(logs, clinicalAssessments, journalEntries, fertilityLogs, 14);
+    const lastWeekData = twoWeekData.slice(0, 7);
 
-  // Summary radar data
+    return [
+      { label: 'Sleep', thisWeek: computeAvg(thisWeekData, 'Sleep'), lastWeek: computeAvg(lastWeekData, 'Sleep'), unit: 'h', icon: Moon, color: COLORS.sleep },
+      { label: 'Water', thisWeek: computeAvg(thisWeekData, 'Water'), lastWeek: computeAvg(lastWeekData, 'Water'), unit: '', icon: Droplets, color: COLORS.water },
+      { label: 'Energy', thisWeek: computeAvg(thisWeekData, 'Energy'), lastWeek: computeAvg(lastWeekData, 'Energy'), unit: '', icon: Sparkles, color: COLORS.energy },
+      { label: 'Pain', thisWeek: computeAvg(thisWeekData, 'Pain'), lastWeek: computeAvg(lastWeekData, 'Pain'), unit: '', icon: Thermometer, color: COLORS.pain, invert: true },
+      { label: 'Symptoms', thisWeek: computeAvg(thisWeekData, 'Symptoms'), lastWeek: computeAvg(lastWeekData, 'Symptoms'), unit: '', icon: Activity, color: COLORS.symptoms, invert: true },
+      { label: 'Exercise', thisWeek: computeAvg(thisWeekData, 'Exercise'), lastWeek: computeAvg(lastWeekData, 'Exercise'), unit: '', icon: Dumbbell, color: COLORS.exercise },
+    ];
+  }, [logs, clinicalAssessments, journalEntries, fertilityLogs]);
+
+  // Radar data
   const radarData = useMemo(() => {
     const totals = chartData.reduce(
       (acc, d) => ({
-        flow: acc.flow + d.Flow,
-        moods: acc.moods + d.Moods,
-        symptoms: acc.symptoms + d.Symptoms,
-        sleep: acc.sleep + d.Sleep,
-        water: acc.water + d.Water,
-        exercise: acc.exercise + d.Exercise,
-        pain: acc.pain + d.Pain,
-        energy: acc.energy + d.Energy,
+        flow: acc.flow + d.Flow, moods: acc.moods + d.Moods, symptoms: acc.symptoms + d.Symptoms,
+        sleep: acc.sleep + d.Sleep, water: acc.water + d.Water, exercise: acc.exercise + d.Exercise,
+        pain: acc.pain + d.Pain, energy: acc.energy + d.Energy,
       }),
       { flow: 0, moods: 0, symptoms: 0, sleep: 0, water: 0, exercise: 0, pain: 0, energy: 0 }
     );
-
     const maxVal = Math.max(...(Object.values(totals) as number[]), 1);
     return [
       { metric: 'Flow', value: (totals.flow / maxVal) * 100 },
@@ -146,24 +210,25 @@ export function DashboardView({
     ];
   }, [chartData]);
 
-  // Quick stats
+  // Quick stats for selected range
   const quickStats = useMemo(() => {
     const daysWithData = chartData.filter(d =>
       d.Flow > 0 || d.Moods > 0 || d.Symptoms > 0 || d.Sleep > 0 || d.Water > 0
     ).length;
-    const avgSleep = chartData.reduce((s, d) => s + d.Sleep, 0) / Math.max(chartData.filter(d => d.Sleep > 0).length, 1);
-    const avgWater = chartData.reduce((s, d) => s + d.Water, 0) / Math.max(chartData.filter(d => d.Water > 0).length, 1);
     const periodDays = chartData.filter(d => d.Flow > 0).length;
-    const avgEnergy = chartData.reduce((s, d) => s + d.Energy, 0) / Math.max(chartData.filter(d => d.Energy > 0).length, 1);
-    const avgPain = chartData.reduce((s, d) => s + d.Pain, 0) / Math.max(chartData.filter(d => d.Pain > 0).length, 1);
-
-    return { daysWithData, avgSleep, avgWater, periodDays, avgEnergy, avgPain };
+    return { daysWithData, periodDays };
   }, [chartData]);
 
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: { opacity: 1, y: 0 },
   };
+
+  const rangeOptions: { value: RangeOption; label: string }[] = [
+    { value: 7, label: '7 Days' },
+    { value: 30, label: '30 Days' },
+    { value: 90, label: '90 Days' },
+  ];
 
   return (
     <motion.div
@@ -172,32 +237,40 @@ export function DashboardView({
       variants={{ hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.08 } } }}
       className="space-y-5"
     >
-      {/* Header */}
-      <div className="flex items-center gap-2 mb-2">
-        <div className="p-2 rounded-lg gradient-primary">
-          <LayoutDashboard className="h-5 w-5 text-primary-foreground" />
+      {/* Header with Range Selector */}
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <div className="p-2 rounded-lg gradient-primary">
+            <LayoutDashboard className="h-5 w-5 text-primary-foreground" />
+          </div>
+          <div>
+            <h2 className="font-display text-2xl font-semibold">Dashboard</h2>
+            <p className="text-sm text-muted-foreground">
+              {quickStats.daysWithData} days logged · {quickStats.periodDays} period days
+            </p>
+          </div>
         </div>
-        <div>
-          <h2 className="font-display text-2xl font-semibold">Dashboard</h2>
-          <p className="text-sm text-muted-foreground">Complete health overview — {days} days</p>
+        <div className="flex bg-muted rounded-lg p-0.5 gap-0.5">
+          {rangeOptions.map(opt => (
+            <button
+              key={opt.value}
+              onClick={() => setRange(opt.value)}
+              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                range === opt.value
+                  ? 'bg-primary text-primary-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
         </div>
       </div>
 
-      {/* Quick Stats Row */}
-      <motion.div variants={itemVariants} className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-        {[
-          { label: 'Logged', value: `${quickStats.daysWithData}d`, icon: Activity, color: 'text-primary' },
-          { label: 'Period', value: `${quickStats.periodDays}d`, icon: Heart, color: 'text-coral' },
-          { label: 'Avg Sleep', value: `${quickStats.avgSleep.toFixed(1)}h`, icon: Moon, color: 'text-lavender' },
-          { label: 'Avg Water', value: `${quickStats.avgWater.toFixed(0)}`, icon: Droplets, color: 'text-fertility' },
-          { label: 'Avg Energy', value: `${quickStats.avgEnergy.toFixed(1)}`, icon: Sparkles, color: 'text-peach' },
-          { label: 'Avg Pain', value: `${quickStats.avgPain.toFixed(1)}`, icon: Thermometer, color: 'text-destructive' },
-        ].map(stat => (
-          <Card key={stat.label} className="p-2 text-center border-border/50">
-            <stat.icon className={`h-4 w-4 mx-auto mb-1 ${stat.color}`} />
-            <p className="text-lg font-bold">{stat.value}</p>
-            <p className="text-[10px] text-muted-foreground">{stat.label}</p>
-          </Card>
+      {/* Trend Summary Cards */}
+      <motion.div variants={itemVariants} className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+        {trendStats.map(stat => (
+          <TrendCard key={stat.label} stat={stat} />
         ))}
       </motion.div>
 
@@ -207,7 +280,7 @@ export function DashboardView({
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
               <TrendingUp className="h-4 w-4 text-primary" />
-              Complete Wellness Timeline
+              Complete Wellness Timeline — {range} Days
             </CardTitle>
           </CardHeader>
           <CardContent className="p-2">
@@ -241,7 +314,6 @@ export function DashboardView({
                   <YAxis tick={{ fontSize: 8, fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} />
                   <Tooltip content={<CustomTooltip />} />
                   <Legend iconType="circle" iconSize={7} wrapperStyle={{ fontSize: '9px', paddingTop: '4px' }} />
-
                   <Area type="monotone" dataKey="Flow" stroke={COLORS.flow} fill="url(#gradFlow)" strokeWidth={2} dot={false} activeDot={{ r: 3 }} />
                   <Area type="monotone" dataKey="Sleep" stroke={COLORS.sleep} fill="url(#gradSleep)" strokeWidth={1.5} dot={false} activeDot={{ r: 3 }} />
                   <Area type="monotone" dataKey="Water" stroke={COLORS.water} fill="url(#gradWater)" strokeWidth={1.5} dot={false} activeDot={{ r: 3 }} />
@@ -261,7 +333,6 @@ export function DashboardView({
 
       {/* Clinical & Wellness Row */}
       <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* Clinical VAS Chart */}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
@@ -287,7 +358,6 @@ export function DashboardView({
           </CardContent>
         </Card>
 
-        {/* Wellness Radar */}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm flex items-center gap-2">
@@ -310,7 +380,7 @@ export function DashboardView({
         </Card>
       </motion.div>
 
-      {/* Temperature & Fertility Row */}
+      {/* Temperature & Fertility */}
       <motion.div variants={itemVariants}>
         <Card>
           <CardHeader className="pb-2">
