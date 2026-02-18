@@ -24,6 +24,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useWellnessJournal } from '@/hooks/useWellnessJournal';
 import { useClinicalAssessments } from '@/hooks/useClinicalAssessments';
 import { useFertilityTracker } from '@/hooks/useFertilityTracker';
+import { useWorkoutTracker } from '@/hooks/useWorkoutTracker';
 import { useReportDraft } from '@/contexts/ReportDraftContext';
 import logoSrc from '@/assets/logo.png';
 
@@ -45,6 +46,7 @@ interface ShareSettings {
   showMoodInsights: boolean;
   showSymptomInsights: boolean;
   showBirthHistory: boolean;
+  showWorkoutData: boolean;
 }
 
 // UI-specific icon and color mappings for phases
@@ -90,6 +92,7 @@ export function PartnerShareView({
   const { fertilityLogs: fetchedFertilityLogs, birthRecords: fetchedBirthRecords } = useFertilityTracker();
   const { fertilityDrafts, birthDraft } = useReportDraft();
   const { historicalAssessments: clinicalAssessments } = useClinicalAssessments();
+  const { workoutLogs } = useWorkoutTracker();
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
@@ -101,6 +104,7 @@ export function PartnerShareView({
     showMoodInsights: true,
     showSymptomInsights: true,
     showBirthHistory: true,
+    showWorkoutData: true,
   });
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   
@@ -420,6 +424,7 @@ export function PartnerShareView({
         fertilityLogs,
         birthRecords,
         clinicalAssessments,
+        workoutLogs,
       } as any, logoBase64);
 
       toast({

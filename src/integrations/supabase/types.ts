@@ -563,6 +563,69 @@ export type Database = {
         }
         Relationships: []
       }
+      workout_logs: {
+        Row: {
+          calories_burned: number | null
+          created_at: string
+          date: string
+          distance_km: number | null
+          duration_minutes: number | null
+          heart_rate_avg: number | null
+          heart_rate_max: number | null
+          id: string
+          intensity: string | null
+          notes: string | null
+          rating: number | null
+          reps: number | null
+          sets: number | null
+          updated_at: string
+          user_id: string
+          weight_kg: number | null
+          workout_category: string
+          workout_type: string
+        }
+        Insert: {
+          calories_burned?: number | null
+          created_at?: string
+          date: string
+          distance_km?: number | null
+          duration_minutes?: number | null
+          heart_rate_avg?: number | null
+          heart_rate_max?: number | null
+          id?: string
+          intensity?: string | null
+          notes?: string | null
+          rating?: number | null
+          reps?: number | null
+          sets?: number | null
+          updated_at?: string
+          user_id: string
+          weight_kg?: number | null
+          workout_category: string
+          workout_type: string
+        }
+        Update: {
+          calories_burned?: number | null
+          created_at?: string
+          date?: string
+          distance_km?: number | null
+          duration_minutes?: number | null
+          heart_rate_avg?: number | null
+          heart_rate_max?: number | null
+          id?: string
+          intensity?: string | null
+          notes?: string | null
+          rating?: number | null
+          reps?: number | null
+          sets?: number | null
+          updated_at?: string
+          user_id?: string
+          weight_kg?: number | null
+          workout_category?: string
+          workout_type?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

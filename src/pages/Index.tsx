@@ -23,18 +23,20 @@ const WellnessJournalView = lazy(() => import('@/components/period/WellnessJourn
 const FertilityTrackingView = lazy(() => import('@/components/period/FertilityTrackingView').then(module => ({ default: module.FertilityTrackingView })));
 const PregnancyBirthView = lazy(() => import('@/components/period/PregnancyBirthView').then(module => ({ default: module.PregnancyBirthView })));
 const DashboardView = lazy(() => import('@/components/period/DashboardView').then(module => ({ default: module.DashboardView })));
+const WorkoutTrackingView = lazy(() => import('@/components/period/WorkoutTrackingView').then(module => ({ default: module.WorkoutTrackingView })));
 import { useSupabasePeriodTracker } from '@/hooks/useSupabasePeriodTracker';
 import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
 import { useFertilityTracker } from '@/hooks/useFertilityTracker';
 import { useSymptomAnalytics } from '@/hooks/useSymptomAnalytics';
 import { useClinicalAssessments } from '@/hooks/useClinicalAssessments';
 import { useWellnessJournal } from '@/hooks/useWellnessJournal';
+import { useWorkoutTracker } from '@/hooks/useWorkoutTracker';
 import { useReportDraft } from '@/contexts/ReportDraftContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { getTipsForCategory, getTipsForPhase } from '@/data/healthTips';
 import { startOfDay, format } from 'date-fns';
 
-type TabType = 'calendar' | 'insights' | 'history' | 'tips' | 'analytics' | 'charts' | 'share' | 'report' | 'brain' | 'clinical' | 'journal' | 'fertility' | 'pregnancy' | 'dashboard' | 'settings' | 'profile';
+type TabType = 'calendar' | 'insights' | 'history' | 'tips' | 'analytics' | 'charts' | 'share' | 'report' | 'brain' | 'clinical' | 'journal' | 'fertility' | 'pregnancy' | 'dashboard' | 'workout' | 'settings' | 'profile';
 
 const ONBOARDING_KEY = 'period_tracker_onboarding_complete';
 
@@ -104,6 +106,7 @@ const Index = () => {
   const { fertilityDrafts, pregnancyDrafts, birthDraft } = useReportDraft();
   const { historicalAssessments: clinicalAssessments } = useClinicalAssessments();
   const { entries: journalEntries } = useWellnessJournal();
+  const { workoutLogs } = useWorkoutTracker();
 
   const handleExportPdf = async () => {
     await exportDataPdf({
@@ -480,8 +483,22 @@ const Index = () => {
                 clinicalAssessments={clinicalAssessments}
                 journalEntries={journalEntries}
                 fertilityLogs={fertilityLogs}
+                workoutLogs={workoutLogs}
                 currentPhase={currentPhase}
               />
+            </motion.div>
+          )}
+
+          {activeTab === 'workout' && (
+            <motion.div
+              key="workout"
+              variants={pageVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              transition={{ duration: 0.2 }}
+            >
+              <WorkoutTrackingView />
             </motion.div>
           )}
 

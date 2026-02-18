@@ -6,6 +6,7 @@ import { getPhaseInfoForPdf } from '@/data/phaseData';
 import type { JournalEntry } from '@/hooks/useWellnessJournal';
 import type { FertilityLog, BirthRecord } from '@/hooks/useFertilityTracker';
 import type { ClinicalAssessment } from '@/hooks/useClinicalAssessments';
+import type { WorkoutLog } from '@/hooks/useWorkoutTracker';
 import {
   colors,
   phaseStyles,
@@ -31,6 +32,7 @@ export interface PdfData {
   fertilityLogs?: FertilityLog[];
   birthRecords?: BirthRecord[];
   clinicalAssessments?: ClinicalAssessment[];
+  workoutLogs?: WorkoutLog[];
   userName?: string;
   journalEntries?: JournalEntry[];
   shareSettings: {
@@ -41,6 +43,7 @@ export interface PdfData {
     showMoodInsights: boolean;
     showSymptomInsights: boolean;
     showBirthHistory?: boolean;
+    showWorkoutData?: boolean;
   };
 }
 
@@ -1068,6 +1071,83 @@ export async function generatePartnerSharePdf(data: PdfData, logoBase64?: string
     }
 
     yPos += 8;
+  }
+
+  // ===== WORKOUT DATA SECTION =====
+  const workoutLogs = data.workoutLogs || [];
+  if (data.shareSettings.showWorkoutData !== false && workoutLogs.length > 0) {
+    checkNewPage(80);
+
+    pdf.setTextColor(...colors.text);
+    pdf.setFontSize(14);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('Workout Summary', margin, yPos + 4);
+    pdf.setFontSize(9);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setTextColor(...colors.textMuted);
+    pdf.text('Recent fitness activity', margin, yPos + 12);
+    yPos += 20;
+
+    // Stats
+    const recentWorkouts = workoutLogs.filter(w => {
+      const d = parseISO(w.date);
+      return d >= subDays(new Date(), 30);
+    });
+    const totalDur = recentWorkouts.reduce((s, w) => s + (w.duration_minutes || 0), 0);
+    const totalCal = recentWorkouts.reduce((s, w) => s + (w.calories_burned || 0), 0);
+    const uniqueTypes = new Set(recentWorkouts.map(w => w.workout_type)).size;
+
+    const wStatWidth = (contentWidth - 12) / 4;
+    const wStats = [
+      { label: 'Workouts', value: recentWorkouts.length.toString(), color: colors.lavenderLight },
+      { label: 'Total Min', value: totalDur.toString(), color: colors.sageLight },
+      { label: 'Calories', value: totalCal.toString(), color: colors.coralLight },
+      { label: 'Types', value: uniqueTypes.toString(), color: colors.peachLight },
+    ];
+
+    wStats.forEach((stat, i) => {
+      const xOffset = margin + i * (wStatWidth + 4);
+      drawRoundedRect(pdf, xOffset, yPos, wStatWidth, 22, 4, stat.color);
+      pdf.setFontSize(14);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(...colors.text);
+      pdf.text(stat.value, xOffset + 6, yPos + 14);
+      pdf.setFontSize(7);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(...colors.textMuted);
+      pdf.text(stat.label, xOffset + wStatWidth - 6, yPos + 18, { align: 'right' });
+    });
+    yPos += 30;
+
+    // Recent workout list (last 10)
+    const displayWorkouts = recentWorkouts.slice(0, 10);
+    if (displayWorkouts.length > 0) {
+      checkNewPage(15 + displayWorkouts.length * 8);
+      drawRoundedRect(pdf, margin, yPos, contentWidth, 10 + displayWorkouts.length * 8, 4, colors.cardBg, colors.border);
+
+      pdf.setFontSize(8);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(...colors.text);
+      pdf.text('Date', margin + 4, yPos + 6);
+      pdf.text('Workout', margin + 28, yPos + 6);
+      pdf.text('Duration', margin + 90, yPos + 6);
+      pdf.text('Calories', margin + 115, yPos + 6);
+      pdf.text('Intensity', margin + 140, yPos + 6);
+      yPos += 10;
+
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(7);
+      displayWorkouts.forEach(w => {
+        pdf.setTextColor(...colors.text);
+        pdf.text(format(parseISO(w.date), 'MMM d'), margin + 4, yPos + 5);
+        pdf.text(w.workout_type.slice(0, 25), margin + 28, yPos + 5);
+        pdf.text(`${w.duration_minutes}m`, margin + 90, yPos + 5);
+        pdf.text(w.calories_burned ? w.calories_burned.toString() : '-', margin + 115, yPos + 5);
+        pdf.text(w.intensity || '-', margin + 140, yPos + 5);
+        yPos += 8;
+      });
+      yPos += 8;
+    }
   }
 
   // ===== PARTNER TIPS =====

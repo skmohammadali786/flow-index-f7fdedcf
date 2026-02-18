@@ -12,6 +12,7 @@ import { CyclePhase } from '@/types/settings';
 import type { ClinicalAssessment } from '@/hooks/useClinicalAssessments';
 import type { JournalEntry } from '@/hooks/useWellnessJournal';
 import type { FertilityLog } from '@/hooks/useFertilityTracker';
+import type { WorkoutLog } from '@/hooks/useWorkoutTracker';
 import {
   LayoutDashboard, TrendingUp, TrendingDown, Minus, Heart, Droplets, Moon, Dumbbell,
   Thermometer, Brain, Activity, Sparkles,
@@ -22,6 +23,7 @@ interface DashboardViewProps {
   clinicalAssessments: ClinicalAssessment[];
   journalEntries: JournalEntry[];
   fertilityLogs: FertilityLog[];
+  workoutLogs?: WorkoutLog[];
   currentPhase: CyclePhase;
   days?: number;
 }
@@ -52,6 +54,8 @@ const COLORS = {
   journalMood: 'hsl(330, 65%, 60%)',
   energy: 'hsl(50, 85%, 50%)',
   lh: 'hsl(190, 70%, 50%)',
+  workout: 'hsl(270, 70%, 55%)',
+  calories: 'hsl(15, 90%, 50%)',
 };
 
 const CustomTooltip = ({ active, payload, label }: any) => {
@@ -75,13 +79,25 @@ type RangeOption = 7 | 30 | 90;
 
 function buildChartData(
   logs: DayLog[], clinicalAssessments: ClinicalAssessment[],
-  journalEntries: JournalEntry[], fertilityLogs: FertilityLog[], days: number
+  journalEntries: JournalEntry[], fertilityLogs: FertilityLog[], 
+  workoutLogs: WorkoutLog[], days: number
 ) {
   const today = startOfDay(new Date());
   const logMap = new Map(logs.map(l => [l.date, l]));
   const clinicalMap = new Map(clinicalAssessments.map(a => [a.date, a]));
   const journalMap = new Map(journalEntries.map(e => [e.date, e]));
   const fertilityMap = new Map(fertilityLogs.map(f => [f.date, f]));
+  
+  // Group workouts by date
+  const workoutMap = new Map<string, { duration: number; calories: number; count: number }>();
+  workoutLogs.forEach(w => {
+    const existing = workoutMap.get(w.date) || { duration: 0, calories: 0, count: 0 };
+    workoutMap.set(w.date, {
+      duration: existing.duration + (w.duration_minutes || 0),
+      calories: existing.calories + (w.calories_burned || 0),
+      count: existing.count + 1,
+    });
+  });
 
   const data = [];
   for (let i = days - 1; i >= 0; i--) {
@@ -91,6 +107,7 @@ function buildChartData(
     const clinical = clinicalMap.get(dateStr);
     const journal = journalMap.get(dateStr);
     const fertility = fertilityMap.get(dateStr);
+    const workout = workoutMap.get(dateStr);
 
     data.push({
       date: format(day, 'MMM d'),
@@ -108,6 +125,8 @@ function buildChartData(
       'Journal Mood': journal?.mood_rating || 0,
       Energy: journal?.energy_level || 0,
       'LH Level': fertility?.lh_level || 0,
+      'Workout Min': workout?.duration || 0,
+      'Workout Cal': (workout?.calories || 0) / 10,
     });
   }
   return data;
@@ -162,19 +181,19 @@ function TrendCard({ stat }: { stat: TrendStat }) {
 }
 
 export function DashboardView({
-  logs, clinicalAssessments, journalEntries, fertilityLogs, currentPhase,
+  logs, clinicalAssessments, journalEntries, fertilityLogs, workoutLogs = [], currentPhase,
 }: DashboardViewProps) {
   const [range, setRange] = useState<RangeOption>(30);
 
   const chartData = useMemo(() =>
-    buildChartData(logs, clinicalAssessments, journalEntries, fertilityLogs, range),
-    [logs, clinicalAssessments, journalEntries, fertilityLogs, range]
+    buildChartData(logs, clinicalAssessments, journalEntries, fertilityLogs, workoutLogs, range),
+    [logs, clinicalAssessments, journalEntries, fertilityLogs, workoutLogs, range]
   );
 
   // Trend comparison: this week vs last week (always 7-day windows)
   const trendStats = useMemo<TrendStat[]>(() => {
-    const thisWeekData = buildChartData(logs, clinicalAssessments, journalEntries, fertilityLogs, 7);
-    const twoWeekData = buildChartData(logs, clinicalAssessments, journalEntries, fertilityLogs, 14);
+    const thisWeekData = buildChartData(logs, clinicalAssessments, journalEntries, fertilityLogs, workoutLogs, 7);
+    const twoWeekData = buildChartData(logs, clinicalAssessments, journalEntries, fertilityLogs, workoutLogs, 14);
     const lastWeekData = twoWeekData.slice(0, 7);
 
     return [
@@ -182,10 +201,10 @@ export function DashboardView({
       { label: 'Water', thisWeek: computeAvg(thisWeekData, 'Water'), lastWeek: computeAvg(lastWeekData, 'Water'), unit: '', icon: Droplets, color: COLORS.water },
       { label: 'Energy', thisWeek: computeAvg(thisWeekData, 'Energy'), lastWeek: computeAvg(lastWeekData, 'Energy'), unit: '', icon: Sparkles, color: COLORS.energy },
       { label: 'Pain', thisWeek: computeAvg(thisWeekData, 'Pain'), lastWeek: computeAvg(lastWeekData, 'Pain'), unit: '', icon: Thermometer, color: COLORS.pain, invert: true },
-      { label: 'Symptoms', thisWeek: computeAvg(thisWeekData, 'Symptoms'), lastWeek: computeAvg(lastWeekData, 'Symptoms'), unit: '', icon: Activity, color: COLORS.symptoms, invert: true },
-      { label: 'Exercise', thisWeek: computeAvg(thisWeekData, 'Exercise'), lastWeek: computeAvg(lastWeekData, 'Exercise'), unit: '', icon: Dumbbell, color: COLORS.exercise },
+      { label: 'Workout', thisWeek: computeAvg(thisWeekData, 'Workout Min'), lastWeek: computeAvg(lastWeekData, 'Workout Min'), unit: 'm', icon: Dumbbell, color: COLORS.workout },
+      { label: 'Exercise', thisWeek: computeAvg(thisWeekData, 'Exercise'), lastWeek: computeAvg(lastWeekData, 'Exercise'), unit: '', icon: Activity, color: COLORS.exercise },
     ];
-  }, [logs, clinicalAssessments, journalEntries, fertilityLogs]);
+  }, [logs, clinicalAssessments, journalEntries, fertilityLogs, workoutLogs]);
 
   // Radar data
   const radarData = useMemo(() => {
@@ -193,9 +212,9 @@ export function DashboardView({
       (acc, d) => ({
         flow: acc.flow + d.Flow, moods: acc.moods + d.Moods, symptoms: acc.symptoms + d.Symptoms,
         sleep: acc.sleep + d.Sleep, water: acc.water + d.Water, exercise: acc.exercise + d.Exercise,
-        pain: acc.pain + d.Pain, energy: acc.energy + d.Energy,
+        pain: acc.pain + d.Pain, energy: acc.energy + d.Energy, workout: acc.workout + d['Workout Min'],
       }),
-      { flow: 0, moods: 0, symptoms: 0, sleep: 0, water: 0, exercise: 0, pain: 0, energy: 0 }
+      { flow: 0, moods: 0, symptoms: 0, sleep: 0, water: 0, exercise: 0, pain: 0, energy: 0, workout: 0 }
     );
     const maxVal = Math.max(...(Object.values(totals) as number[]), 1);
     return [
@@ -207,6 +226,7 @@ export function DashboardView({
       { metric: 'Exercise', value: (totals.exercise / maxVal) * 100 },
       { metric: 'Pain', value: (totals.pain / maxVal) * 100 },
       { metric: 'Energy', value: (totals.energy / maxVal) * 100 },
+      { metric: 'Workout', value: (totals.workout / maxVal) * 100 },
     ];
   }, [chartData]);
 
@@ -324,6 +344,7 @@ export function DashboardView({
                   <Area type="monotone" dataKey="Exercise" stroke={COLORS.exercise} fill="none" strokeWidth={1} dot={false} strokeDasharray="2 2" activeDot={{ r: 2 }} />
                   <Area type="monotone" dataKey="Journal Mood" stroke={COLORS.journalMood} fill="none" strokeWidth={1} dot={false} strokeDasharray="3 3" activeDot={{ r: 2 }} />
                   <Area type="monotone" dataKey="LH Level" stroke={COLORS.lh} fill="none" strokeWidth={1} dot={false} strokeDasharray="5 2" activeDot={{ r: 2 }} />
+                  <Area type="monotone" dataKey="Workout Min" stroke={COLORS.workout} fill="none" strokeWidth={1.5} dot={false} strokeDasharray="4 2" activeDot={{ r: 3 }} />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -426,6 +447,7 @@ export function buildComprehensiveDashboardData(
   clinicalAssessments: ClinicalAssessment[],
   journalEntries: JournalEntry[],
   fertilityLogs: FertilityLog[],
+  workoutLogs: WorkoutLog[] = [],
   days = 30
 ) {
   const today = startOfDay(new Date());
@@ -433,6 +455,14 @@ export function buildComprehensiveDashboardData(
   const clinicalMap = new Map(clinicalAssessments.map(a => [a.date, a]));
   const journalMap = new Map(journalEntries.map(e => [e.date, e]));
   const fertilityMap = new Map(fertilityLogs.map(f => [f.date, f]));
+  const workoutMap = new Map<string, { duration: number; calories: number }>();
+  workoutLogs.forEach(w => {
+    const existing = workoutMap.get(w.date) || { duration: 0, calories: 0 };
+    workoutMap.set(w.date, {
+      duration: existing.duration + (w.duration_minutes || 0),
+      calories: existing.calories + (w.calories_burned || 0),
+    });
+  });
 
   const data = [];
   for (let i = days - 1; i >= 0; i--) {
@@ -442,6 +472,7 @@ export function buildComprehensiveDashboardData(
     const clinical = clinicalMap.get(dateStr);
     const journal = journalMap.get(dateStr);
     const fertility = fertilityMap.get(dateStr);
+    const workout = workoutMap.get(dateStr);
 
     data.push({
       date: format(day, 'd'),
@@ -459,6 +490,8 @@ export function buildComprehensiveDashboardData(
       journalMood: journal?.mood_rating || 0,
       energy: journal?.energy_level || 0,
       lh: fertility?.lh_level || 0,
+      workoutMin: workout?.duration || 0,
+      workoutCal: workout?.calories || 0,
     });
   }
   return data;
