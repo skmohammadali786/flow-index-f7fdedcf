@@ -1,7 +1,7 @@
 -- Create clinical_assessments table to store VAS scales and clinical notes
 CREATE TABLE public.clinical_assessments (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID NOT NULL,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   date DATE NOT NULL DEFAULT CURRENT_DATE,
   pain_vas INTEGER DEFAULT 0 CHECK (pain_vas >= 0 AND pain_vas <= 10),
   fatigue_vas INTEGER DEFAULT 0 CHECK (fatigue_vas >= 0 AND fatigue_vas <= 10),

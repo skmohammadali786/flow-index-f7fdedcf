@@ -2,7 +2,7 @@
 -- Create wellness journal table
 CREATE TABLE public.wellness_journal (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID NOT NULL,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   date DATE NOT NULL DEFAULT CURRENT_DATE,
   mood_rating INTEGER CHECK (mood_rating >= 1 AND mood_rating <= 5),
   gratitude TEXT,
