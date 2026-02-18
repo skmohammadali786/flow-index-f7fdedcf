@@ -2,7 +2,7 @@
 -- Fertility daily logs (OPK, cervical mucus, LH, intercourse, BBT)
 CREATE TABLE public.fertility_logs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   date DATE NOT NULL,
   opk_result TEXT CHECK (opk_result IN ('negative', 'low', 'high', 'peak')),
   cervical_mucus TEXT CHECK (cervical_mucus IN ('dry', 'sticky', 'creamy', 'watery', 'egg_white')),
@@ -29,7 +29,7 @@ CREATE TRIGGER update_fertility_logs_updated_at BEFORE UPDATE ON public.fertilit
 -- Pregnancy tracking
 CREATE TABLE public.pregnancy_tracking (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   conception_date DATE,
   last_period_date DATE,
   due_date DATE NOT NULL,
@@ -52,7 +52,7 @@ CREATE TRIGGER update_pregnancy_tracking_updated_at BEFORE UPDATE ON public.preg
 -- Pregnancy weekly logs
 CREATE TABLE public.pregnancy_logs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   pregnancy_id UUID NOT NULL REFERENCES public.pregnancy_tracking(id) ON DELETE CASCADE,
   date DATE NOT NULL,
   week_number INTEGER,
@@ -81,7 +81,7 @@ CREATE TRIGGER update_pregnancy_logs_updated_at BEFORE UPDATE ON public.pregnanc
 -- Birth records
 CREATE TABLE public.birth_records (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   pregnancy_id UUID REFERENCES public.pregnancy_tracking(id) ON DELETE SET NULL,
   birth_date DATE NOT NULL,
   birth_time TIME,
@@ -113,7 +113,7 @@ CREATE TRIGGER update_birth_records_updated_at BEFORE UPDATE ON public.birth_rec
 -- Postpartum logs
 CREATE TABLE public.postpartum_logs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID NOT NULL,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   birth_record_id UUID REFERENCES public.birth_records(id) ON DELETE SET NULL,
   date DATE NOT NULL,
   mood_rating INTEGER CHECK (mood_rating >= 1 AND mood_rating <= 10),
