@@ -15,6 +15,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import {
   useWorkoutTracker, WorkoutLog, WORKOUT_TYPES, WORKOUT_CATEGORIES, WorkoutCategory,
 } from '@/hooks/useWorkoutTracker';
@@ -71,17 +73,48 @@ export function WorkoutTrackingView() {
   const [activeTab, setActiveTab] = useState('log');
   const [range, setRange] = useState<RangeOption>(30);
 
-  // Goals state (persisted in localStorage)
-  const [goals, setGoals] = useState<WorkoutGoals>(() => {
-    try {
-      const saved = localStorage.getItem('workout_goals');
-      return saved ? JSON.parse(saved) : { workoutsPerWeek: 4, minutesPerWeek: 150, caloriesPerWeek: 1500 };
-    } catch { return { workoutsPerWeek: 4, minutesPerWeek: 150, caloriesPerWeek: 1500 }; }
-  });
+  // Goals state (persisted in backend)
+  const [goals, setGoalsLocal] = useState<WorkoutGoals>({ workoutsPerWeek: 4, minutesPerWeek: 150, caloriesPerWeek: 1500 });
+  const [goalsLoaded, setGoalsLoaded] = useState(false);
+  const { user } = useAuth();
 
+  // Load goals from backend
   useEffect(() => {
-    localStorage.setItem('workout_goals', JSON.stringify(goals));
-  }, [goals]);
+    if (!user) return;
+    (async () => {
+      const { data } = await supabase
+        .from('workout_goals')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (data) {
+        setGoalsLocal({
+          workoutsPerWeek: (data as any).workouts_per_week,
+          minutesPerWeek: (data as any).minutes_per_week,
+          caloriesPerWeek: (data as any).calories_per_week,
+        });
+      }
+      setGoalsLoaded(true);
+    })();
+  }, [user]);
+
+  // Save goals to backend (debounced via useEffect)
+  const setGoals = (updater: (prev: WorkoutGoals) => WorkoutGoals) => {
+    setGoalsLocal(prev => {
+      const next = updater(prev);
+      if (user) {
+        supabase.from('workout_goals').upsert({
+          user_id: user.id,
+          workouts_per_week: next.workoutsPerWeek,
+          minutes_per_week: next.minutesPerWeek,
+          calories_per_week: next.caloriesPerWeek,
+        } as any, { onConflict: 'user_id' }).then(({ error }) => {
+          if (error) console.error('Error saving goals:', error);
+        });
+      }
+      return next;
+    });
+  };
 
   // Current week progress
   const weekProgress = useMemo(() => {

@@ -563,6 +563,36 @@ export type Database = {
         }
         Relationships: []
       }
+      workout_goals: {
+        Row: {
+          calories_per_week: number
+          created_at: string
+          id: string
+          minutes_per_week: number
+          updated_at: string
+          user_id: string
+          workouts_per_week: number
+        }
+        Insert: {
+          calories_per_week?: number
+          created_at?: string
+          id?: string
+          minutes_per_week?: number
+          updated_at?: string
+          user_id: string
+          workouts_per_week?: number
+        }
+        Update: {
+          calories_per_week?: number
+          created_at?: string
+          id?: string
+          minutes_per_week?: number
+          updated_at?: string
+          user_id?: string
+          workouts_per_week?: number
+        }
+        Relationships: []
+      }
       workout_logs: {
         Row: {
           calories_burned: number | null
