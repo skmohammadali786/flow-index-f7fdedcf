@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { format, subDays, startOfDay, parseISO } from 'date-fns';
+import { useState, useMemo, useEffect } from 'react';
+import { format, subDays, startOfDay, startOfWeek, endOfWeek, eachDayOfInterval, differenceInCalendarWeeks, parseISO } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, RadarChart, Radar,
@@ -20,13 +20,21 @@ import {
 } from '@/hooks/useWorkoutTracker';
 import { CuteLoader } from './CuteLoader';
 import jsPDF from 'jspdf';
+import { Progress } from '@/components/ui/progress';
 import {
   Dumbbell, Plus, Flame, Clock, TrendingUp, Calendar, Filter,
-  Trash2, Star, Heart, BarChart3, FileDown, X,
+  Trash2, Star, Heart, BarChart3, FileDown, X, Target, Zap, Trophy,
+  ArrowUp, ArrowDown, Minus,
 } from 'lucide-react';
 import { colors, drawRoundedRect, addPageFooter } from '@/utils/pdfUtils';
 
 type RangeOption = 7 | 30 | 90;
+
+interface WorkoutGoals {
+  workoutsPerWeek: number;
+  minutesPerWeek: number;
+  caloriesPerWeek: number;
+}
 
 const INTENSITY_OPTIONS = [
   { value: 'light', label: 'Light', color: 'hsl(142, 55%, 50%)' },
@@ -62,6 +70,96 @@ export function WorkoutTrackingView() {
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('log');
   const [range, setRange] = useState<RangeOption>(30);
+
+  // Goals state (persisted in localStorage)
+  const [goals, setGoals] = useState<WorkoutGoals>(() => {
+    try {
+      const saved = localStorage.getItem('workout_goals');
+      return saved ? JSON.parse(saved) : { workoutsPerWeek: 4, minutesPerWeek: 150, caloriesPerWeek: 1500 };
+    } catch { return { workoutsPerWeek: 4, minutesPerWeek: 150, caloriesPerWeek: 1500 }; }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('workout_goals', JSON.stringify(goals));
+  }, [goals]);
+
+  // Current week progress
+  const weekProgress = useMemo(() => {
+    const now = new Date();
+    const weekStart = format(startOfWeek(now, { weekStartsOn: 1 }), 'yyyy-MM-dd');
+    const weekEnd = format(endOfWeek(now, { weekStartsOn: 1 }), 'yyyy-MM-dd');
+    const thisWeek = workoutLogs.filter(l => l.date >= weekStart && l.date <= weekEnd);
+    return {
+      workouts: thisWeek.length,
+      minutes: thisWeek.reduce((s, l) => s + (l.duration_minutes || 0), 0),
+      calories: thisWeek.reduce((s, l) => s + (l.calories_burned || 0), 0),
+    };
+  }, [workoutLogs]);
+
+  // Streak calculations
+  const streaks = useMemo(() => {
+    if (workoutLogs.length === 0) return { currentDay: 0, longestDay: 0, currentWeek: 0, longestWeek: 0 };
+
+    // Daily streak
+    const workoutDates = new Set(workoutLogs.map(l => l.date));
+    const today = startOfDay(new Date());
+    let currentDay = 0;
+    let d = today;
+    // Check today first, if not, check yesterday as start
+    if (!workoutDates.has(format(today, 'yyyy-MM-dd'))) {
+      d = subDays(today, 1);
+      if (!workoutDates.has(format(d, 'yyyy-MM-dd'))) {
+        currentDay = 0;
+      } else {
+        currentDay = 1;
+        d = subDays(d, 1);
+        while (workoutDates.has(format(d, 'yyyy-MM-dd'))) { currentDay++; d = subDays(d, 1); }
+      }
+    } else {
+      currentDay = 1;
+      d = subDays(today, 1);
+      while (workoutDates.has(format(d, 'yyyy-MM-dd'))) { currentDay++; d = subDays(d, 1); }
+    }
+
+    // Longest daily streak
+    const sortedDates = [...workoutDates].sort();
+    let longestDay = 0;
+    let streak = 0;
+    let prev = '';
+    sortedDates.forEach(dateStr => {
+      if (prev && format(subDays(parseISO(dateStr), -0), 'yyyy-MM-dd') === dateStr) {
+        const prevDate = parseISO(prev);
+        const currDate = parseISO(dateStr);
+        const diff = Math.round((currDate.getTime() - prevDate.getTime()) / 86400000);
+        if (diff === 1) { streak++; } else { streak = 1; }
+      } else { streak = 1; }
+      longestDay = Math.max(longestDay, streak);
+      prev = dateStr;
+    });
+
+    // Weekly streak (weeks meeting workout goal)
+    const now = new Date();
+    let currentWeek = 0;
+    let checkWeek = startOfWeek(now, { weekStartsOn: 1 });
+    // Check current week only if some workouts logged
+    for (let i = 0; i < 52; i++) {
+      const ws = format(checkWeek, 'yyyy-MM-dd');
+      const we = format(endOfWeek(checkWeek, { weekStartsOn: 1 }), 'yyyy-MM-dd');
+      const count = workoutLogs.filter(l => l.date >= ws && l.date <= we).length;
+      if (count >= goals.workoutsPerWeek) {
+        currentWeek++;
+        checkWeek = subDays(checkWeek, 7);
+      } else if (i === 0) {
+        // Current week in progress, check previous
+        checkWeek = subDays(checkWeek, 7);
+        continue;
+      } else {
+        break;
+      }
+    }
+
+    return { currentDay, longestDay, currentWeek, longestWeek: currentWeek };
+  }, [workoutLogs, goals.workoutsPerWeek]);
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
   const [showForm, setShowForm] = useState(false);
 
@@ -429,9 +527,10 @@ export function WorkoutTrackingView() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="log"><Calendar className="h-4 w-4 mr-1" />History</TabsTrigger>
           <TabsTrigger value="graphs"><BarChart3 className="h-4 w-4 mr-1" />Graphs</TabsTrigger>
+          <TabsTrigger value="goals"><Target className="h-4 w-4 mr-1" />Goals</TabsTrigger>
           <TabsTrigger value="stats"><TrendingUp className="h-4 w-4 mr-1" />Stats</TabsTrigger>
         </TabsList>
 
@@ -613,6 +712,105 @@ export function WorkoutTrackingView() {
                       <Bar dataKey="count" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} name="Times" />
                     </BarChart>
                   </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </TabsContent>
+
+        {/* Goals & Streaks Tab */}
+        <TabsContent value="goals" className="space-y-4 mt-3">
+          {/* Weekly Goals Settings */}
+          <motion.div variants={itemVariants}>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Target className="h-4 w-4 text-primary" /> Weekly Targets
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {[
+                  { label: 'Workouts / Week', key: 'workoutsPerWeek' as const, min: 1, max: 14, step: 1 },
+                  { label: 'Minutes / Week', key: 'minutesPerWeek' as const, min: 30, max: 600, step: 15 },
+                  { label: 'Calories / Week', key: 'caloriesPerWeek' as const, min: 200, max: 5000, step: 100 },
+                ].map(g => (
+                  <div key={g.key} className="space-y-1.5">
+                    <div className="flex justify-between items-center">
+                      <Label className="text-xs font-medium">{g.label}</Label>
+                      <span className="text-xs font-bold text-primary">{goals[g.key]}</span>
+                    </div>
+                    <input
+                      type="range"
+                      min={g.min} max={g.max} step={g.step}
+                      value={goals[g.key]}
+                      onChange={e => setGoals(prev => ({ ...prev, [g.key]: parseInt(e.target.value) }))}
+                      className="w-full h-2 bg-secondary rounded-lg appearance-none cursor-pointer accent-primary"
+                    />
+                    <div className="flex justify-between text-[10px] text-muted-foreground">
+                      <span>{g.min}</span><span>{g.max}</span>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* This Week Progress */}
+          <motion.div variants={itemVariants}>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Zap className="h-4 w-4 text-yellow-500" /> This Week's Progress
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {[
+                  { label: 'Workouts', current: weekProgress.workouts, target: goals.workoutsPerWeek, unit: '', color: 'hsl(var(--primary))' },
+                  { label: 'Minutes', current: weekProgress.minutes, target: goals.minutesPerWeek, unit: 'min', color: 'hsl(280, 65%, 55%)' },
+                  { label: 'Calories', current: weekProgress.calories, target: goals.caloriesPerWeek, unit: 'kcal', color: 'hsl(25, 85%, 50%)' },
+                ].map(p => {
+                  const pct = Math.min((p.current / p.target) * 100, 100);
+                  const isComplete = p.current >= p.target;
+                  return (
+                    <div key={p.label} className="space-y-1.5">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs font-medium">{p.label}</span>
+                        <span className={`text-xs font-bold ${isComplete ? 'text-green-500' : 'text-foreground'}`}>
+                          {p.current}{p.unit ? ` ${p.unit}` : ''} / {p.target}{p.unit ? ` ${p.unit}` : ''}
+                          {isComplete && ' ✅'}
+                        </span>
+                      </div>
+                      <Progress value={pct} className="h-3" />
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          {/* Streaks */}
+          <motion.div variants={itemVariants}>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <Trophy className="h-4 w-4 text-yellow-500" /> Streaks & Consistency
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { label: 'Current Day Streak', value: streaks.currentDay, emoji: '🔥', sub: 'consecutive days' },
+                    { label: 'Longest Day Streak', value: streaks.longestDay, emoji: '🏆', sub: 'personal best' },
+                    { label: 'Weekly Goal Streak', value: streaks.currentWeek, emoji: '⚡', sub: 'weeks hitting target' },
+                    { label: 'Total Active Days', value: new Set(workoutLogs.map(l => l.date)).size, emoji: '📅', sub: 'days with workouts' },
+                  ].map(s => (
+                    <Card key={s.label} className="p-3 bg-muted/40">
+                      <div className="text-2xl mb-1">{s.emoji}</div>
+                      <p className="text-2xl font-bold">{s.value}</p>
+                      <p className="text-[10px] text-muted-foreground font-medium">{s.label}</p>
+                      <p className="text-[9px] text-muted-foreground">{s.sub}</p>
+                    </Card>
+                  ))}
                 </div>
               </CardContent>
             </Card>
