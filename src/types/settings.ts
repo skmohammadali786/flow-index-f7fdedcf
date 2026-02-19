@@ -24,6 +24,7 @@ export interface UserProfile {
   name: string;
   birthDate?: string;
   avatar?: string;
+  avatarUrl?: string;
   email?: string;
   createdAt: string;
   lastBackup?: string;
