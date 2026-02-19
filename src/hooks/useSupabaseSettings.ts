@@ -49,6 +49,7 @@ export function useSupabaseSettings() {
           setProfile({
             name: profileData.name || '',
             birthDate: profileData.birth_date || undefined,
+            avatarUrl: (profileData as any).avatar_url || undefined,
             createdAt: profileData.created_at,
             lastBackup: undefined,
           });
@@ -149,7 +150,8 @@ export function useSupabaseSettings() {
       .update({
         name: newProfile.name,
         birth_date: newProfile.birthDate || null,
-      })
+        avatar_url: newProfile.avatarUrl || null,
+      } as any)
       .eq('user_id', user.id);
 
     if (error) {
