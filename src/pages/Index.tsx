@@ -122,19 +122,21 @@ const Index = () => {
       const onboardingComplete = localStorage.getItem(ONBOARDING_KEY);
       const isNewUser = localStorage.getItem('period_tracker_is_new_user');
       
-      // Only show onboarding for new users who signed up (not logged in)
-      // and haven't completed onboarding yet, and have no cycles
-      if (!onboardingComplete && isNewUser === 'true' && cycles.length === 0) {
+      // Check both localStorage and profile.onboardingCompleted from DB
+      const dbOnboardingDone = (profile as any).onboardingCompleted === true;
+      
+      if (!onboardingComplete && !dbOnboardingDone && isNewUser === 'true' && cycles.length === 0) {
         setShowOnboarding(true);
       }
     }
-  }, [isLoaded, settingsLoaded, user, cycles.length]);
+  }, [isLoaded, settingsLoaded, user, cycles.length, profile]);
 
   const handleOnboardingComplete = (data: OnboardingData) => {
-    // Save profile info (name and birth date) to backend
+    // Save profile info (name and birth date) + mark onboarding done in DB
     updateProfile({
       name: data.name,
       birthDate: data.birthDate,
+      onboardingCompleted: true,
     });
     
     // Log the initial period
@@ -146,9 +148,8 @@ const Index = () => {
       periodLength: data.averagePeriodLength,
     });
     
-    // Mark onboarding as complete
+    // Mark onboarding as complete in localStorage too
     localStorage.setItem(ONBOARDING_KEY, 'true');
-    // Clear the new user flag
     localStorage.removeItem('period_tracker_is_new_user');
     setShowOnboarding(false);
   };
@@ -234,7 +235,7 @@ const Index = () => {
           <div className="w-12 h-12 rounded-full gradient-primary animate-pulse-soft" />
         </div>
       }>
-        <OnboardingFlow onComplete={handleOnboardingComplete} />
+        <OnboardingFlow onComplete={handleOnboardingComplete} userName={user?.user_metadata?.name || ''} />
       </Suspense>
     );
   }

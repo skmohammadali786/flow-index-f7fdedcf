@@ -50,6 +50,7 @@ export function useSupabaseSettings() {
             name: profileData.name || '',
             birthDate: profileData.birth_date || undefined,
             avatarUrl: (profileData as any).avatar_url || undefined,
+            onboardingCompleted: (profileData as any).onboarding_completed || false,
             createdAt: profileData.created_at,
             lastBackup: undefined,
           });
@@ -151,6 +152,7 @@ export function useSupabaseSettings() {
         name: newProfile.name,
         birth_date: newProfile.birthDate || null,
         avatar_url: newProfile.avatarUrl || null,
+        onboarding_completed: newProfile.onboardingCompleted ?? false,
       } as any)
       .eq('user_id', user.id);
 

@@ -136,6 +136,9 @@ const Auth = () => {
       return;
     }
 
+    // Mark as new user so onboarding shows after email verification
+    localStorage.setItem('period_tracker_is_new_user', 'true');
+    
     toast({
       title: "Account created!",
       description: "Please check your email to verify your account.",
