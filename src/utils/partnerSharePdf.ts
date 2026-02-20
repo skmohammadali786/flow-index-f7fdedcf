@@ -34,6 +34,7 @@ export interface PdfData {
   clinicalAssessments?: ClinicalAssessment[];
   workoutLogs?: WorkoutLog[];
   userName?: string;
+  avatarUrl?: string;
   journalEntries?: JournalEntry[];
   shareSettings: {
     showPeriodDates: boolean;
@@ -232,6 +233,30 @@ export async function generatePartnerSharePdf(data: PdfData, logoBase64?: string
       logoXOffset = 32;
     } catch (e) {
       console.warn('Could not add logo to PDF:', e);
+    }
+  }
+
+  // Add user avatar on the right side of header if available
+  if (data.avatarUrl) {
+    try {
+      const avatarResponse = await fetch(data.avatarUrl);
+      const avatarBlob = await avatarResponse.blob();
+      const avatarBase64: string = await new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(avatarBlob);
+      });
+      // Draw a white circle background for avatar
+      pdf.setFillColor(255, 255, 255);
+      pdf.circle(pageWidth - margin - 16, yPos + 19, 13, 'F');
+      // Draw the avatar image (clipped to appear circular via rounded rect)
+      pdf.addImage(avatarBase64, 'JPEG', pageWidth - margin - 28, yPos + 7, 24, 24);
+      // Draw circular border on top
+      pdf.setDrawColor(255, 255, 255);
+      pdf.setLineWidth(1.5);
+      pdf.circle(pageWidth - margin - 16, yPos + 19, 12, 'S');
+    } catch (e) {
+      console.warn('Could not add avatar to PDF:', e);
     }
   }
   
