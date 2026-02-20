@@ -26,6 +26,7 @@ import { useClinicalAssessments } from '@/hooks/useClinicalAssessments';
 import { useFertilityTracker } from '@/hooks/useFertilityTracker';
 import { useWorkoutTracker } from '@/hooks/useWorkoutTracker';
 import { useReportDraft } from '@/contexts/ReportDraftContext';
+import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
 import logoSrc from '@/assets/logo.png';
 
 interface PartnerShareViewProps {
@@ -88,6 +89,7 @@ export function PartnerShareView({
 }: PartnerShareViewProps) {
   const { toast } = useToast();
   const { user } = useAuth();
+  const { profile } = useSupabaseSettings();
   const { entries: journalEntries } = useWellnessJournal();
   const { fertilityLogs: fetchedFertilityLogs, birthRecords: fetchedBirthRecords } = useFertilityTracker();
   const { fertilityDrafts, birthDraft } = useReportDraft();
@@ -419,6 +421,7 @@ export function PartnerShareView({
         currentCycleDay,
         logs,
         userName,
+        avatarUrl: profile.avatarUrl || undefined,
         journalEntries,
         shareSettings,
         fertilityLogs,
