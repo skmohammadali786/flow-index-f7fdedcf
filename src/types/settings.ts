@@ -28,6 +28,7 @@ export interface UserProfile {
   email?: string;
   createdAt: string;
   lastBackup?: string;
+  onboardingCompleted?: boolean;
 }
 
 export type CyclePhase = 'menstrual' | 'follicular' | 'ovulation' | 'luteal';

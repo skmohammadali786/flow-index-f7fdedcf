@@ -1,16 +1,18 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format, subDays } from 'date-fns';
-import { ChevronRight, ChevronLeft, Flower2, Calendar, Droplets, Target, Check, User } from 'lucide-react';
+import { ChevronRight, ChevronLeft, Flower2, Calendar, Sparkles, Heart, Shield, BarChart3, Moon, Droplets, Target } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import logo from '@/assets/logo.png';
 
 interface OnboardingFlowProps {
   onComplete: (data: OnboardingData) => void;
+  userName?: string;
 }
 
 export interface OnboardingData {
@@ -23,59 +25,43 @@ export interface OnboardingData {
 }
 
 const trackingGoalOptions = [
-  { id: 'predict', label: 'Predict my next period', icon: '📅' },
-  { id: 'symptoms', label: 'Track symptoms', icon: '📝' },
-  { id: 'fertility', label: 'Monitor fertility', icon: '🌸' },
-  { id: 'health', label: 'Improve overall health', icon: '💪' },
-  { id: 'mood', label: 'Understand mood patterns', icon: '😊' },
-  { id: 'share', label: 'Share with partner/doctor', icon: '👥' },
+  { id: 'predict', label: 'Predict periods', icon: <Calendar className="h-5 w-5" />, color: 'text-coral' },
+  { id: 'symptoms', label: 'Track symptoms', icon: <Heart className="h-5 w-5" />, color: 'text-rose-400' },
+  { id: 'fertility', label: 'Fertility tracking', icon: <Flower2 className="h-5 w-5" />, color: 'text-lavender' },
+  { id: 'health', label: 'Overall health', icon: <Shield className="h-5 w-5" />, color: 'text-sage' },
+  { id: 'mood', label: 'Mood patterns', icon: <Moon className="h-5 w-5" />, color: 'text-amber-400' },
+  { id: 'share', label: 'Share reports', icon: <BarChart3 className="h-5 w-5" />, color: 'text-sky-400' },
 ];
 
-export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
+// Floating blob background animation
+const FloatingBlob = ({ delay, className }: { delay: number; className: string }) => (
+  <motion.div
+    className={cn("absolute rounded-full opacity-20 blur-3xl", className)}
+    animate={{
+      y: [0, -30, 0, 30, 0],
+      x: [0, 20, -20, 10, 0],
+      scale: [1, 1.1, 0.9, 1.05, 1],
+    }}
+    transition={{ duration: 8, delay, repeat: Infinity, ease: "easeInOut" }}
+  />
+);
+
+export function OnboardingFlow({ onComplete, userName }: OnboardingFlowProps) {
   const [step, setStep] = useState(0);
-  const [userName, setUserName] = useState('');
   const [birthDate, setBirthDate] = useState('');
   const [lastPeriodDate, setLastPeriodDate] = useState<Date>(subDays(new Date(), 14));
   const [cycleLength, setCycleLength] = useState(28);
   const [periodLength, setPeriodLength] = useState(5);
   const [selectedGoals, setSelectedGoals] = useState<string[]>(['predict']);
 
-  const steps = [
-    {
-      title: 'Welcome to Flow Index',
-      description: 'Your personal cycle companion. Let\'s set things up to give you the best experience.',
-      icon: <Flower2 className="h-12 w-12" />,
-    },
-    {
-      title: 'Tell us about yourself',
-      description: 'This helps personalize your experience.',
-      icon: <User className="h-8 w-8" />,
-    },
-    {
-      title: 'When did your last period start?',
-      description: 'This helps us predict your next cycle accurately.',
-      icon: <Calendar className="h-8 w-8" />,
-    },
-    {
-      title: 'Your cycle length',
-      description: 'How many days is your typical cycle? (From period start to the next period start)',
-      icon: <Droplets className="h-8 w-8" />,
-    },
-    {
-      title: 'What would you like to track?',
-      description: 'Select all that apply. You can change these later.',
-      icon: <Target className="h-8 w-8" />,
-    },
-  ];
-
-  const currentStep = steps[step];
+  const totalSteps = 3;
 
   const handleNext = () => {
-    if (step < steps.length - 1) {
+    if (step < totalSteps - 1) {
       setStep(step + 1);
     } else {
       onComplete({
-        name: userName.trim(),
+        name: userName || '',
         birthDate: birthDate || undefined,
         lastPeriodDate,
         averageCycleLength: cycleLength,
@@ -97,266 +83,384 @@ export function OnboardingFlow({ onComplete }: OnboardingFlowProps) {
     );
   };
 
+  const canProceed = () => {
+    if (step === 1) return !!lastPeriodDate;
+    if (step === 2) return selectedGoals.length > 0;
+    return true;
+  };
+
   const pageVariants = {
-    initial: { opacity: 0, x: 50 },
-    animate: { opacity: 1, x: 0 },
-    exit: { opacity: 0, x: -50 },
+    initial: (direction: number) => ({
+      opacity: 0,
+      x: direction > 0 ? 80 : -80,
+      scale: 0.95,
+    }),
+    animate: {
+      opacity: 1,
+      x: 0,
+      scale: 1,
+    },
+    exit: (direction: number) => ({
+      opacity: 0,
+      x: direction > 0 ? -80 : 80,
+      scale: 0.95,
+    }),
+  };
+
+  const [direction, setDirection] = useState(1);
+
+  const goNext = () => {
+    setDirection(1);
+    handleNext();
+  };
+
+  const goBack = () => {
+    setDirection(-1);
+    handleBack();
   };
 
   return (
-    <div className="min-h-screen gradient-soft flex items-center justify-center p-4">
+    <div className="min-h-screen gradient-soft flex items-center justify-center p-4 overflow-hidden relative">
+      {/* Animated background blobs */}
+      <FloatingBlob delay={0} className="w-64 h-64 bg-coral -top-20 -left-20" />
+      <FloatingBlob delay={2} className="w-48 h-48 bg-lavender top-1/3 -right-10" />
+      <FloatingBlob delay={4} className="w-56 h-56 bg-sage -bottom-20 left-1/4" />
+
       <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="w-full max-w-md"
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="w-full max-w-md relative z-10"
       >
-        {/* Progress dots */}
-        <div className="flex justify-center gap-2 mb-8">
-          {steps.map((_, i) => (
+        {/* Progress bar */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-medium text-muted-foreground">Step {step + 1} of {totalSteps}</span>
+            <span className="text-xs font-medium text-muted-foreground">
+              {step === 0 ? 'Welcome' : step === 1 ? 'Your Cycle' : 'Your Goals'}
+            </span>
+          </div>
+          <div className="h-1.5 bg-muted/50 rounded-full overflow-hidden backdrop-blur-sm">
             <motion.div
-              key={i}
-              animate={{
-                scale: i === step ? 1.2 : 1,
-                backgroundColor: i <= step ? 'hsl(var(--coral))' : 'hsl(var(--muted))',
-              }}
-              className="w-2 h-2 rounded-full"
+              className="h-full rounded-full gradient-primary"
+              initial={{ width: '0%' }}
+              animate={{ width: `${((step + 1) / totalSteps) * 100}%` }}
+              transition={{ duration: 0.5, ease: "easeInOut" }}
             />
-          ))}
+          </div>
         </div>
 
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={step}
-            variants={pageVariants}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-            transition={{ duration: 0.3 }}
-            className="bg-card rounded-2xl shadow-elevated p-8"
-          >
-            {/* Step 0: Welcome */}
-            {step === 0 && (
+        <AnimatePresence mode="wait" custom={direction}>
+          {/* Step 1: Welcome & Introduction */}
+          {step === 0 && (
+            <motion.div
+              key="step-0"
+              custom={direction}
+              variants={pageVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              transition={{ duration: 0.4, ease: "easeInOut" }}
+              className="bg-card/90 backdrop-blur-md rounded-3xl shadow-elevated p-8 border border-border/30"
+            >
               <div className="text-center">
-                <div className="w-20 h-20 mx-auto mb-6 rounded-full gradient-primary flex items-center justify-center text-primary-foreground">
-                  {currentStep.icon}
-                </div>
-                <h1 className="font-display text-3xl font-bold mb-3">{currentStep.title}</h1>
-                <p className="text-muted-foreground mb-8">{currentStep.description}</p>
-                
-                <div className="space-y-3 text-left mb-8">
-                  <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
-                    <Check className="h-5 w-5 text-sage" />
-                    <span className="text-sm">Track periods & symptoms</span>
-                  </div>
-                  <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
-                    <Check className="h-5 w-5 text-sage" />
-                    <span className="text-sm">Get accurate predictions</span>
-                  </div>
-                  <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
-                    <Check className="h-5 w-5 text-sage" />
-                    <span className="text-sm">Understand your patterns</span>
-                  </div>
-                </div>
-              </div>
-            )}
+                {/* Animated logo */}
+                <motion.div
+                  initial={{ scale: 0, rotate: -180 }}
+                  animate={{ scale: 1, rotate: 0 }}
+                  transition={{ type: "spring", stiffness: 200, damping: 15, delay: 0.2 }}
+                  className="w-24 h-24 mx-auto mb-6 rounded-3xl overflow-hidden shadow-elevated"
+                >
+                  <img src={logo} alt="Flow Index" className="w-full h-full object-cover" />
+                </motion.div>
 
-            {/* Step 1: Personal Info */}
-            {step === 1 && (
-              <div>
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="p-2 rounded-lg bg-lavender-light text-lavender">
-                    {currentStep.icon}
-                  </div>
-                  <div>
-                    <h2 className="font-display text-xl font-semibold">{currentStep.title}</h2>
-                    <p className="text-sm text-muted-foreground">{currentStep.description}</p>
-                  </div>
-                </div>
+                <motion.h1
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                  className="font-display text-3xl font-bold mb-2"
+                >
+                  Welcome{userName ? `, ${userName}` : ''}! 🌸
+                </motion.h1>
+                <motion.p
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5 }}
+                  className="text-muted-foreground mb-8"
+                >
+                  Let's personalize your experience in just a few steps
+                </motion.p>
 
-                <div className="space-y-4">
-                  <div>
-                    <Label className="text-sm font-medium mb-2 block">Your Name</Label>
-                    <Input
-                      type="text"
-                      placeholder="Enter your name"
-                      value={userName}
-                      onChange={(e) => setUserName(e.target.value)}
-                      className="h-14"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-sm font-medium mb-2 block">Date of Birth (optional)</Label>
-                    <Input
-                      type="date"
-                      value={birthDate}
-                      onChange={(e) => setBirthDate(e.target.value)}
-                      className="h-14"
-                      max={new Date().toISOString().split('T')[0]}
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Step 2: Last Period */}
-            {step === 2 && (
-              <div>
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="p-2 rounded-lg bg-coral-light text-coral">
-                    {currentStep.icon}
-                  </div>
-                  <div>
-                    <h2 className="font-display text-xl font-semibold">{currentStep.title}</h2>
-                    <p className="text-sm text-muted-foreground">{currentStep.description}</p>
-                  </div>
-                </div>
-
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-full justify-start text-left font-normal h-14",
-                        !lastPeriodDate && "text-muted-foreground"
-                      )}
+                {/* Feature highlights with staggered animation */}
+                <div className="space-y-3 text-left mb-6">
+                  {[
+                    { icon: <Droplets className="h-5 w-5 text-coral" />, text: 'Accurate period predictions & tracking', delay: 0.6 },
+                    { icon: <Heart className="h-5 w-5 text-rose-400" />, text: 'Symptom insights & wellness journal', delay: 0.7 },
+                    { icon: <Sparkles className="h-5 w-5 text-lavender" />, text: 'Smart health reports & analytics', delay: 0.8 },
+                  ].map((item, i) => (
+                    <motion.div
+                      key={i}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: item.delay, duration: 0.3 }}
+                      className="flex items-center gap-3 p-3.5 bg-muted/50 rounded-xl border border-border/20"
                     >
-                      <Calendar className="mr-2 h-4 w-4" />
-                      {lastPeriodDate ? format(lastPeriodDate, "MMMM d, yyyy") : "Select date"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <CalendarComponent
-                      mode="single"
-                      selected={lastPeriodDate}
-                      onSelect={(date) => date && setLastPeriodDate(date)}
-                      disabled={(date) => date > new Date()}
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-            )}
-
-            {/* Step 3: Cycle Length */}
-            {step === 3 && (
-              <div>
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="p-2 rounded-lg bg-lavender-light text-lavender">
-                    {currentStep.icon}
-                  </div>
-                  <div>
-                    <h2 className="font-display text-xl font-semibold">{currentStep.title}</h2>
-                    <p className="text-sm text-muted-foreground">{currentStep.description}</p>
-                  </div>
-                </div>
-
-                <div className="space-y-6">
-                  <div>
-                    <Label className="text-sm font-medium mb-2 block">Cycle length (days)</Label>
-                    <div className="flex items-center gap-4">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => setCycleLength(Math.max(21, cycleLength - 1))}
-                      >
-                        -
-                      </Button>
-                      <div className="flex-1 text-center">
-                        <span className="text-4xl font-display font-bold">{cycleLength}</span>
-                        <p className="text-xs text-muted-foreground">days</p>
+                      <div className="shrink-0 w-10 h-10 rounded-xl bg-background flex items-center justify-center shadow-sm">
+                        {item.icon}
                       </div>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => setCycleLength(Math.min(45, cycleLength + 1))}
-                      >
-                        +
-                      </Button>
-                    </div>
-                    <p className="text-xs text-muted-foreground text-center mt-2">
-                      Average is 28 days
-                    </p>
-                  </div>
-
-                  <div>
-                    <Label className="text-sm font-medium mb-2 block">Period length (days)</Label>
-                    <div className="flex items-center gap-4">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => setPeriodLength(Math.max(2, periodLength - 1))}
-                      >
-                        -
-                      </Button>
-                      <div className="flex-1 text-center">
-                        <span className="text-4xl font-display font-bold">{periodLength}</span>
-                        <p className="text-xs text-muted-foreground">days</p>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => setPeriodLength(Math.min(10, periodLength + 1))}
-                      >
-                        +
-                      </Button>
-                    </div>
-                    <p className="text-xs text-muted-foreground text-center mt-2">
-                      Average is 5 days
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Step 4: Goals */}
-            {step === 4 && (
-              <div>
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="p-2 rounded-lg bg-sage-light text-sage">
-                    {currentStep.icon}
-                  </div>
-                  <div>
-                    <h2 className="font-display text-xl font-semibold">{currentStep.title}</h2>
-                    <p className="text-sm text-muted-foreground">{currentStep.description}</p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  {trackingGoalOptions.map((goal) => (
-                    <motion.button
-                      key={goal.id}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => toggleGoal(goal.id)}
-                      className={cn(
-                        "p-4 rounded-xl border-2 transition-all text-left",
-                        selectedGoals.includes(goal.id)
-                          ? "border-primary bg-primary/5"
-                          : "border-border hover:border-primary/50"
-                      )}
-                    >
-                      <span className="text-2xl mb-2 block">{goal.icon}</span>
-                      <span className="text-sm">{goal.label}</span>
-                    </motion.button>
+                      <span className="text-sm font-medium">{item.text}</span>
+                    </motion.div>
                   ))}
                 </div>
-              </div>
-            )}
 
-            {/* Navigation */}
-            <div className="flex gap-3 mt-8">
-              {step > 0 && (
-                <Button variant="outline" onClick={handleBack} className="flex-1">
-                  <ChevronLeft className="h-4 w-4 mr-1" />
-                  Back
-                </Button>
-              )}
-              <Button onClick={handleNext} className="flex-1 gradient-primary text-primary-foreground border-0">
-                {step === steps.length - 1 ? 'Get Started' : 'Continue'}
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
-            </div>
-          </motion.div>
+                {/* Optional birth date */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.9 }}
+                  className="text-left"
+                >
+                  <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">Date of Birth (optional)</Label>
+                  <Input
+                    type="date"
+                    value={birthDate}
+                    onChange={(e) => setBirthDate(e.target.value)}
+                    className="h-12 rounded-xl border-border/30 bg-muted/30"
+                    max={new Date().toISOString().split('T')[0]}
+                  />
+                </motion.div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Step 2: Cycle Information */}
+          {step === 1 && (
+            <motion.div
+              key="step-1"
+              custom={direction}
+              variants={pageVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              transition={{ duration: 0.4, ease: "easeInOut" }}
+              className="bg-card/90 backdrop-blur-md rounded-3xl shadow-elevated p-8 border border-border/30"
+            >
+              <div className="text-center mb-6">
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                  className="w-16 h-16 mx-auto mb-4 rounded-2xl gradient-primary flex items-center justify-center text-primary-foreground shadow-lg"
+                >
+                  <Calendar className="h-8 w-8" />
+                </motion.div>
+                <h2 className="font-display text-2xl font-bold">Your Cycle Details</h2>
+                <p className="text-sm text-muted-foreground mt-1">This helps us predict accurately</p>
+              </div>
+
+              <div className="space-y-6">
+                {/* Last period date */}
+                <div>
+                  <Label className="text-sm font-medium mb-2 block">When did your last period start?</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal h-12 rounded-xl border-border/30",
+                          !lastPeriodDate && "text-muted-foreground"
+                        )}
+                      >
+                        <Calendar className="mr-2 h-4 w-4 text-coral" />
+                        {lastPeriodDate ? format(lastPeriodDate, "MMMM d, yyyy") : "Select date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <CalendarComponent
+                        mode="single"
+                        selected={lastPeriodDate}
+                        onSelect={(date) => date && setLastPeriodDate(date)}
+                        disabled={(date) => date > new Date()}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                {/* Cycle length */}
+                <div>
+                  <Label className="text-sm font-medium mb-3 block">Cycle length</Label>
+                  <div className="flex items-center gap-4 bg-muted/30 rounded-2xl p-4 border border-border/20">
+                    <motion.button
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => setCycleLength(Math.max(21, cycleLength - 1))}
+                      className="w-10 h-10 rounded-xl bg-background shadow-sm flex items-center justify-center text-lg font-bold hover:bg-muted transition-colors"
+                    >
+                      −
+                    </motion.button>
+                    <div className="flex-1 text-center">
+                      <motion.span
+                        key={cycleLength}
+                        initial={{ scale: 1.3, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        className="text-4xl font-display font-bold text-coral"
+                      >
+                        {cycleLength}
+                      </motion.span>
+                      <p className="text-xs text-muted-foreground mt-0.5">days (avg 28)</p>
+                    </div>
+                    <motion.button
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => setCycleLength(Math.min(45, cycleLength + 1))}
+                      className="w-10 h-10 rounded-xl bg-background shadow-sm flex items-center justify-center text-lg font-bold hover:bg-muted transition-colors"
+                    >
+                      +
+                    </motion.button>
+                  </div>
+                </div>
+
+                {/* Period length */}
+                <div>
+                  <Label className="text-sm font-medium mb-3 block">Period length</Label>
+                  <div className="flex items-center gap-4 bg-muted/30 rounded-2xl p-4 border border-border/20">
+                    <motion.button
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => setPeriodLength(Math.max(2, periodLength - 1))}
+                      className="w-10 h-10 rounded-xl bg-background shadow-sm flex items-center justify-center text-lg font-bold hover:bg-muted transition-colors"
+                    >
+                      −
+                    </motion.button>
+                    <div className="flex-1 text-center">
+                      <motion.span
+                        key={periodLength}
+                        initial={{ scale: 1.3, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        className="text-4xl font-display font-bold text-lavender"
+                      >
+                        {periodLength}
+                      </motion.span>
+                      <p className="text-xs text-muted-foreground mt-0.5">days (avg 5)</p>
+                    </div>
+                    <motion.button
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => setPeriodLength(Math.min(10, periodLength + 1))}
+                      className="w-10 h-10 rounded-xl bg-background shadow-sm flex items-center justify-center text-lg font-bold hover:bg-muted transition-colors"
+                    >
+                      +
+                    </motion.button>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Step 3: Goals */}
+          {step === 2 && (
+            <motion.div
+              key="step-2"
+              custom={direction}
+              variants={pageVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              transition={{ duration: 0.4, ease: "easeInOut" }}
+              className="bg-card/90 backdrop-blur-md rounded-3xl shadow-elevated p-8 border border-border/30"
+            >
+              <div className="text-center mb-6">
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                  className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-sage/20 flex items-center justify-center shadow-lg"
+                >
+                  <Target className="h-8 w-8 text-sage" />
+                </motion.div>
+                <h2 className="font-display text-2xl font-bold">What matters to you?</h2>
+                <p className="text-sm text-muted-foreground mt-1">Select all that apply — you can change later</p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                {trackingGoalOptions.map((goal, i) => (
+                  <motion.button
+                    key={goal.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.08 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => toggleGoal(goal.id)}
+                    className={cn(
+                      "p-4 rounded-2xl border-2 transition-all text-left relative overflow-hidden group",
+                      selectedGoals.includes(goal.id)
+                        ? "border-primary bg-primary/5 shadow-md"
+                        : "border-border/30 hover:border-primary/40 bg-muted/20"
+                    )}
+                  >
+                    {selectedGoals.includes(goal.id) && (
+                      <motion.div
+                        layoutId="goal-check"
+                        className="absolute top-2 right-2 w-5 h-5 rounded-full gradient-primary flex items-center justify-center"
+                      >
+                        <svg className="w-3 h-3 text-primary-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      </motion.div>
+                    )}
+                    <div className={cn("mb-2", goal.color)}>{goal.icon}</div>
+                    <span className="text-sm font-medium">{goal.label}</span>
+                  </motion.button>
+                ))}
+              </div>
+
+              {/* Encouraging message */}
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.6 }}
+                className="mt-6 text-center"
+              >
+                <p className="text-xs text-muted-foreground">
+                  🎉 You're all set! Tap "Get Started" to begin your journey
+                </p>
+              </motion.div>
+            </motion.div>
+          )}
         </AnimatePresence>
+
+        {/* Navigation buttons */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="flex gap-3 mt-6"
+        >
+          {step > 0 && (
+            <Button
+              variant="outline"
+              onClick={goBack}
+              className="flex-1 h-12 rounded-xl border-border/30 bg-card/50 backdrop-blur-sm"
+            >
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Back
+            </Button>
+          )}
+          <Button
+            onClick={goNext}
+            disabled={!canProceed()}
+            className="flex-1 h-12 rounded-xl gradient-primary text-primary-foreground border-0 shadow-lg"
+          >
+            {step === totalSteps - 1 ? (
+              <>
+                Get Started
+                <Sparkles className="h-4 w-4 ml-1" />
+              </>
+            ) : (
+              <>
+                Continue
+                <ChevronRight className="h-4 w-4 ml-1" />
+              </>
+            )}
+          </Button>
+        </motion.div>
       </motion.div>
     </div>
   );
