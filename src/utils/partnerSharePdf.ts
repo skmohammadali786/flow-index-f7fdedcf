@@ -236,27 +236,19 @@ export async function generatePartnerSharePdf(data: PdfData, logoBase64?: string
     }
   }
 
-  // Add user avatar on the right side of header if available
+  // Load avatar base64 if available (will be drawn after header)
+  let avatarBase64: string | undefined;
   if (data.avatarUrl) {
     try {
       const avatarResponse = await fetch(data.avatarUrl);
       const avatarBlob = await avatarResponse.blob();
-      const avatarBase64: string = await new Promise((resolve) => {
+      avatarBase64 = await new Promise((resolve) => {
         const reader = new FileReader();
         reader.onloadend = () => resolve(reader.result as string);
         reader.readAsDataURL(avatarBlob);
       });
-      // Draw a white circle background for avatar
-      pdf.setFillColor(255, 255, 255);
-      pdf.circle(pageWidth - margin - 16, yPos + 19, 13, 'F');
-      // Draw the avatar image (clipped to appear circular via rounded rect)
-      pdf.addImage(avatarBase64, 'JPEG', pageWidth - margin - 28, yPos + 7, 24, 24);
-      // Draw circular border on top
-      pdf.setDrawColor(255, 255, 255);
-      pdf.setLineWidth(1.5);
-      pdf.circle(pageWidth - margin - 16, yPos + 19, 12, 'S');
     } catch (e) {
-      console.warn('Could not add avatar to PDF:', e);
+      console.warn('Could not load avatar:', e);
     }
   }
   
@@ -273,13 +265,47 @@ export async function generatePartnerSharePdf(data: PdfData, logoBase64?: string
   pdf.setFont('helvetica', 'normal');
   pdf.text(`A wellness report for ${userName}'s partner`, margin + logoXOffset, yPos + 28);
   
-  // Date on right
+  // Date and report label on right (shifted left if avatar present)
+  const rightTextX = avatarBase64 ? pageWidth - margin - 34 : pageWidth - margin - 8;
+  const rightTextAlign: 'right' = 'right';
   pdf.setFontSize(9);
   pdf.setFont('helvetica', 'bold');
-  pdf.text(format(new Date(), 'MMMM d, yyyy'), pageWidth - margin - 8, yPos + 12, { align: 'right' });
+  pdf.text(format(new Date(), 'MMMM d, yyyy'), rightTextX, yPos + 12, { align: rightTextAlign });
   pdf.setFont('helvetica', 'normal');
   pdf.setFontSize(8);
-  pdf.text('Partner Share Report', pageWidth - margin - 8, yPos + 19, { align: 'right' });
+  pdf.text('Partner Share Report', rightTextX, yPos + 19, { align: rightTextAlign });
+
+  // Draw avatar circle in top-right of header
+  if (avatarBase64) {
+    const avatarSize = 22;
+    const avatarX = pageWidth - margin - avatarSize - 4;
+    const avatarY = yPos + (headerHeight - avatarSize) / 2;
+    const centerX = avatarX + avatarSize / 2;
+    const centerY = avatarY + avatarSize / 2;
+    const radius = avatarSize / 2;
+
+    // Save graphics state, clip to circle, draw image, restore
+    (pdf as any).saveGraphicsState();
+    // Create circular clip path using arc
+    const ctx = (pdf as any).context2d;
+    if (ctx) {
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+      ctx.clip();
+    } else {
+      // Fallback: draw white circle bg then image on top
+      pdf.setFillColor(255, 255, 255);
+      pdf.circle(centerX, centerY, radius + 1, 'F');
+    }
+    pdf.addImage(avatarBase64, 'JPEG', avatarX, avatarY, avatarSize, avatarSize);
+    if (ctx) {
+      (pdf as any).restoreGraphicsState();
+    }
+    // Draw circular white border for clean look
+    pdf.setDrawColor(255, 255, 255);
+    pdf.setLineWidth(1.5);
+    pdf.circle(centerX, centerY, radius, 'S');
+  }
 
   yPos += headerHeight + 10;
 
