@@ -179,21 +179,24 @@ export function OnboardingFlow({ onComplete, userName }: OnboardingFlowProps) {
   const stepLabels = ['Profile', 'Lifestyle', 'Your Cycle', 'Goals', 'Ready!'];
 
   return (
-    <div className="min-h-screen gradient-soft flex items-center justify-center p-4 overflow-hidden relative">
-      {/* Particles */}
-      {Array.from({ length: 20 }).map((_, i) => (
-        <Particle key={i} index={i} />
-      ))}
+    <div className="relative h-screen w-full gradient-soft overflow-hidden">
+      {/* Background Layer - Fixed */}
+      <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
+        {/* Particles */}
+        {Array.from({ length: 20 }).map((_, i) => (
+          <Particle key={i} index={i} />
+        ))}
 
-      {/* Blobs */}
-      <FloatingBlob delay={0} className="w-72 h-72 bg-coral -top-24 -left-24" />
-      <FloatingBlob delay={2} className="w-56 h-56 bg-lavender top-1/4 -right-16" />
-      <FloatingBlob delay={4} className="w-64 h-64 bg-sage -bottom-24 left-1/3" />
-      <FloatingBlob delay={6} className="w-40 h-40 bg-peach top-2/3 -left-10" />
+        {/* Blobs */}
+        <FloatingBlob delay={0} className="w-72 h-72 bg-coral -top-24 -left-24" />
+        <FloatingBlob delay={2} className="w-56 h-56 bg-lavender top-1/4 -right-16" />
+        <FloatingBlob delay={4} className="w-64 h-64 bg-sage -bottom-24 left-1/3" />
+        <FloatingBlob delay={6} className="w-40 h-40 bg-peach top-2/3 -left-10" />
+      </div>
 
-      {/* Confetti burst on final step */}
+      {/* Confetti Layer - Fixed */}
       {showConfetti && (
-        <div className="absolute inset-0 pointer-events-none z-50">
+        <div className="absolute inset-0 pointer-events-none z-50 overflow-hidden">
           {Array.from({ length: 40 }).map((_, i) => (
             <motion.div
               key={`confetti-${i}`}
@@ -219,12 +222,15 @@ export function OnboardingFlow({ onComplete, userName }: OnboardingFlowProps) {
         </div>
       )}
 
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
-        className="w-full max-w-md relative z-10"
-      >
+      {/* Content Layer - Scrollable */}
+      <div className="relative z-10 h-full w-full overflow-y-auto">
+        <div className="min-h-full w-full flex flex-col items-center p-4 py-8">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="w-full max-w-md my-auto"
+            transition={{ duration: 0.6, ease: "easeOut" }}
+          >
         {/* Step indicator dots */}
         <div className="mb-6">
           <div className="flex items-center justify-center gap-2 mb-3">
@@ -759,7 +765,9 @@ export function OnboardingFlow({ onComplete, userName }: OnboardingFlowProps) {
             )}
           </Button>
         </motion.div>
-      </motion.div>
+          </motion.div>
+        </div>
+      </div>
     </div>
   );
 }

@@ -81,6 +81,45 @@ vi.mock('@/hooks/useFertilityTracker', () => ({
   })
 }));
 
+// Mock useSupabaseSettings
+vi.mock('@/hooks/useSupabaseSettings', () => ({
+  useSupabaseSettings: () => ({
+    profile: { name: 'Test User', avatarUrl: null },
+    settings: {
+      showFertileWindow: true,
+      showOvulation: true,
+      showPeriodPredictions: true,
+      cycleLength: 28,
+      periodLength: 5,
+    },
+    isLoaded: true,
+    updateSettings: vi.fn(),
+    updateNotifications: vi.fn(),
+    updateProfile: vi.fn(),
+    resetSettings: vi.fn(),
+    exportDataPdf: vi.fn(),
+  })
+}));
+
+// Mock useClinicalAssessments
+vi.mock('@/hooks/useClinicalAssessments', () => ({
+  useClinicalAssessments: () => ({
+    historicalAssessments: [],
+    saveAssessment: vi.fn(),
+    getAssessment: vi.fn(),
+  })
+}));
+
+// Mock useWorkoutTracker
+vi.mock('@/hooks/useWorkoutTracker', () => ({
+  useWorkoutTracker: () => ({
+    workoutLogs: [],
+    addWorkoutLog: vi.fn(),
+    updateWorkoutLog: vi.fn(),
+    deleteWorkoutLog: vi.fn(),
+  })
+}));
+
 // Mock useReportDraft
 vi.mock('@/contexts/ReportDraftContext', () => ({
   useReportDraft: () => ({
