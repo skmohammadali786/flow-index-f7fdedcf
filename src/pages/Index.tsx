@@ -24,6 +24,7 @@ const FertilityTrackingView = lazy(() => import('@/components/period/FertilityTr
 const PregnancyBirthView = lazy(() => import('@/components/period/PregnancyBirthView').then(module => ({ default: module.PregnancyBirthView })));
 const DashboardView = lazy(() => import('@/components/period/DashboardView').then(module => ({ default: module.DashboardView })));
 const WorkoutTrackingView = lazy(() => import('@/components/period/WorkoutTrackingView').then(module => ({ default: module.WorkoutTrackingView })));
+const MindMapView = lazy(() => import('@/components/period/MindMapView').then(module => ({ default: module.MindMapView })));
 import { useSupabasePeriodTracker } from '@/hooks/useSupabasePeriodTracker';
 import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
 import { useFertilityTracker } from '@/hooks/useFertilityTracker';
@@ -36,7 +37,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getTipsForCategory, getTipsForPhase } from '@/data/healthTips';
 import { startOfDay, format } from 'date-fns';
 
-type TabType = 'calendar' | 'insights' | 'history' | 'tips' | 'analytics' | 'charts' | 'share' | 'report' | 'brain' | 'clinical' | 'journal' | 'fertility' | 'pregnancy' | 'dashboard' | 'workout' | 'settings' | 'profile';
+type TabType = 'calendar' | 'insights' | 'history' | 'tips' | 'analytics' | 'charts' | 'share' | 'report' | 'brain' | 'clinical' | 'journal' | 'fertility' | 'pregnancy' | 'dashboard' | 'workout' | 'mindmap' | 'settings' | 'profile';
 
 const ONBOARDING_KEY = 'period_tracker_onboarding_complete';
 
@@ -500,6 +501,28 @@ const Index = () => {
               transition={{ duration: 0.2 }}
             >
               <WorkoutTrackingView />
+            </motion.div>
+           )}
+
+          {activeTab === 'mindmap' && (
+            <motion.div
+              key="mindmap"
+              variants={pageVariants}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              transition={{ duration: 0.2 }}
+            >
+              <MindMapView
+                logs={logs}
+                cycles={cycles}
+                currentPhase={currentPhase}
+                currentCycleDay={currentCycleDay}
+                clinicalAssessments={clinicalAssessments}
+                workoutLogs={workoutLogs}
+                journalEntries={journalEntries}
+                userName={displayName}
+              />
             </motion.div>
           )}
 
