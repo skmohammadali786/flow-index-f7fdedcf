@@ -2,3 +2,6 @@ project_id = "adaizreqsvtibaycexbu"
 
 [functions.delete-account]
 verify_jwt = false
+
+[functions.monthly-report-ai]
+verify_jwt = false

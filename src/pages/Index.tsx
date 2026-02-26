@@ -25,6 +25,10 @@ const PregnancyBirthView = lazy(() => import('@/components/period/PregnancyBirth
 const DashboardView = lazy(() => import('@/components/period/DashboardView').then(module => ({ default: module.DashboardView })));
 const WorkoutTrackingView = lazy(() => import('@/components/period/WorkoutTrackingView').then(module => ({ default: module.WorkoutTrackingView })));
 const MindMapView = lazy(() => import('@/components/period/MindMapView').then(module => ({ default: module.MindMapView })));
+const NutritionTrackerView = lazy(() => import('@/components/period/NutritionTrackerView').then(module => ({ default: module.NutritionTrackerView })));
+const SleepDreamView = lazy(() => import('@/components/period/SleepDreamView').then(module => ({ default: module.SleepDreamView })));
+const CycleComparisonView = lazy(() => import('@/components/period/CycleComparisonView').then(module => ({ default: module.CycleComparisonView })));
+const MonthlyReportView = lazy(() => import('@/components/period/MonthlyReportView').then(module => ({ default: module.MonthlyReportView })));
 import { useSupabasePeriodTracker } from '@/hooks/useSupabasePeriodTracker';
 import { useSupabaseSettings } from '@/hooks/useSupabaseSettings';
 import { useFertilityTracker } from '@/hooks/useFertilityTracker';
@@ -37,7 +41,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { getTipsForCategory, getTipsForPhase } from '@/data/healthTips';
 import { startOfDay, format } from 'date-fns';
 
-type TabType = 'calendar' | 'insights' | 'history' | 'tips' | 'analytics' | 'charts' | 'share' | 'report' | 'brain' | 'clinical' | 'journal' | 'fertility' | 'pregnancy' | 'dashboard' | 'workout' | 'mindmap' | 'settings' | 'profile';
+type TabType = 'calendar' | 'insights' | 'history' | 'tips' | 'analytics' | 'charts' | 'share' | 'report' | 'brain' | 'clinical' | 'journal' | 'fertility' | 'pregnancy' | 'dashboard' | 'workout' | 'mindmap' | 'nutrition' | 'sleep' | 'cyclecompare' | 'monthlyreport' | 'settings' | 'profile';
 
 const ONBOARDING_KEY = 'period_tracker_onboarding_complete';
 
@@ -523,6 +527,30 @@ const Index = () => {
                 journalEntries={journalEntries}
                 userName={displayName}
               />
+            </motion.div>
+           )}
+
+          {activeTab === 'nutrition' && (
+            <motion.div key="nutrition" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.2 }}>
+              <NutritionTrackerView />
+            </motion.div>
+          )}
+
+          {activeTab === 'sleep' && (
+            <motion.div key="sleep" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.2 }}>
+              <SleepDreamView />
+            </motion.div>
+          )}
+
+          {activeTab === 'cyclecompare' && (
+            <motion.div key="cyclecompare" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.2 }}>
+              <CycleComparisonView logs={logs} cycles={cycles} />
+            </motion.div>
+          )}
+
+          {activeTab === 'monthlyreport' && (
+            <motion.div key="monthlyreport" variants={pageVariants} initial="initial" animate="animate" exit="exit" transition={{ duration: 0.2 }}>
+              <MonthlyReportView logs={logs} cycles={cycles} stats={stats} currentPhase={currentPhase} userName={displayName} />
             </motion.div>
           )}
 

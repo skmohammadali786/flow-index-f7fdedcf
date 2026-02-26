@@ -202,6 +202,63 @@ export type Database = {
         }
         Relationships: []
       }
+      nutrition_logs: {
+        Row: {
+          calories: number | null
+          carbs: number | null
+          created_at: string
+          date: string
+          fat: number | null
+          fiber: number | null
+          food_name: string
+          id: string
+          iron: number | null
+          is_craving: boolean | null
+          meal_type: string
+          notes: string | null
+          protein: number | null
+          updated_at: string
+          user_id: string
+          water_ml: number | null
+        }
+        Insert: {
+          calories?: number | null
+          carbs?: number | null
+          created_at?: string
+          date: string
+          fat?: number | null
+          fiber?: number | null
+          food_name: string
+          id?: string
+          iron?: number | null
+          is_craving?: boolean | null
+          meal_type?: string
+          notes?: string | null
+          protein?: number | null
+          updated_at?: string
+          user_id: string
+          water_ml?: number | null
+        }
+        Update: {
+          calories?: number | null
+          carbs?: number | null
+          created_at?: string
+          date?: string
+          fat?: number | null
+          fiber?: number | null
+          food_name?: string
+          id?: string
+          iron?: number | null
+          is_craving?: boolean | null
+          meal_type?: string
+          notes?: string | null
+          protein?: number | null
+          updated_at?: string
+          user_id?: string
+          water_ml?: number | null
+        }
+        Relationships: []
+      }
       period_logs: {
         Row: {
           created_at: string
@@ -458,6 +515,66 @@ export type Database = {
           onboarding_completed?: boolean
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      sleep_logs: {
+        Row: {
+          bedtime: string | null
+          created_at: string
+          date: string
+          dream_description: string | null
+          dream_logged: boolean | null
+          dream_mood: string | null
+          dream_tags: string[] | null
+          id: string
+          night_wakings: number | null
+          notes: string | null
+          sleep_aids: string | null
+          sleep_hours: number | null
+          sleep_quality: string | null
+          sleep_score: number | null
+          updated_at: string
+          user_id: string
+          wake_time: string | null
+        }
+        Insert: {
+          bedtime?: string | null
+          created_at?: string
+          date: string
+          dream_description?: string | null
+          dream_logged?: boolean | null
+          dream_mood?: string | null
+          dream_tags?: string[] | null
+          id?: string
+          night_wakings?: number | null
+          notes?: string | null
+          sleep_aids?: string | null
+          sleep_hours?: number | null
+          sleep_quality?: string | null
+          sleep_score?: number | null
+          updated_at?: string
+          user_id: string
+          wake_time?: string | null
+        }
+        Update: {
+          bedtime?: string | null
+          created_at?: string
+          date?: string
+          dream_description?: string | null
+          dream_logged?: boolean | null
+          dream_mood?: string | null
+          dream_tags?: string[] | null
+          id?: string
+          night_wakings?: number | null
+          notes?: string | null
+          sleep_aids?: string | null
+          sleep_hours?: number | null
+          sleep_quality?: string | null
+          sleep_score?: number | null
+          updated_at?: string
+          user_id?: string
+          wake_time?: string | null
         }
         Relationships: []
       }
