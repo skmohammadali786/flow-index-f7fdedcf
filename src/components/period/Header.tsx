@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { User, Settings, Lightbulb, Share2, FileText, Brain, Stethoscope, Calendar, TrendingUp, BarChart3, Activity, History, BookHeart, Egg, Baby, LayoutDashboard, Dumbbell, Sparkles } from 'lucide-react';
+import { User, Settings, Lightbulb, Share2, FileText, Brain, Stethoscope, Calendar, TrendingUp, BarChart3, Activity, History, BookHeart, Egg, Baby, LayoutDashboard, Dumbbell, Sparkles, Apple, Moon, GitCompare, CalendarDays } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -9,7 +9,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 
-type TabType = 'calendar' | 'insights' | 'history' | 'tips' | 'analytics' | 'charts' | 'share' | 'report' | 'brain' | 'clinical' | 'journal' | 'fertility' | 'pregnancy' | 'dashboard' | 'workout' | 'mindmap' | 'settings' | 'profile';
+type TabType = 'calendar' | 'insights' | 'history' | 'tips' | 'analytics' | 'charts' | 'share' | 'report' | 'brain' | 'clinical' | 'journal' | 'fertility' | 'pregnancy' | 'dashboard' | 'workout' | 'mindmap' | 'nutrition' | 'sleep' | 'cyclecompare' | 'monthlyreport' | 'settings' | 'profile';
 
 interface HeaderProps {
   activeTab: TabType;
@@ -30,6 +30,10 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
 
   const moreOptions = [
     { id: 'mindmap' as const, label: 'AI Mind Map', icon: Sparkles },
+    { id: 'nutrition' as const, label: 'Nutrition Tracker', icon: Apple },
+    { id: 'sleep' as const, label: 'Sleep & Dreams', icon: Moon },
+    { id: 'cyclecompare' as const, label: 'Cycle Comparison', icon: GitCompare },
+    { id: 'monthlyreport' as const, label: 'Monthly Report', icon: CalendarDays },
     { id: 'workout' as const, label: 'Workout Tracker', icon: Dumbbell },
     { id: 'fertility' as const, label: 'Fertility Tracking', icon: Egg },
     { id: 'pregnancy' as const, label: 'Pregnancy & Birth', icon: Baby },
