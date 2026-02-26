@@ -48,6 +48,14 @@ Deno.serve(async (req) => {
 
     // Delete all user data from all tables (order matters due to potential dependencies)
     const tables = [
+      'postpartum_logs',
+      'birth_records',
+      'pregnancy_logs',
+      'pregnancy_tracking',
+      'fertility_logs',
+      'wellness_journal',
+      'workout_logs',
+      'workout_goals',
       'clinical_assessments',
       'period_logs',
       'cycles',
