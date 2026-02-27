@@ -58,6 +58,10 @@ interface ExportDataPdfProps {
   fertilityLogs?: FertilityLog[];
   pregnancyLogs?: PregnancyLog[];
   birthRecords?: BirthRecord[];
+  wellnessJournal?: any[];
+  sleepLogs?: any[];
+  nutritionLogs?: any[];
+  workoutLogs?: any[];
   userName?: string;
 }
 
@@ -496,6 +500,265 @@ export async function generateExportDataPdf(data: ExportDataPdfProps, logoBase64
       yPos += 12;
     });
   }
+
+  // ===== WELLNESS JOURNAL =====
+  if (data.wellnessJournal && data.wellnessJournal.length > 0) {
+    checkNewPage(40);
+
+    pdf.setFontSize(14);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(...colors.text);
+    pdf.text('Wellness Journal', margin, yPos);
+    yPos += 8;
+
+    const wCols = [
+      { header: 'Date', width: 25 },
+      { header: 'Mood', width: 15 },
+      { header: 'Energy', width: 15 },
+      { header: 'Gratitude', width: 45 },
+      { header: 'Reflection', width: 50 },
+    ];
+
+    const drawWHeader = () => {
+      drawRoundedRect(pdf, margin, yPos, contentWidth, 8, 2, colors.sageLight);
+      let x = margin + 5;
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(...colors.text);
+      wCols.forEach(col => {
+        pdf.text(col.header, x, yPos + 5);
+        x += col.width + 5;
+      });
+      yPos += 10;
+    };
+
+    drawWHeader();
+
+    pdf.setFont('helvetica', 'normal');
+    data.wellnessJournal.forEach((entry, i) => {
+      checkNewPage(12, drawWHeader);
+
+      if (i % 2 === 1) {
+        pdf.setFillColor(250, 250, 252);
+        pdf.rect(margin, yPos - 2, contentWidth, 10, 'F');
+      }
+
+      let x = margin + 5;
+      pdf.setFontSize(8);
+      pdf.setTextColor(...colors.text);
+      pdf.text(entry.date || '-', x, yPos + 3); x += wCols[0].width + 5;
+      pdf.text(entry.mood_rating != null ? `${entry.mood_rating}/10` : '-', x, yPos + 3); x += wCols[1].width + 5;
+      pdf.text(entry.energy_level != null ? `${entry.energy_level}/10` : '-', x, yPos + 3); x += wCols[2].width + 5;
+      const grat = (entry.gratitude || '-').substring(0, 30);
+      pdf.text(grat, x, yPos + 3); x += wCols[3].width + 5;
+      const refl = (entry.reflection || '-').substring(0, 30);
+      pdf.text(refl, x, yPos + 3);
+
+      yPos += 10;
+    });
+    yPos += 10;
+  }
+
+  // ===== SLEEP LOGS =====
+  if (data.sleepLogs && data.sleepLogs.length > 0) {
+    checkNewPage(40);
+
+    pdf.setFontSize(14);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(...colors.text);
+    pdf.text('Sleep & Dream Journal', margin, yPos);
+    yPos += 8;
+
+    const sCols = [
+      { header: 'Date', width: 25 },
+      { header: 'Hours', width: 15 },
+      { header: 'Quality', width: 18 },
+      { header: 'Score', width: 15 },
+      { header: 'Bed/Wake', width: 30 },
+      { header: 'Dream', width: 50 },
+    ];
+
+    const drawSHeader = () => {
+      drawRoundedRect(pdf, margin, yPos, contentWidth, 8, 2, colors.lavenderLight);
+      let x = margin + 5;
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(...colors.text);
+      sCols.forEach(col => {
+        pdf.text(col.header, x, yPos + 5);
+        x += col.width + 5;
+      });
+      yPos += 10;
+    };
+
+    drawSHeader();
+
+    pdf.setFont('helvetica', 'normal');
+    data.sleepLogs.forEach((log, i) => {
+      checkNewPage(12, drawSHeader);
+
+      if (i % 2 === 1) {
+        pdf.setFillColor(250, 250, 252);
+        pdf.rect(margin, yPos - 2, contentWidth, 10, 'F');
+      }
+
+      let x = margin + 5;
+      pdf.setFontSize(8);
+      pdf.setTextColor(...colors.text);
+      pdf.text(log.date || '-', x, yPos + 3); x += sCols[0].width + 5;
+      pdf.text(log.sleep_hours != null ? `${log.sleep_hours}h` : '-', x, yPos + 3); x += sCols[1].width + 5;
+      pdf.text(log.sleep_quality || '-', x, yPos + 3); x += sCols[2].width + 5;
+      pdf.text(log.sleep_score != null ? `${log.sleep_score}` : '-', x, yPos + 3); x += sCols[3].width + 5;
+      const bedWake = [log.bedtime, log.wake_time].filter(Boolean).join('-') || '-';
+      pdf.text(bedWake, x, yPos + 3); x += sCols[4].width + 5;
+      const dream = (log.dream_description || '-').substring(0, 30);
+      pdf.text(dream, x, yPos + 3);
+
+      yPos += 10;
+    });
+    yPos += 10;
+  }
+
+  // ===== NUTRITION LOGS =====
+  if (data.nutritionLogs && data.nutritionLogs.length > 0) {
+    checkNewPage(40);
+
+    pdf.setFontSize(14);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(...colors.text);
+    pdf.text('Nutrition Logs', margin, yPos);
+    yPos += 8;
+
+    const nCols = [
+      { header: 'Date', width: 22 },
+      { header: 'Meal', width: 18 },
+      { header: 'Food', width: 35 },
+      { header: 'Cal', width: 15 },
+      { header: 'P/C/F', width: 30 },
+      { header: 'Water', width: 15 },
+    ];
+
+    const drawNHeader = () => {
+      drawRoundedRect(pdf, margin, yPos, contentWidth, 8, 2, colors.peachLight);
+      let x = margin + 5;
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(...colors.text);
+      nCols.forEach(col => {
+        pdf.text(col.header, x, yPos + 5);
+        x += col.width + 5;
+      });
+      yPos += 10;
+    };
+
+    drawNHeader();
+
+    pdf.setFont('helvetica', 'normal');
+    data.nutritionLogs.forEach((log, i) => {
+      checkNewPage(12, drawNHeader);
+
+      if (i % 2 === 1) {
+        pdf.setFillColor(250, 250, 252);
+        pdf.rect(margin, yPos - 2, contentWidth, 10, 'F');
+      }
+
+      let x = margin + 5;
+      pdf.setFontSize(8);
+      pdf.setTextColor(...colors.text);
+      pdf.text(log.date || '-', x, yPos + 3); x += nCols[0].width + 5;
+      pdf.text(log.meal_type || '-', x, yPos + 3); x += nCols[1].width + 5;
+      const food = (log.food_name || '-').substring(0, 22);
+      pdf.text(food, x, yPos + 3); x += nCols[2].width + 5;
+      pdf.text(log.calories != null ? `${log.calories}` : '-', x, yPos + 3); x += nCols[3].width + 5;
+      const pcf = `${log.protein || 0}/${log.carbs || 0}/${log.fat || 0}g`;
+      pdf.text(pcf, x, yPos + 3); x += nCols[4].width + 5;
+      pdf.text(log.water_ml ? `${log.water_ml}ml` : '-', x, yPos + 3);
+
+      yPos += 10;
+    });
+    yPos += 10;
+  }
+
+  // ===== WORKOUT LOGS =====
+  if (data.workoutLogs && data.workoutLogs.length > 0) {
+    checkNewPage(40);
+
+    pdf.setFontSize(14);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(...colors.text);
+    pdf.text('Workout Logs', margin, yPos);
+    yPos += 8;
+
+    const wkCols = [
+      { header: 'Date', width: 22 },
+      { header: 'Type', width: 25 },
+      { header: 'Duration', width: 18 },
+      { header: 'Cal', width: 15 },
+      { header: 'Intensity', width: 18 },
+      { header: 'Notes', width: 45 },
+    ];
+
+    const drawWkHeader = () => {
+      drawRoundedRect(pdf, margin, yPos, contentWidth, 8, 2, colors.coralLight);
+      let x = margin + 5;
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(...colors.text);
+      wkCols.forEach(col => {
+        pdf.text(col.header, x, yPos + 5);
+        x += col.width + 5;
+      });
+      yPos += 10;
+    };
+
+    drawWkHeader();
+
+    pdf.setFont('helvetica', 'normal');
+    data.workoutLogs.forEach((log, i) => {
+      checkNewPage(12, drawWkHeader);
+
+      if (i % 2 === 1) {
+        pdf.setFillColor(250, 250, 252);
+        pdf.rect(margin, yPos - 2, contentWidth, 10, 'F');
+      }
+
+      let x = margin + 5;
+      pdf.setFontSize(8);
+      pdf.setTextColor(...colors.text);
+      pdf.text(log.date || '-', x, yPos + 3); x += wkCols[0].width + 5;
+      pdf.text((log.workout_type || '-').substring(0, 16), x, yPos + 3); x += wkCols[1].width + 5;
+      pdf.text(log.duration_minutes ? `${log.duration_minutes}m` : '-', x, yPos + 3); x += wkCols[2].width + 5;
+      pdf.text(log.calories_burned ? `${log.calories_burned}` : '-', x, yPos + 3); x += wkCols[3].width + 5;
+      pdf.text(log.intensity || '-', x, yPos + 3); x += wkCols[4].width + 5;
+      const notes = (log.notes || '-').substring(0, 28);
+      pdf.text(notes, x, yPos + 3);
+
+      yPos += 10;
+    });
+    yPos += 10;
+  }
+
+  // ===== DATA SUMMARY =====
+  checkNewPage(25);
+  drawRoundedRect(pdf, margin, yPos, contentWidth, 20, 5, colors.lavenderLight, colors.border);
+  pdf.setFontSize(9);
+  pdf.setFont('helvetica', 'bold');
+  pdf.setTextColor(...colors.primary);
+  pdf.text('Export Summary', margin + 10, yPos + 8);
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(8);
+  pdf.setTextColor(...colors.text);
+  const counts = [
+    `${data.logs.length} period logs`,
+    `${data.cycles.length} cycles`,
+    `${data.assessments.length} assessments`,
+    `${(data.fertilityLogs || []).length} fertility`,
+    `${(data.wellnessJournal || []).length} journal`,
+    `${(data.sleepLogs || []).length} sleep`,
+    `${(data.nutritionLogs || []).length} nutrition`,
+    `${(data.workoutLogs || []).length} workouts`,
+  ].join(' • ');
+  pdf.text(counts, margin + 10, yPos + 15);
 
   // Footer on last page
   addPageFooter(pdf, pageWidth, pageHeight, margin);

@@ -13,7 +13,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import type { DayLog, CycleData, CycleStats } from '@/types/period';
 import type { CyclePhase } from '@/types/settings';
-import jsPDF from 'jspdf';
+
 
 interface MonthlyReportViewProps {
   logs: DayLog[];
@@ -111,106 +111,26 @@ export function MonthlyReportView({ logs, cycles, stats, currentPhase, userName 
   const exportPdf = async () => {
     setIsExporting(true);
     try {
-      const doc = new jsPDF();
-      const pageWidth = doc.internal.pageSize.getWidth();
-      let y = 20;
-
-      // Title
-      doc.setFontSize(20);
-      doc.setTextColor(180, 80, 120);
-      doc.text('Monthly Health Report', pageWidth / 2, y, { align: 'center' });
-      y += 10;
-      doc.setFontSize(12);
-      doc.setTextColor(100, 100, 100);
-      doc.text(format(monthStart, 'MMMM yyyy'), pageWidth / 2, y, { align: 'center' });
-      if (userName) {
-        y += 7;
-        doc.text(`Prepared for: ${userName}`, pageWidth / 2, y, { align: 'center' });
-      }
-      y += 15;
-
-      // Summary stats
-      doc.setFontSize(14);
-      doc.setTextColor(60, 60, 60);
-      doc.text('Summary', 20, y);
-      y += 8;
-      doc.setFontSize(10);
-      const summaryItems = [
-        `Days Logged: ${loggedDays}`,
-        `Period Days: ${periodDays}`,
-        `Avg Sleep: ${avgSleep}h`,
-        `Avg Water: ${avgWater} cups`,
-        `Total Exercise: ${totalExercise} min`,
-      ];
-      summaryItems.forEach(item => {
-        doc.text(`• ${item}`, 25, y);
-        y += 6;
-      });
-      y += 5;
-
-      // Top Symptoms
-      if (topSymptoms.length > 0) {
-        doc.setFontSize(14);
-        doc.text('Top Symptoms', 20, y);
-        y += 8;
-        doc.setFontSize(10);
-        topSymptoms.forEach(([symptom, count]) => {
-          doc.text(`• ${symptom.replace('_', ' ')}: ${count} days`, 25, y);
-          y += 6;
-        });
-        y += 5;
-      }
-
-      // Top Moods
-      if (topMoods.length > 0) {
-        doc.setFontSize(14);
-        doc.text('Top Moods', 20, y);
-        y += 8;
-        doc.setFontSize(10);
-        topMoods.forEach(([mood, count]) => {
-          doc.text(`• ${mood}: ${count} days`, 25, y);
-          y += 6;
-        });
-        y += 5;
-      }
-
-      // AI Insights
-      if (aiInsights) {
-        if (y > 230) { doc.addPage(); y = 20; }
-        doc.setFontSize(14);
-        doc.text('AI Insights', 20, y);
-        y += 8;
-        doc.setFontSize(10);
-        if (aiInsights.summary) {
-          const lines = doc.splitTextToSize(aiInsights.summary, pageWidth - 40);
-          doc.text(lines, 25, y);
-          y += lines.length * 5 + 5;
-        }
-        if (aiInsights.recommendations?.length > 0) {
-          doc.setFontSize(12);
-          doc.text('Recommendations:', 25, y);
-          y += 7;
-          doc.setFontSize(10);
-          aiInsights.recommendations.forEach((rec: string) => {
-            if (y > 270) { doc.addPage(); y = 20; }
-            const lines = doc.splitTextToSize(`• ${rec}`, pageWidth - 50);
-            doc.text(lines, 30, y);
-            y += lines.length * 5 + 2;
-          });
-        }
-      }
-
-      // Footer
-      const totalPages = doc.getNumberOfPages();
-      for (let i = 1; i <= totalPages; i++) {
-        doc.setPage(i);
-        doc.setFontSize(8);
-        doc.setTextColor(150, 150, 150);
-        doc.text(`Flow Index • Monthly Report • ${format(new Date(), 'MMM dd, yyyy')}`, pageWidth / 2, 290, { align: 'center' });
-        doc.text(`Page ${i} of ${totalPages}`, pageWidth - 20, 290, { align: 'right' });
-      }
-
-      doc.save(`Monthly_Report_${selectedMonth}.pdf`);
+      const { generateMonthlyReportPdf } = await import('@/utils/monthlyReportPdf');
+      const { loadLogo } = await import('@/utils/pdfUtils');
+      const logoModule = await import('@/assets/logo-pdf.png');
+      const logoBase64 = await loadLogo(logoModule.default);
+      await generateMonthlyReportPdf({
+        monthLabel: format(monthStart, 'MMMM yyyy'),
+        userName,
+        loggedDays,
+        periodDays,
+        avgSleep,
+        avgWater,
+        totalExercise,
+        topSymptoms,
+        topMoods,
+        dailyChart,
+        stats,
+        currentPhase,
+        aiInsights,
+        monthLogs,
+      }, logoBase64);
       toast.success('Report exported!');
     } catch (err) {
       toast.error('Failed to export PDF');

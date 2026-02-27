@@ -196,7 +196,7 @@ export function useSupabaseSettings() {
 
     try {
       // Fetch logs, cycles, assessments (raw DB data)
-      const [logsResult, cyclesResult, clinicalResult, fertilityResult, pregnancyLogsResult, birthResult] = await Promise.all([
+      const [logsResult, cyclesResult, clinicalResult, fertilityResult, pregnancyLogsResult, birthResult, wellnessResult, sleepResult, nutritionResult, workoutResult] = await Promise.all([
         supabase
           .from('period_logs')
           .select('*')
@@ -227,6 +227,26 @@ export function useSupabaseSettings() {
           .select('*')
           .eq('user_id', user.id)
           .order('birth_date', { ascending: false }),
+        supabase
+          .from('wellness_journal')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('date', { ascending: false }),
+        supabase
+          .from('sleep_logs')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('date', { ascending: false }),
+        supabase
+          .from('nutrition_logs')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('date', { ascending: false }),
+        supabase
+          .from('workout_logs')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('date', { ascending: false }),
       ]);
 
       // Merge drafts if provided
@@ -278,6 +298,10 @@ export function useSupabaseSettings() {
         fertilityLogs,
         pregnancyLogs,
         birthRecords,
+        wellnessJournal: (wellnessResult.data || []) as any[],
+        sleepLogs: (sleepResult.data || []) as any[],
+        nutritionLogs: (nutritionResult.data || []) as any[],
+        workoutLogs: (workoutResult.data || []) as any[],
       } as any, logoBase64);
 
       toast.success("Data export downloaded successfully");
