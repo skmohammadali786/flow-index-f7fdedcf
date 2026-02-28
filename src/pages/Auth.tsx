@@ -1,11 +1,10 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Mail, Lock, User, Eye, EyeOff, Sparkles, ArrowLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
@@ -18,194 +17,120 @@ const Auth = () => {
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login');
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
+  const [slideDirection, setSlideDirection] = useState<1 | -1>(1);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { signIn, signUp } = useAuth();
 
-  // Login form state
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
-
-  // Signup form state
   const [signupName, setSignupName] = useState('');
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
   const [signupConfirmPassword, setSignupConfirmPassword] = useState('');
 
-  const validateEmail = (email: string) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const validateEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+  const switchTab = (tab: 'login' | 'signup') => {
+    setSlideDirection(tab === 'signup' ? 1 : -1);
+    setActiveTab(tab);
   };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (!loginEmail || !loginPassword) {
-      toast({
-        title: "Missing fields",
-        description: "Please fill in all fields",
-        variant: "destructive",
-      });
+      toast({ title: "Missing fields", description: "Please fill in all fields", variant: "destructive" });
       return;
     }
-
     if (!validateEmail(loginEmail)) {
-      toast({
-        title: "Invalid email",
-        description: "Please enter a valid email address",
-        variant: "destructive",
-      });
+      toast({ title: "Invalid email", description: "Please enter a valid email address", variant: "destructive" });
       return;
     }
-
     setIsLoading(true);
-
     const { error } = await signIn(loginEmail, loginPassword);
-    
     setIsLoading(false);
-
     if (error) {
-      toast({
-        title: "Login failed",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast({ title: "Login failed", description: error.message, variant: "destructive" });
       return;
     }
-
-    // Mark as returning user (skip onboarding)
     localStorage.setItem('period_tracker_is_new_user', 'false');
-    
-    toast({
-      title: "Login successful!",
-      description: "Welcome back to Flow Index",
-    });
+    toast({ title: "Login successful!", description: "Welcome back to Flow Index" });
     navigate('/');
   };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!signupName || !signupEmail || !signupPassword || !signupConfirmPassword) {
-      toast({
-        title: "Missing fields",
-        description: "Please fill in all fields",
-        variant: "destructive",
-      });
+      toast({ title: "Missing fields", description: "Please fill in all fields", variant: "destructive" });
       return;
     }
-
     if (!validateEmail(signupEmail)) {
-      toast({
-        title: "Invalid email",
-        description: "Please enter a valid email address",
-        variant: "destructive",
-      });
+      toast({ title: "Invalid email", description: "Please enter a valid email address", variant: "destructive" });
       return;
     }
-
     if (signupPassword.length < 8) {
-      toast({
-        title: "Password too short",
-        description: "Password must be at least 8 characters",
-        variant: "destructive",
-      });
+      toast({ title: "Password too short", description: "Password must be at least 8 characters", variant: "destructive" });
       return;
     }
-
     if (signupPassword !== signupConfirmPassword) {
-      toast({
-        title: "Passwords don't match",
-        description: "Please make sure your passwords match",
-        variant: "destructive",
-      });
+      toast({ title: "Passwords don't match", description: "Please make sure your passwords match", variant: "destructive" });
       return;
     }
-
     setIsLoading(true);
-
     const { error } = await signUp(signupEmail, signupPassword, signupName);
-    
     setIsLoading(false);
-
     if (error) {
-      toast({
-        title: "Signup failed",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast({ title: "Signup failed", description: error.message, variant: "destructive" });
       return;
     }
-
-    // Mark as new user so onboarding shows after email verification
     localStorage.setItem('period_tracker_is_new_user', 'true');
-    
-    toast({
-      title: "Account created!",
-      description: "Please check your email to verify your account.",
-    });
+    toast({ title: "Account created!", description: "Please check your email to verify your account." });
   };
 
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!resetEmail) {
-      toast({
-        title: "Missing email",
-        description: "Please enter your email address",
-        variant: "destructive",
-      });
+      toast({ title: "Missing email", description: "Please enter your email address", variant: "destructive" });
       return;
     }
-
     if (!validateEmail(resetEmail)) {
-      toast({
-        title: "Invalid email",
-        description: "Please enter a valid email address",
-        variant: "destructive",
-      });
+      toast({ title: "Invalid email", description: "Please enter a valid email address", variant: "destructive" });
       return;
     }
-
     setIsLoading(true);
-
     const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
       redirectTo: `${window.location.origin}/auth`,
     });
-
     setIsLoading(false);
-
     if (error) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: error.message, variant: "destructive" });
       return;
     }
-
-    toast({
-      title: "Check your email",
-      description: "We've sent you a password reset link.",
-    });
+    toast({ title: "Check your email", description: "We've sent you a password reset link." });
     setShowForgotPassword(false);
     setResetEmail('');
   };
 
+  const slideVariants = {
+    enter: (dir: number) => ({ x: dir > 0 ? 200 : -200, opacity: 0 }),
+    center: { x: 0, opacity: 1 },
+    exit: (dir: number) => ({ x: dir > 0 ? -200 : 200, opacity: 0 }),
+  };
 
   return (
     <div className="min-h-screen gradient-soft flex items-center justify-center p-4">
       <div className="w-full max-w-lg">
-        {/* Logo centered above form */}
+        {/* Logo */}
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.4 }}
           className="flex flex-col items-center mb-8"
         >
           <motion.div 
             initial={{ scale: 0.9 }}
             animate={{ scale: 1 }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.25 }}
             className="w-20 h-20 rounded-3xl overflow-hidden shadow-elevated mb-4"
           >
             <img src={logo} alt="Flow Index" className="w-full h-full object-cover" />
@@ -217,28 +142,35 @@ const Auth = () => {
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="w-full"
+          transition={{ duration: 0.4, delay: 0.15 }}
         >
-          <Card className="w-full border-border/50 shadow-elevated bg-card/80 backdrop-blur-sm">
+          <Card className="w-full border-border/50 shadow-elevated bg-card/80 backdrop-blur-sm overflow-hidden">
             <CardHeader className="text-center pb-4">
-              <CardTitle className="text-2xl font-display">
-                {activeTab === 'login' ? 'Welcome back' : 'Get started'}
-              </CardTitle>
-              <CardDescription>
-                {activeTab === 'login' 
-                  ? 'Sign in to continue' 
-                  : 'Create your account'}
-              </CardDescription>
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeTab}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.15 }}
+                >
+                  <CardTitle className="text-2xl font-display">
+                    {activeTab === 'login' ? 'Welcome back' : 'Get started'}
+                  </CardTitle>
+                  <CardDescription>
+                    {activeTab === 'login' ? 'Sign in to continue' : 'Create your account'}
+                  </CardDescription>
+                </motion.div>
+              </AnimatePresence>
             </CardHeader>
 
             <CardContent>
               {showForgotPassword ? (
                 <motion.form
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.2 }}
+                  initial={{ opacity: 0, x: 100 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -100 }}
+                  transition={{ duration: 0.25 }}
                   onSubmit={handleForgotPassword}
                   className="space-y-4"
                 >
@@ -266,209 +198,142 @@ const Auth = () => {
                     </div>
                   </div>
 
-                  <Button
-                    type="submit"
-                    className="w-full gradient-primary text-primary-foreground font-medium h-11"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                      >
-                        <Sparkles className="w-5 h-5" />
-                      </motion.div>
-                    ) : (
-                      'Send Reset Link'
-                    )}
+                  <Button type="submit" className="w-full gradient-primary text-primary-foreground font-medium h-11" disabled={isLoading}>
+                    {isLoading ? <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}><Sparkles className="w-5 h-5" /></motion.div> : 'Send Reset Link'}
                   </Button>
                 </motion.form>
               ) : (
-              <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'login' | 'signup')} className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-6">
-                  <TabsTrigger value="login" className="font-medium">Sign In</TabsTrigger>
-                  <TabsTrigger value="signup" className="font-medium">Sign Up</TabsTrigger>
-                </TabsList>
-
-                <AnimatePresence mode="wait">
-                  <TabsContent value="login" className="mt-0">
-                    <motion.form
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      transition={{ duration: 0.2 }}
-                      onSubmit={handleLogin}
-                      className="space-y-4"
+                <>
+                  {/* Sliding tab switcher */}
+                  <div className="relative flex bg-muted rounded-lg p-1 mb-6">
+                    <motion.div
+                      className="absolute top-1 bottom-1 rounded-md bg-card shadow-sm"
+                      animate={{ left: activeTab === 'login' ? '4px' : '50%' }}
+                      transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                      style={{ width: 'calc(50% - 4px)' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => switchTab('login')}
+                      className={`relative z-10 flex-1 py-2 text-sm font-medium text-center rounded-md transition-colors ${activeTab === 'login' ? 'text-foreground' : 'text-muted-foreground'}`}
                     >
-                      <div className="space-y-2">
-                        <Label htmlFor="login-email" className="text-sm font-medium">Email</Label>
-                        <div className="relative">
-                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                          <Input
-                            id="login-email"
-                            type="email"
-                            placeholder="you@example.com"
-                            value={loginEmail}
-                            onChange={(e) => setLoginEmail(e.target.value)}
-                            className="pl-10 border-border/50 focus:border-primary"
-                          />
-                        </div>
-                      </div>
+                      Sign In
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => switchTab('signup')}
+                      className={`relative z-10 flex-1 py-2 text-sm font-medium text-center rounded-md transition-colors ${activeTab === 'signup' ? 'text-foreground' : 'text-muted-foreground'}`}
+                    >
+                      Sign Up
+                    </button>
+                  </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="login-password" className="text-sm font-medium">Password</Label>
-                        <div className="relative">
-                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                          <Input
-                            id="login-password"
-                            type={showPassword ? 'text' : 'password'}
-                            placeholder="••••••••"
-                            value={loginPassword}
-                            onChange={(e) => setLoginPassword(e.target.value)}
-                            className="pl-10 pr-10 border-border/50 focus:border-primary"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                          >
-                            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="flex justify-end">
-                        <button 
-                          type="button" 
-                          className="text-sm text-primary hover:underline"
-                          onClick={() => setShowForgotPassword(true)}
+                  {/* Sliding form content */}
+                  <div className="relative overflow-hidden">
+                    <AnimatePresence mode="wait" custom={slideDirection}>
+                      {activeTab === 'login' ? (
+                        <motion.form
+                          key="login"
+                          custom={slideDirection}
+                          variants={slideVariants}
+                          initial="enter"
+                          animate="center"
+                          exit="exit"
+                          transition={{ duration: 0.25, ease: 'easeInOut' }}
+                          onSubmit={handleLogin}
+                          className="space-y-4"
                         >
-                          Forgot password?
-                        </button>
-                      </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="login-email" className="text-sm font-medium">Email</Label>
+                            <div className="relative">
+                              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                              <Input id="login-email" type="email" placeholder="you@example.com" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} className="pl-10 border-border/50 focus:border-primary" />
+                            </div>
+                          </div>
 
-                      <Button
-                        type="submit"
-                        className="w-full gradient-primary text-primary-foreground font-medium h-11"
-                        disabled={isLoading}
-                      >
-                        {isLoading ? (
-                          <motion.div
-                            animate={{ rotate: 360 }}
-                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                          >
-                            <Sparkles className="w-5 h-5" />
-                          </motion.div>
-                        ) : (
-                          'Sign In'
-                        )}
-                      </Button>
-                    </motion.form>
-                  </TabsContent>
+                          <div className="space-y-2">
+                            <Label htmlFor="login-password" className="text-sm font-medium">Password</Label>
+                            <div className="relative">
+                              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                              <Input id="login-password" type={showPassword ? 'text' : 'password'} placeholder="••••••••" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} className="pl-10 pr-10 border-border/50 focus:border-primary" />
+                              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+                                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                              </button>
+                            </div>
+                          </div>
 
-                  <TabsContent value="signup" className="mt-0">
-                    <motion.form
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      transition={{ duration: 0.2 }}
-                      onSubmit={handleSignup}
-                      className="space-y-4"
-                    >
-                      <div className="space-y-2">
-                        <Label htmlFor="signup-name" className="text-sm font-medium">Full Name</Label>
-                        <div className="relative">
-                          <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                          <Input
-                            id="signup-name"
-                            type="text"
-                            placeholder="Jane Doe"
-                            value={signupName}
-                            onChange={(e) => setSignupName(e.target.value)}
-                            className="pl-10 border-border/50 focus:border-primary"
-                          />
-                        </div>
-                      </div>
+                          <div className="flex justify-end">
+                            <button type="button" className="text-sm text-primary hover:underline" onClick={() => setShowForgotPassword(true)}>
+                              Forgot password?
+                            </button>
+                          </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="signup-email" className="text-sm font-medium">Email</Label>
-                        <div className="relative">
-                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                          <Input
-                            id="signup-email"
-                            type="email"
-                            placeholder="you@example.com"
-                            value={signupEmail}
-                            onChange={(e) => setSignupEmail(e.target.value)}
-                            className="pl-10 border-border/50 focus:border-primary"
-                          />
-                        </div>
-                      </div>
+                          <Button type="submit" className="w-full gradient-primary text-primary-foreground font-medium h-11" disabled={isLoading}>
+                            {isLoading ? <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}><Sparkles className="w-5 h-5" /></motion.div> : 'Sign In'}
+                          </Button>
+                        </motion.form>
+                      ) : (
+                        <motion.form
+                          key="signup"
+                          custom={slideDirection}
+                          variants={slideVariants}
+                          initial="enter"
+                          animate="center"
+                          exit="exit"
+                          transition={{ duration: 0.25, ease: 'easeInOut' }}
+                          onSubmit={handleSignup}
+                          className="space-y-4"
+                        >
+                          <div className="space-y-2">
+                            <Label htmlFor="signup-name" className="text-sm font-medium">Full Name</Label>
+                            <div className="relative">
+                              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                              <Input id="signup-name" type="text" placeholder="Jane Doe" value={signupName} onChange={(e) => setSignupName(e.target.value)} className="pl-10 border-border/50 focus:border-primary" />
+                            </div>
+                          </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="signup-password" className="text-sm font-medium">Password</Label>
-                        <div className="relative">
-                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                          <Input
-                            id="signup-password"
-                            type={showPassword ? 'text' : 'password'}
-                            placeholder="Minimum 8 characters"
-                            value={signupPassword}
-                            onChange={(e) => setSignupPassword(e.target.value)}
-                            className="pl-10 pr-10 border-border/50 focus:border-primary"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                          >
-                            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                          </button>
-                        </div>
-                      </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="signup-email" className="text-sm font-medium">Email</Label>
+                            <div className="relative">
+                              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                              <Input id="signup-email" type="email" placeholder="you@example.com" value={signupEmail} onChange={(e) => setSignupEmail(e.target.value)} className="pl-10 border-border/50 focus:border-primary" />
+                            </div>
+                          </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="signup-confirm" className="text-sm font-medium">Confirm Password</Label>
-                        <div className="relative">
-                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                          <Input
-                            id="signup-confirm"
-                            type={showPassword ? 'text' : 'password'}
-                            placeholder="Confirm your password"
-                            value={signupConfirmPassword}
-                            onChange={(e) => setSignupConfirmPassword(e.target.value)}
-                            className="pl-10 border-border/50 focus:border-primary"
-                          />
-                        </div>
-                      </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="signup-password" className="text-sm font-medium">Password</Label>
+                            <div className="relative">
+                              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                              <Input id="signup-password" type={showPassword ? 'text' : 'password'} placeholder="Minimum 8 characters" value={signupPassword} onChange={(e) => setSignupPassword(e.target.value)} className="pl-10 pr-10 border-border/50 focus:border-primary" />
+                              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+                                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                              </button>
+                            </div>
+                          </div>
 
-                      <Button
-                        type="submit"
-                        className="w-full gradient-primary text-primary-foreground font-medium h-11"
-                        disabled={isLoading}
-                      >
-                        {isLoading ? (
-                          <motion.div
-                            animate={{ rotate: 360 }}
-                            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                          >
-                            <Sparkles className="w-5 h-5" />
-                          </motion.div>
-                        ) : (
-                          'Create Account'
-                        )}
-                      </Button>
+                          <div className="space-y-2">
+                            <Label htmlFor="signup-confirm" className="text-sm font-medium">Confirm Password</Label>
+                            <div className="relative">
+                              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                              <Input id="signup-confirm" type={showPassword ? 'text' : 'password'} placeholder="Confirm your password" value={signupConfirmPassword} onChange={(e) => setSignupConfirmPassword(e.target.value)} className="pl-10 border-border/50 focus:border-primary" />
+                            </div>
+                          </div>
 
-                      <p className="text-xs text-center text-muted-foreground">
-                        By signing up, you agree to our{' '}
-                        <Link to="/terms" className="text-primary hover:underline">Terms of Service</Link>
-                        {' '}and{' '}
-                        <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>
-                      </p>
-                    </motion.form>
-                  </TabsContent>
-                </AnimatePresence>
-              </Tabs>
+                          <Button type="submit" className="w-full gradient-primary text-primary-foreground font-medium h-11" disabled={isLoading}>
+                            {isLoading ? <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}><Sparkles className="w-5 h-5" /></motion.div> : 'Create Account'}
+                          </Button>
+
+                          <p className="text-xs text-center text-muted-foreground">
+                            By signing up, you agree to our{' '}
+                            <Link to="/terms" className="text-primary hover:underline">Terms of Service</Link>
+                            {' '}and{' '}
+                            <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>
+                          </p>
+                        </motion.form>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </>
               )}
             </CardContent>
           </Card>

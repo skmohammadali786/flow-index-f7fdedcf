@@ -46,7 +46,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     });
 
-    // Timeout fallback in case Supabase is unreachable
+    // Timeout fallback - reduced for faster perceived load
     const timeoutTimer = setTimeout(() => {
       if (mounted) {
         setLoading((prevLoading) => {
@@ -57,7 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return prevLoading;
         });
       }
-    }, 5000);
+    }, 2500);
 
     return () => {
       mounted = false;

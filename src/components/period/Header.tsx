@@ -4,7 +4,7 @@ import {
   User, Settings, Lightbulb, Share2, FileText, Brain, Stethoscope, 
   Calendar, TrendingUp, BarChart3, Activity, History, BookHeart, 
   Egg, Baby, LayoutDashboard, Dumbbell, Sparkles, Apple, Moon, 
-  GitCompare, CalendarDays, ChevronDown, Menu, X
+  GitCompare, CalendarDays, Menu, X, Heart, Leaf, ClipboardList, PieChart
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -18,11 +18,11 @@ interface HeaderProps {
 
 type CategoryKey = 'core' | 'health' | 'wellness' | 'reports';
 
-const categories: { key: CategoryKey; label: string; emoji: string }[] = [
-  { key: 'core', label: 'Core', emoji: '📊' },
-  { key: 'health', label: 'Health', emoji: '🩺' },
-  { key: 'wellness', label: 'Wellness', emoji: '🌿' },
-  { key: 'reports', label: 'Reports', emoji: '📋' },
+const categories: { key: CategoryKey; label: string; icon: any }[] = [
+  { key: 'core', label: 'Core', icon: PieChart },
+  { key: 'health', label: 'Health', icon: Heart },
+  { key: 'wellness', label: 'Wellness', icon: Leaf },
+  { key: 'reports', label: 'Reports', icon: ClipboardList },
 ];
 
 const tabsByCategory: Record<CategoryKey, { id: TabType; label: string; icon: any }[]> = {
@@ -56,7 +56,6 @@ const tabsByCategory: Record<CategoryKey, { id: TabType; label: string; icon: an
   ],
 };
 
-// Find which category a tab belongs to
 function getCategoryForTab(tab: TabType): CategoryKey {
   for (const [cat, tabs] of Object.entries(tabsByCategory)) {
     if (tabs.some(t => t.id === tab)) return cat as CategoryKey;
@@ -79,16 +78,10 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
     setActiveCategory(cat);
   };
 
-  // When activeTab changes externally, sync category
-  const tabCategory = getCategoryForTab(activeTab);
-  if (tabCategory !== activeCategory && !expanded) {
-    // Only auto-sync if user isn't browsing categories
-  }
-
   return (
     <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b border-border">
       <div className="max-w-2xl mx-auto px-3 py-3">
-        {/* Top bar: Logo + actions */}
+        {/* Top bar */}
         <div className="flex items-center justify-between mb-3">
           <motion.h1 
             initial={{ opacity: 0, y: -10 }}
@@ -132,9 +125,10 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
           </div>
         </div>
 
-        {/* Category chips */}
+        {/* Category chips - icons instead of emojis */}
         <div className="flex gap-1.5 mb-2">
           {categories.map((cat) => {
+            const CatIcon = cat.icon;
             const isActive = activeCategory === cat.key;
             const hasActiveTab = tabsByCategory[cat.key].some(t => t.id === activeTab);
             return (
@@ -150,8 +144,8 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
                       : "bg-muted text-muted-foreground hover:bg-muted/80"
                 )}
               >
-                <span className="flex items-center justify-center gap-1">
-                  <span>{cat.emoji}</span>
+                <span className="flex items-center justify-center gap-1.5">
+                  <CatIcon className="h-3.5 w-3.5" />
                   <span className="hidden sm:inline">{cat.label}</span>
                 </span>
                 {hasActiveTab && !isActive && (
@@ -209,7 +203,7 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
           </motion.nav>
         </AnimatePresence>
 
-        {/* Expanded: Show ALL categories at once */}
+        {/* Expanded overlay - clean icons, no emojis */}
         <AnimatePresence>
           {expanded && (
             <motion.div
@@ -220,36 +214,40 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
               className="overflow-hidden mt-2"
             >
               <div className="bg-card rounded-xl border border-border p-3 space-y-3">
-                {categories.map((cat) => (
-                  <div key={cat.key}>
-                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 px-1">
-                      {cat.emoji} {cat.label}
-                    </p>
-                    <div className="grid grid-cols-4 gap-1">
-                      {tabsByCategory[cat.key].map((tab) => {
-                        const Icon = tab.icon;
-                        const isActive = activeTab === tab.id;
-                        return (
-                          <button
-                            key={tab.id}
-                            onClick={() => { handleTabChange(tab.id); setActiveCategory(cat.key); }}
-                            className={cn(
-                              "flex flex-col items-center gap-1 py-2 px-1 rounded-lg transition-colors",
-                              isActive 
-                                ? "bg-primary/10 text-primary" 
-                                : "text-muted-foreground hover:bg-muted"
-                            )}
-                          >
-                            <Icon className="h-4 w-4" />
-                            <span className="text-[9px] font-medium leading-tight text-center truncate w-full">
-                              {tab.label}
-                            </span>
-                          </button>
-                        );
-                      })}
+                {categories.map((cat) => {
+                  const CatIcon = cat.icon;
+                  return (
+                    <div key={cat.key}>
+                      <p className="flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5 px-1">
+                        <CatIcon className="h-3 w-3" />
+                        {cat.label}
+                      </p>
+                      <div className="grid grid-cols-4 gap-1">
+                        {tabsByCategory[cat.key].map((tab) => {
+                          const Icon = tab.icon;
+                          const isActive = activeTab === tab.id;
+                          return (
+                            <button
+                              key={tab.id}
+                              onClick={() => { handleTabChange(tab.id); setActiveCategory(cat.key); }}
+                              className={cn(
+                                "flex flex-col items-center gap-1 py-2 px-1 rounded-lg transition-colors",
+                                isActive 
+                                  ? "bg-primary/10 text-primary" 
+                                  : "text-muted-foreground hover:bg-muted"
+                              )}
+                            >
+                              <Icon className="h-4 w-4" />
+                              <span className="text-[9px] font-medium leading-tight text-center truncate w-full">
+                                {tab.label}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
                 
                 <div className="pt-1 border-t border-border">
                   <div className="grid grid-cols-2 gap-1">
