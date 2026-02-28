@@ -2,7 +2,7 @@
 -- Create workout_logs table with 50+ workout types support
 CREATE TABLE public.workout_logs (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID NOT NULL,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   date DATE NOT NULL,
   workout_type TEXT NOT NULL,
   workout_category TEXT NOT NULL,
