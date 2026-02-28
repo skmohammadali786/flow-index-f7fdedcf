@@ -314,7 +314,7 @@ export function FertilityTrackingView({ periodLogs, initialDate }: FertilityTrac
                   <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
                   <XAxis dataKey="date" tick={{ fontSize: 10 }} interval={4} />
                   <YAxis domain={['auto', 'auto']} tick={{ fontSize: 10 }} />
-                  <Tooltip />
+                  <Tooltip content={<CustomTooltip />} />
                   <Area type="monotone" dataKey="bbt" stroke="hsl(25 80% 75%)" fill="hsl(25 80% 75% / 0.2)" name="BBT °F" connectNulls />
                 </AreaChart>
               </ResponsiveContainer>
@@ -330,7 +330,7 @@ export function FertilityTrackingView({ periodLogs, initialDate }: FertilityTrac
                   <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
                   <XAxis dataKey="date" tick={{ fontSize: 10 }} interval={4} />
                   <YAxis tick={{ fontSize: 10 }} />
-                  <Tooltip />
+                  <Tooltip content={<CustomTooltip />} />
                   <Legend />
                   <Line type="monotone" dataKey="lh" stroke="hsl(355 70% 65%)" name="LH mIU/mL" connectNulls dot={false} />
                   <Line type="stepAfter" dataKey="opk" stroke="hsl(280 40% 75%)" name="OPK (0-3)" connectNulls dot={false} />
@@ -348,7 +348,7 @@ export function FertilityTrackingView({ periodLogs, initialDate }: FertilityTrac
                   <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
                   <XAxis dataKey="date" tick={{ fontSize: 10 }} interval={4} />
                   <YAxis domain={[0, 5]} ticks={[1, 2, 3, 4, 5]} tick={{ fontSize: 9 }} tickFormatter={(v) => ['', 'Dry', 'Stky', 'Crm', 'Wtr', 'EW'][v] || ''} />
-                  <Tooltip />
+                  <Tooltip content={<CustomTooltip />} />
                   <Area type="stepAfter" dataKey="cm" stroke="hsl(140 30% 70%)" fill="hsl(140 30% 70% / 0.2)" name="CM Quality" connectNulls />
                 </AreaChart>
               </ResponsiveContainer>

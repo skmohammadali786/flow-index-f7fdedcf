@@ -31,8 +31,9 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { CustomTooltip } from '@/components/ui/custom-tooltip';
 import { useClinicalAssessments } from '@/hooks/useClinicalAssessments';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { generateClinicalReportPdf } from '@/utils/clinicalReportPdf';
 import { loadLogo } from '@/utils/pdfUtils';
 import logoSrc from '@/assets/logo.png';
@@ -474,7 +475,14 @@ export function ClinicalEvidenceView({ logs, cycles, stats, userName: propUserNa
                 ) : (
                   <div className="h-[300px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+
+                      <AreaChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+                        <defs>
+                          <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                            <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                          </linearGradient>
+                        </defs>
                         <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                         <XAxis 
                           dataKey="date" 
@@ -495,7 +503,7 @@ export function ClinicalEvidenceView({ logs, cycles, stats, userName: propUserNa
                           }}
                         />
                         <Legend wrapperStyle={{ fontSize: '11px' }} />
-                        <Line 
+                        <Area fill="url(#colorScore)" fillOpacity={1}
                           type="monotone" 
                           dataKey="pain" 
                           name="Pain"
@@ -504,7 +512,7 @@ export function ClinicalEvidenceView({ logs, cycles, stats, userName: propUserNa
                           dot={{ r: 3 }}
                           activeDot={{ r: 5 }}
                         />
-                        <Line 
+                        <Area fill="url(#colorScore)" fillOpacity={1}
                           type="monotone" 
                           dataKey="fatigue" 
                           name="Fatigue"
@@ -513,7 +521,7 @@ export function ClinicalEvidenceView({ logs, cycles, stats, userName: propUserNa
                           dot={{ r: 3 }}
                           activeDot={{ r: 5 }}
                         />
-                        <Line 
+                        <Area fill="url(#colorScore)" fillOpacity={1}
                           type="monotone" 
                           dataKey="mood" 
                           name="Mood"
@@ -522,7 +530,7 @@ export function ClinicalEvidenceView({ logs, cycles, stats, userName: propUserNa
                           dot={{ r: 3 }}
                           activeDot={{ r: 5 }}
                         />
-                        <Line 
+                        <Area fill="url(#colorScore)" fillOpacity={1}
                           type="monotone" 
                           dataKey="bloating" 
                           name="Bloating"
@@ -531,7 +539,7 @@ export function ClinicalEvidenceView({ logs, cycles, stats, userName: propUserNa
                           dot={{ r: 3 }}
                           activeDot={{ r: 5 }}
                         />
-                      </LineChart>
+                      </AreaChart>
                     </ResponsiveContainer>
                   </div>
                 )}

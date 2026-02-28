@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CustomTooltip } from '@/components/ui/custom-tooltip';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -186,13 +187,24 @@ export function MonthlyReportView({ logs, cycles, stats, currentPhase, userName 
           <CardHeader className="pb-2"><CardTitle className="text-sm">Daily Activity</CardTitle></CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={180}>
+
               <BarChart data={dailyChart}>
+                <defs>
+                  <linearGradient id="gradSymptoms" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.4}/>
+                  </linearGradient>
+                  <linearGradient id="gradMoods" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(280, 65%, 60%)" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="hsl(280, 65%, 60%)" stopOpacity={0.4}/>
+                  </linearGradient>
+                </defs>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis dataKey="date" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 9 }} />
                 <YAxis tick={{ fill: 'hsl(var(--muted-foreground))' }} />
-                <Tooltip />
-                <Bar dataKey="symptoms" fill="hsl(var(--primary))" name="Symptoms" radius={[2, 2, 0, 0]} />
-                <Bar dataKey="moods" fill="hsl(280, 65%, 60%)" name="Moods" radius={[2, 2, 0, 0]} />
+                <Tooltip content={<CustomTooltip />} />
+                <Bar dataKey="symptoms" fill="url(#gradSymptoms)" name="Symptoms" radius={[2, 2, 0, 0]} />
+                <Bar dataKey="moods" fill="url(#gradMoods)" name="Moods" radius={[2, 2, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>

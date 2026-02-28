@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 import { format, subDays, startOfDay, parseISO } from 'date-fns';
+import { CustomTooltip } from '@/components/ui/custom-tooltip';
 import {
-  LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
   CartesianGrid, Legend,
 } from 'recharts';
 import { DayLog } from '@/types/period';
@@ -21,21 +22,6 @@ const flowToValue = (log?: DayLog): number => {
     case 'heavy': return 4;
     default: return 2;
   }
-};
-
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="bg-card border border-border rounded-lg px-3 py-2 shadow-lg text-xs space-y-1">
-      <p className="font-semibold text-foreground">{label}</p>
-      {payload.map((p: any) => (
-        <p key={p.dataKey} style={{ color: p.color }} className="flex items-center gap-1.5">
-          <span className="w-2 h-2 rounded-full inline-block" style={{ backgroundColor: p.color }} />
-          {p.name}: {p.value}
-        </p>
-      ))}
-    </div>
-  );
 };
 
 export function InsightsGraph({ logs, days = 30 }: InsightsGraphProps) {
@@ -76,7 +62,30 @@ export function InsightsGraph({ logs, days = 30 }: InsightsGraphProps) {
   return (
     <div className="h-56">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+        <AreaChart data={chartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+
+          <defs>
+            <linearGradient id="colorFlow" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="hsl(355, 70%, 60%)" stopOpacity={0.4}/>
+              <stop offset="95%" stopColor="hsl(355, 70%, 60%)" stopOpacity={0}/>
+            </linearGradient>
+            <linearGradient id="colorMoods" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="hsl(142, 55%, 55%)" stopOpacity={0.4}/>
+              <stop offset="95%" stopColor="hsl(142, 55%, 55%)" stopOpacity={0}/>
+            </linearGradient>
+            <linearGradient id="colorSymptoms" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="hsl(25, 95%, 60%)" stopOpacity={0.4}/>
+              <stop offset="95%" stopColor="hsl(25, 95%, 60%)" stopOpacity={0}/>
+            </linearGradient>
+            <linearGradient id="colorSleep" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="hsl(263, 70%, 65%)" stopOpacity={0.4}/>
+              <stop offset="95%" stopColor="hsl(263, 70%, 65%)" stopOpacity={0}/>
+            </linearGradient>
+            <linearGradient id="colorWater" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="hsl(200, 70%, 55%)" stopOpacity={0.4}/>
+              <stop offset="95%" stopColor="hsl(200, 70%, 55%)" stopOpacity={0}/>
+            </linearGradient>
+          </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.4} />
           <XAxis
             dataKey="date"
@@ -97,12 +106,12 @@ export function InsightsGraph({ logs, days = 30 }: InsightsGraphProps) {
             iconSize={8}
             wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }}
           />
-          <Line type="monotone" dataKey="Flow" stroke="hsl(355, 70%, 60%)" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
-          <Line type="monotone" dataKey="Moods" stroke="hsl(142, 55%, 55%)" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
-          <Line type="monotone" dataKey="Symptoms" stroke="hsl(25, 95%, 60%)" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
-          <Line type="monotone" dataKey="Sleep" stroke="hsl(263, 70%, 65%)" strokeWidth={1.5} dot={false} activeDot={{ r: 3 }} strokeDasharray="4 2" />
-          <Line type="monotone" dataKey="Water" stroke="hsl(200, 70%, 55%)" strokeWidth={1.5} dot={false} activeDot={{ r: 3 }} strokeDasharray="4 2" />
-        </LineChart>
+          <Area fillOpacity={0.3} type="monotone" dataKey="Flow" fill="url(#colorFlow)" stroke="hsl(355, 70%, 60%)" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
+          <Area fillOpacity={0.3} type="monotone" dataKey="Moods" fill="url(#colorMoods)" stroke="hsl(142, 55%, 55%)" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
+          <Area fillOpacity={0.3} type="monotone" dataKey="Symptoms" fill="url(#colorSymptoms)" stroke="hsl(25, 95%, 60%)" strokeWidth={2} dot={false} activeDot={{ r: 4 }} />
+          <Area fillOpacity={0.3} type="monotone" dataKey="Sleep" fill="url(#colorSleep)" stroke="hsl(263, 70%, 65%)" strokeWidth={1.5} dot={false} activeDot={{ r: 3 }} strokeDasharray="4 2" />
+          <Area fillOpacity={0.3} type="monotone" dataKey="Water" fill="url(#colorWater)" stroke="hsl(200, 70%, 55%)" strokeWidth={1.5} dot={false} activeDot={{ r: 3 }} strokeDasharray="4 2" />
+        </AreaChart>
       </ResponsiveContainer>
     </div>
   );
