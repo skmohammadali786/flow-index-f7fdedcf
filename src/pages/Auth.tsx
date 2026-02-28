@@ -9,6 +9,7 @@ import { Mail, Lock, User, Eye, EyeOff, Sparkles, ArrowLeft } from 'lucide-react
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { SwipeButton } from '@/components/ui/swipe-button';
 import logo from '@/assets/logo.png';
 
 const Auth = () => {
@@ -47,8 +48,8 @@ const Auth = () => {
     }
   }, [activeTab, switchTab]);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleLogin = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!loginEmail || !loginPassword) {
       toast({ title: "Missing fields", description: "Please fill in all fields", variant: "destructive" });
       return;
@@ -69,8 +70,8 @@ const Auth = () => {
     navigate('/');
   };
 
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSignup = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!signupName || !signupEmail || !signupPassword || !signupConfirmPassword) {
       toast({ title: "Missing fields", description: "Please fill in all fields", variant: "destructive" });
       return;
@@ -285,9 +286,13 @@ const Auth = () => {
                             </button>
                           </div>
 
-                          <Button type="submit" className="w-full gradient-primary text-primary-foreground font-medium h-11" disabled={isLoading}>
-                            {isLoading ? <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}><Sparkles className="w-5 h-5" /></motion.div> : 'Sign In'}
-                          </Button>
+                          <SwipeButton
+                            onConfirm={handleLogin}
+                            isLoading={isLoading}
+                            text="Swipe to sign in"
+                            successText="Welcome back!"
+                          />
+                          <button type="submit" className="hidden">Sign In</button>
                         </motion.form>
                       ) : (
                         <motion.form
@@ -336,9 +341,13 @@ const Auth = () => {
                             </div>
                           </div>
 
-                          <Button type="submit" className="w-full gradient-primary text-primary-foreground font-medium h-11" disabled={isLoading}>
-                            {isLoading ? <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}><Sparkles className="w-5 h-5" /></motion.div> : 'Create Account'}
-                          </Button>
+                          <SwipeButton
+                            onConfirm={handleSignup}
+                            isLoading={isLoading}
+                            text="Swipe to sign up"
+                            successText="Welcome!"
+                          />
+                          <button type="submit" className="hidden">Sign Up</button>
 
                           <p className="text-xs text-center text-muted-foreground">
                             By signing up, you agree to our{' '}
