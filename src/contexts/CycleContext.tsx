@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import type { Json } from '@/integrations/supabase/types';
@@ -374,7 +374,7 @@ export function CycleProvider({ children }: { children: ReactNode }) {
     await upsertLog(dateStr, { temperature: temp });
   }, [user]);
 
-  const getPredictions = useCallback((): CyclePrediction | null => {
+  const cachedPredictions = useMemo((): CyclePrediction | null => {
     if (cycles.length < 2) return null;
 
     const sortedCycles = [...cycles].sort((a, b) =>
@@ -416,6 +416,10 @@ export function CycleProvider({ children }: { children: ReactNode }) {
       ovulationDate: format(ovulationDate, 'yyyy-MM-dd'),
     };
   }, [cycles]);
+
+  const getPredictions = useCallback((): CyclePrediction | null => {
+    return cachedPredictions;
+  }, [cachedPredictions]);
 
   const getStats = useCallback((): CycleStats | null => {
     if (cycles.length < 1) return null;
