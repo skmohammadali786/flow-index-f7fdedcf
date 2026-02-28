@@ -15,8 +15,48 @@ import type { FertilityLog } from '@/hooks/useFertilityTracker';
 import type { WorkoutLog } from '@/hooks/useWorkoutTracker';
 import {
   LayoutDashboard, TrendingUp, TrendingDown, Minus, Heart, Droplets, Moon, Dumbbell,
-  Thermometer, Brain, Activity, Sparkles,
+  Thermometer, Brain, Activity, Sparkles, type LucideIcon,
 } from 'lucide-react';
+
+interface ChartDataPoint {
+  date: string;
+  Flow: number;
+  Moods: number;
+  Symptoms: number;
+  Sleep: number;
+  Water: number;
+  Exercise: number;
+  'BBT': number;
+  Pain: number;
+  Fatigue: number;
+  'Clinical Mood': number;
+  Bloating: number;
+  'Journal Mood': number;
+  Energy: number;
+  'LH Level': number;
+  'Workout Min': number;
+  'Workout Cal': number;
+}
+
+interface ComprehensiveDataPoint {
+  date: string;
+  flow: number;
+  moods: number;
+  symptoms: number;
+  sleep: number;
+  water: number;
+  exercise: number;
+  bbt: number;
+  pain: number;
+  fatigue: number;
+  clinicalMood: number;
+  bloating: number;
+  journalMood: number;
+  energy: number;
+  lh: number;
+  workoutMin: number;
+  workoutCal: number;
+}
 
 interface DashboardViewProps {
   logs: DayLog[];
@@ -58,14 +98,25 @@ const COLORS = {
   calories: 'hsl(15, 90%, 50%)',
 };
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: {
+    value: number | string;
+    name: string;
+    color: string;
+    dataKey: string;
+  }[];
+  label?: string;
+}
+
+const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
   if (!active || !payload?.length) return null;
-  const nonZero = payload.filter((p: any) => p.value > 0);
+  const nonZero = payload.filter((p) => (typeof p.value === 'number' ? p.value > 0 : !!p.value));
   if (nonZero.length === 0) return null;
   return (
     <div className="bg-card border border-border rounded-xl px-4 py-3 shadow-xl text-xs space-y-1.5 max-w-[200px]">
       <p className="font-bold text-foreground text-sm">{label}</p>
-      {nonZero.map((p: any) => (
+      {nonZero.map((p) => (
         <p key={p.dataKey} style={{ color: p.color }} className="flex items-center gap-2">
           <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: p.color }} />
           <span className="font-medium">{p.name}:</span> {typeof p.value === 'number' ? p.value.toFixed(1) : p.value}
@@ -81,7 +132,7 @@ function buildChartData(
   logs: DayLog[], clinicalAssessments: ClinicalAssessment[],
   journalEntries: JournalEntry[], fertilityLogs: FertilityLog[], 
   workoutLogs: WorkoutLog[], days: number
-) {
+): ChartDataPoint[] {
   const today = startOfDay(new Date());
   const logMap = new Map(logs.map(l => [l.date, l]));
   const clinicalMap = new Map(clinicalAssessments.map(a => [a.date, a]));
@@ -99,7 +150,7 @@ function buildChartData(
     });
   });
 
-  const data = [];
+  const data: ChartDataPoint[] = [];
   for (let i = days - 1; i >= 0; i--) {
     const day = subDays(today, i);
     const dateStr = format(day, 'yyyy-MM-dd');
@@ -132,10 +183,10 @@ function buildChartData(
   return data;
 }
 
-function computeAvg(data: any[], key: string): number {
-  const vals = data.filter(d => d[key] > 0);
+function computeAvg<T extends Record<string, any>>(data: T[], key: keyof T): number {
+  const vals = data.filter(d => typeof d[key] === 'number' && (d[key] as number) > 0);
   if (vals.length === 0) return 0;
-  return vals.reduce((s, d) => s + d[key], 0) / vals.length;
+  return vals.reduce((s, d) => s + (d[key] as number), 0) / vals.length;
 }
 
 interface TrendStat {
@@ -143,7 +194,7 @@ interface TrendStat {
   thisWeek: number;
   lastWeek: number;
   unit: string;
-  icon: any;
+  icon: LucideIcon;
   color: string;
   invert?: boolean; // true = lower is better (pain, symptoms)
 }
@@ -449,7 +500,7 @@ export function buildComprehensiveDashboardData(
   fertilityLogs: FertilityLog[],
   workoutLogs: WorkoutLog[] = [],
   days = 30
-) {
+): ComprehensiveDataPoint[] {
   const today = startOfDay(new Date());
   const logMap = new Map(logs.map(l => [l.date, l]));
   const clinicalMap = new Map(clinicalAssessments.map(a => [a.date, a]));
@@ -464,7 +515,7 @@ export function buildComprehensiveDashboardData(
     });
   });
 
-  const data = [];
+  const data: ComprehensiveDataPoint[] = [];
   for (let i = days - 1; i >= 0; i--) {
     const day = subDays(today, i);
     const dateStr = format(day, 'yyyy-MM-dd');
