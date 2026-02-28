@@ -54,6 +54,8 @@ Deno.serve(async (req) => {
       'pregnancy_tracking',
       'fertility_logs',
       'wellness_journal',
+      // Ensure workout_logs and workout_goals are explicitly deleted
+      // as they do not have cascading deletes configured in the database
       'workout_logs',
       'workout_goals',
       'clinical_assessments',
