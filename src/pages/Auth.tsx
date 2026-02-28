@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useCallback } from 'react';
+import { motion, AnimatePresence, PanInfo } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,10 +31,21 @@ const Auth = () => {
 
   const validateEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-  const switchTab = (tab: 'login' | 'signup') => {
+  const switchTab = useCallback((tab: 'login' | 'signup') => {
+    if (tab === activeTab) return;
     setSlideDirection(tab === 'signup' ? 1 : -1);
     setActiveTab(tab);
-  };
+  }, [activeTab]);
+
+  // Swipe/drag handler
+  const handleDragEnd = useCallback((_: any, info: PanInfo) => {
+    const threshold = 50;
+    if (info.offset.x < -threshold && activeTab === 'login') {
+      switchTab('signup');
+    } else if (info.offset.x > threshold && activeTab === 'signup') {
+      switchTab('login');
+    }
+  }, [activeTab, switchTab]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -112,9 +123,9 @@ const Auth = () => {
   };
 
   const slideVariants = {
-    enter: (dir: number) => ({ x: dir > 0 ? 200 : -200, opacity: 0 }),
+    enter: (dir: number) => ({ x: dir > 0 ? 300 : -300, opacity: 0 }),
     center: { x: 0, opacity: 1 },
-    exit: (dir: number) => ({ x: dir > 0 ? -200 : 200, opacity: 0 }),
+    exit: (dir: number) => ({ x: dir > 0 ? -300 : 300, opacity: 0 }),
   };
 
   return (
@@ -187,14 +198,7 @@ const Auth = () => {
                     <Label htmlFor="reset-email" className="text-sm font-medium">Email</Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        id="reset-email"
-                        type="email"
-                        placeholder="you@example.com"
-                        value={resetEmail}
-                        onChange={(e) => setResetEmail(e.target.value)}
-                        className="pl-10 border-border/50 focus:border-primary"
-                      />
+                      <Input id="reset-email" type="email" placeholder="you@example.com" value={resetEmail} onChange={(e) => setResetEmail(e.target.value)} className="pl-10 border-border/50 focus:border-primary" />
                     </div>
                   </div>
 
@@ -204,7 +208,7 @@ const Auth = () => {
                 </motion.form>
               ) : (
                 <>
-                  {/* Sliding tab switcher */}
+                  {/* Sliding tab switcher with drag hint */}
                   <div className="relative flex bg-muted rounded-lg p-1 mb-6">
                     <motion.div
                       className="absolute top-1 bottom-1 rounded-md bg-card shadow-sm"
@@ -228,8 +232,21 @@ const Auth = () => {
                     </button>
                   </div>
 
-                  {/* Sliding form content */}
-                  <div className="relative overflow-hidden">
+                  {/* Swipe hint */}
+                  <p className="text-[10px] text-center text-muted-foreground/60 -mt-4 mb-4">
+                    ← Swipe to switch →
+                  </p>
+
+                  {/* Swipeable form content */}
+                  <motion.div
+                    className="relative overflow-hidden touch-pan-y"
+                    drag="x"
+                    dragConstraints={{ left: 0, right: 0 }}
+                    dragElastic={0.3}
+                    onDragEnd={handleDragEnd}
+                    style={{ cursor: 'grab' }}
+                    whileDrag={{ cursor: 'grabbing' }}
+                  >
                     <AnimatePresence mode="wait" custom={slideDirection}>
                       {activeTab === 'login' ? (
                         <motion.form
@@ -239,7 +256,7 @@ const Auth = () => {
                           initial="enter"
                           animate="center"
                           exit="exit"
-                          transition={{ duration: 0.25, ease: 'easeInOut' }}
+                          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                           onSubmit={handleLogin}
                           className="space-y-4"
                         >
@@ -280,7 +297,7 @@ const Auth = () => {
                           initial="enter"
                           animate="center"
                           exit="exit"
-                          transition={{ duration: 0.25, ease: 'easeInOut' }}
+                          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                           onSubmit={handleSignup}
                           className="space-y-4"
                         >
@@ -332,7 +349,7 @@ const Auth = () => {
                         </motion.form>
                       )}
                     </AnimatePresence>
-                  </div>
+                  </motion.div>
                 </>
               )}
             </CardContent>
