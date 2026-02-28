@@ -12,7 +12,7 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
+import { AreaChart, Area, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
 import { useFertilityTracker, PregnancyRecord, BirthRecord, PostpartumLog } from '@/hooks/useFertilityTracker';
 import { useReportDraft } from '@/contexts/ReportDraftContext';
 import { startOfDay } from 'date-fns';
@@ -348,15 +348,22 @@ export function PregnancyBirthView({ defaultTab }: PregnancyBirthViewProps) {
                   <h3 className="font-display font-semibold mb-3 text-sm">Weight & Kick Trends</h3>
                   <div className="h-48">
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={pregChartData}>
+
+                      <AreaChart data={pregChartData}>
+                        <defs>
+                          <linearGradient id="colorWeight" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4}/>
+                            <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                          </linearGradient>
+                        </defs>
                         <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
                         <XAxis dataKey="week" tick={{ fontSize: 10 }} />
                         <YAxis tick={{ fontSize: 10 }} />
-                        <Tooltip />
+                        <Tooltip content={<CustomTooltip />} />
                         <Legend />
-                        <Line type="monotone" dataKey="weight" stroke="hsl(355 70% 65%)" name="Weight" dot={false} />
-                        <Line type="monotone" dataKey="movements" stroke="hsl(280 40% 75%)" name="Kicks" dot={false} />
-                      </LineChart>
+                        <Area fillOpacity={1} type="monotone" dataKey="weight" fill="url(#colorWeight)" stroke="hsl(355 70% 65%)" name="Weight" dot={false} />
+                        <Area fillOpacity={1} type="monotone" dataKey="movements" fill="url(#colorEnergy)" stroke="hsl(280 40% 75%)" name="Kicks" dot={false} />
+                      </AreaChart>
                     </ResponsiveContainer>
                   </div>
                 </Card>
@@ -594,17 +601,28 @@ export function PregnancyBirthView({ defaultTab }: PregnancyBirthViewProps) {
               <h3 className="font-display font-semibold mb-3 text-sm">Recovery Trends</h3>
               <div className="h-48">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={ppChartData}>
+
+                  <AreaChart data={ppChartData}>
+                    <defs>
+                      <linearGradient id="colorMood" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4}/>
+                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                      </linearGradient>
+                      <linearGradient id="colorEnergy" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="hsl(280, 65%, 60%)" stopOpacity={0.4}/>
+                        <stop offset="95%" stopColor="hsl(280, 65%, 60%)" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
                     <CartesianGrid strokeDasharray="3 3" opacity={0.1} />
                     <XAxis dataKey="date" tick={{ fontSize: 10 }} />
                     <YAxis domain={[0, 10]} tick={{ fontSize: 10 }} />
-                    <Tooltip />
+                    <Tooltip content={<CustomTooltip />} />
                     <Legend />
-                    <Line type="monotone" dataKey="mood" stroke="hsl(140 30% 70%)" name="Mood" dot={false} />
-                    <Line type="monotone" dataKey="anxiety" stroke="hsl(355 70% 65%)" name="Anxiety" dot={false} />
-                    <Line type="monotone" dataKey="pain" stroke="hsl(25 80% 75%)" name="Pain" dot={false} />
-                    <Line type="monotone" dataKey="sleep" stroke="hsl(280 40% 75%)" name="Sleep hrs" dot={false} />
-                  </LineChart>
+                    <Area fillOpacity={1} type="monotone" dataKey="mood" fill="url(#colorMood)" stroke="hsl(140 30% 70%)" name="Mood" dot={false} />
+                    <Area fillOpacity={1} type="monotone" dataKey="anxiety" fill="url(#colorWeight)" stroke="hsl(355 70% 65%)" name="Anxiety" dot={false} />
+                    <Area fillOpacity={1} type="monotone" dataKey="pain" fill="url(#colorEnergy)" stroke="hsl(25 80% 75%)" name="Pain" dot={false} />
+                    <Area fillOpacity={1} type="monotone" dataKey="sleep" fill="url(#colorMood)" stroke="hsl(280 40% 75%)" name="Sleep hrs" dot={false} />
+                  </AreaChart>
                 </ResponsiveContainer>
               </div>
             </Card>

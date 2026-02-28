@@ -23,6 +23,7 @@ import {
 import { CuteLoader } from './CuteLoader';
 import jsPDF from 'jspdf';
 import { Progress } from '@/components/ui/progress';
+import { CustomTooltip } from '@/components/ui/custom-tooltip';
 import {
   Dumbbell, Plus, Flame, Clock, TrendingUp, Calendar, Filter,
   Trash2, Star, Heart, BarChart3, FileDown, X, Target, Zap, Trophy,
@@ -51,21 +52,6 @@ const PIE_COLORS = [
   'hsl(160, 60%, 45%)', 'hsl(15, 90%, 50%)', 'hsl(200, 60%, 55%)',
   'hsl(50, 85%, 50%)',
 ];
-
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="bg-card border border-border rounded-xl px-4 py-3 shadow-xl text-xs space-y-1.5 max-w-[200px]">
-      <p className="font-bold text-foreground text-sm">{label}</p>
-      {payload.map((p: any) => (
-        <p key={p.dataKey} style={{ color: p.color || p.fill }} className="flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: p.color || p.fill }} />
-          <span className="font-medium">{p.name}:</span> {typeof p.value === 'number' ? p.value.toFixed(1) : p.value}
-        </p>
-      ))}
-    </div>
-  );
-};
 
 export function WorkoutTrackingView() {
   const { workoutLogs, isLoading, addWorkout, deleteWorkout } = useWorkoutTracker();

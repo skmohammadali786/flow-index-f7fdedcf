@@ -5,7 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { GitCompare, Calendar, Activity, Droplets, ThermometerSun, TrendingUp, AlertTriangle } from 'lucide-react';
 import { format, differenceInDays, parseISO, addDays } from 'date-fns';
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
+import { CustomTooltip } from '@/components/ui/custom-tooltip';
+import { AreaChart, Area, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
 import type { DayLog, CycleData } from '@/types/period';
 
 interface CycleComparisonViewProps {
@@ -222,16 +223,25 @@ export function CycleComparisonView({ logs, cycles }: CycleComparisonViewProps) 
           <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><TrendingUp className="h-4 w-4" /> Symptom Intensity Overlay</CardTitle></CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={200}>
-              <LineChart data={overlayData}>
+
+              <AreaChart data={overlayData}>
+                <defs>
+                  {comparedCycles.map((c, i) => (
+                    <linearGradient key={`grad_${c.id}`} id={`grad_${i}`} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={COLORS[i]} stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor={COLORS[i]} stopOpacity={0}/>
+                    </linearGradient>
+                  ))}
+                </defs>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis dataKey="day" label={{ value: 'Cycle Day', position: 'bottom', offset: -5 }} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} />
                 <YAxis tick={{ fill: 'hsl(var(--muted-foreground))' }} />
-                <Tooltip />
+                <Tooltip content={<CustomTooltip />} />
                 <Legend />
                 {comparedCycles.map((c, i) => (
-                  <Line key={c.id} type="monotone" dataKey={`symptoms_${i}`} name={c.label} stroke={COLORS[i]} strokeWidth={2} dot={false} />
+                  <Area key={c.id} type="monotone" dataKey={`symptoms_${i}`} name={c.label} stroke={COLORS[i]} fill={`url(#grad_${i})`} strokeWidth={2} dot={false} fillOpacity={1} />
                 ))}
-              </LineChart>
+              </AreaChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>

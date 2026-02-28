@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { format, subDays, startOfDay, parseISO } from 'date-fns';
+import { CustomTooltip } from '@/components/ui/custom-tooltip';
 import { Area, AreaChart, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import { DayLog } from '@/types/period';
 import { Droplets } from 'lucide-react';
@@ -27,23 +28,6 @@ const flowLabels: Record<number, string> = {
   2: 'Light',
   3: 'Medium',
   4: 'Heavy',
-};
-
-const CustomTooltip = ({ active, payload, label }: any) => {
-  if (!active || !payload?.length) return null;
-  const value = payload[0].value as number;
-  return (
-    <div className="bg-card border border-border rounded-lg px-3 py-2 shadow-lg text-sm">
-      <p className="font-medium text-foreground">{label}</p>
-      <p className="text-coral flex items-center gap-1">
-        <Droplets className="h-3 w-3" />
-        {flowLabels[value] || 'None'}
-      </p>
-      {value > 0 && (
-        <p className="text-xs text-muted-foreground mt-1">Tap dot to view details</p>
-      )}
-    </div>
-  );
 };
 
 interface ClickableDotProps {

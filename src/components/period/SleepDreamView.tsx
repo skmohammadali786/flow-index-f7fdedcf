@@ -10,8 +10,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useSleepTracker } from '@/hooks/useSleepTracker';
 import { CuteLoader } from './CuteLoader';
 import { format } from 'date-fns';
+import { CustomTooltip } from '@/components/ui/custom-tooltip';
 import { Plus, Trash2, Moon, Sun, Cloud, TrendingUp, TrendingDown, Minus, Sparkles, Brain } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid } from 'recharts';
+import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, CartesianGrid } from 'recharts';
 
 const QUALITIES = ['poor', 'fair', 'good', 'excellent'];
 const QUALITY_EMOJI: Record<string, string> = { poor: '😴', fair: '🙂', good: '😊', excellent: '🌟' };
@@ -202,12 +203,19 @@ export function SleepDreamView() {
                 <CardHeader className="pb-2"><CardTitle className="text-sm">Sleep Hours (Last 14 Days)</CardTitle></CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={200}>
+
                     <BarChart data={sleepChartData}>
+                      <defs>
+                        <linearGradient id="colorHours" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.8}/>
+                          <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.4}/>
+                        </linearGradient>
+                      </defs>
                       <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                       <XAxis dataKey="date" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} />
                       <YAxis domain={[0, 12]} tick={{ fill: 'hsl(var(--muted-foreground))' }} />
-                      <Tooltip />
-                      <Bar dataKey="hours" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                      <Tooltip content={<CustomTooltip />} />
+                      <Bar dataKey="hours" fill="url(#colorHours)" radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </CardContent>
@@ -216,13 +224,20 @@ export function SleepDreamView() {
                 <CardHeader className="pb-2"><CardTitle className="text-sm">Sleep Quality Trend</CardTitle></CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={150}>
-                    <LineChart data={sleepChartData}>
+
+                    <AreaChart data={sleepChartData}>
+                      <defs>
+                        <linearGradient id="colorQuality" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="hsl(var(--accent))" stopOpacity={0.4}/>
+                          <stop offset="95%" stopColor="hsl(var(--accent))" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
                       <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                       <XAxis dataKey="date" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} />
                       <YAxis domain={[0, 4]} ticks={[1, 2, 3, 4]} tickFormatter={v => ['', 'Poor', 'Fair', 'Good', '★'][v]} tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} />
-                      <Tooltip />
-                      <Line type="monotone" dataKey="quality" stroke="hsl(var(--accent))" strokeWidth={2} dot={{ fill: 'hsl(var(--accent))' }} />
-                    </LineChart>
+                      <Tooltip content={<CustomTooltip />} />
+                      <Area fillOpacity={1} type="monotone" dataKey="quality" fill="url(#colorQuality)" stroke="hsl(var(--accent))" strokeWidth={2} dot={{ fill: 'hsl(var(--accent))' }} />
+                    </AreaChart>
                   </ResponsiveContainer>
                 </CardContent>
               </Card>
