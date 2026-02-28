@@ -1,7 +1,7 @@
 
 CREATE TABLE public.workout_goals (
   id UUID NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID NOT NULL,
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   workouts_per_week INTEGER NOT NULL DEFAULT 4,
   minutes_per_week INTEGER NOT NULL DEFAULT 150,
   calories_per_week INTEGER NOT NULL DEFAULT 1500,
