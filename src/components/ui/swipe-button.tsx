@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, useAnimation, useMotionValue, useTransform } from 'framer-motion';
-import { ArrowRight, Check, Sparkles } from 'lucide-react';
+import { ArrowRight, Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import logo from '@/assets/logo.png';
 
 interface SwipeButtonProps {
   onConfirm: () => void;
@@ -110,13 +111,13 @@ export const SwipeButton: React.FC<SwipeButtonProps> = ({
       {/* Confirmed / Loading state knob placeholder (static) */}
       {(isLoading || isConfirmed) && (
         <motion.div
-          className="absolute right-1 top-1 bottom-1 w-10 bg-primary rounded flex items-center justify-center z-10 shadow-sm"
+          className="absolute right-1 top-1 bottom-1 w-10 bg-primary rounded flex items-center justify-center z-10 shadow-sm overflow-hidden"
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
         >
           {isLoading ? (
             <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}>
-              <Sparkles className="w-5 h-5 text-primary-foreground" />
+              <img src={logo} alt="Loading" className="w-6 h-6 object-contain filter brightness-0 invert" />
             </motion.div>
           ) : (
             <Check className="w-5 h-5 text-primary-foreground" />

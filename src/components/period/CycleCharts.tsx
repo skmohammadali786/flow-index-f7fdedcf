@@ -368,9 +368,12 @@ export function CycleCharts({ logs, cycles }: CycleChartsProps) {
                       {showDailyView ? (
                         <ComposedChart data={dailyChartData}>
                           <defs>
-                            <linearGradient id="symptomGrad" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="hsl(var(--peach))" stopOpacity={0.8} />
-                              <stop offset="100%" stopColor="hsl(var(--peach))" stopOpacity={0.2} />
+                            <linearGradient id="symptomGrad" x1="0" y1="0" x2="1" y2="0">
+                              <stop offset="0%" stopColor="#ff00ff" stopOpacity={0.8} />
+                              <stop offset="25%" stopColor="#ff69b4" stopOpacity={0.8} />
+                              <stop offset="50%" stopColor="#ff7f50" stopOpacity={0.8} />
+                              <stop offset="75%" stopColor="#ffa500" stopOpacity={0.8} />
+                              <stop offset="100%" stopColor="#ffbf00" stopOpacity={0.8} />
                             </linearGradient>
                             <linearGradient id="moodGrad" x1="0" y1="0" x2="0" y2="1">
                               <stop offset="0%" stopColor="hsl(var(--sage))" stopOpacity={0.8} />
@@ -382,15 +385,18 @@ export function CycleCharts({ logs, cycles }: CycleChartsProps) {
                           <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
                           <Tooltip content={<CustomTooltip />} />
                           <Legend wrapperStyle={{ fontSize: 11 }} />
-                          <Area type="monotone" dataKey="symptoms" fill="url(#symptomGrad)" stroke="hsl(var(--peach))" strokeWidth={2} name="Symptoms" />
+                          <Area type="monotone" dataKey="symptoms" fill="url(#symptomGrad)" stroke="url(#symptomGrad)" strokeWidth={2} name="Symptoms" />
                           <Area type="monotone" dataKey="moods" fill="url(#moodGrad)" stroke="hsl(var(--sage))" strokeWidth={2} name="Moods" />
                         </ComposedChart>
                       ) : (
                         <AreaChart data={chartData}>
                           <defs>
-                            <linearGradient id="symptomGradM" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="hsl(var(--peach))" stopOpacity={0.6} />
-                              <stop offset="100%" stopColor="hsl(var(--peach))" stopOpacity={0.05} />
+                            <linearGradient id="symptomGradM" x1="0" y1="0" x2="1" y2="0">
+                              <stop offset="0%" stopColor="#ff00ff" stopOpacity={0.8} />
+                              <stop offset="25%" stopColor="#ff69b4" stopOpacity={0.8} />
+                              <stop offset="50%" stopColor="#ff7f50" stopOpacity={0.8} />
+                              <stop offset="75%" stopColor="#ffa500" stopOpacity={0.8} />
+                              <stop offset="100%" stopColor="#ffbf00" stopOpacity={0.8} />
                             </linearGradient>
                             <linearGradient id="moodGradM" x1="0" y1="0" x2="0" y2="1">
                               <stop offset="0%" stopColor="hsl(var(--sage))" stopOpacity={0.6} />
@@ -402,7 +408,7 @@ export function CycleCharts({ logs, cycles }: CycleChartsProps) {
                           <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
                           <Tooltip content={<CustomTooltip />} />
                           <Legend wrapperStyle={{ fontSize: 11 }} />
-                          <Area type="monotone" dataKey="symptoms" stroke="hsl(var(--peach))" fill="url(#symptomGradM)" strokeWidth={2} name="Symptoms" />
+                          <Area type="monotone" dataKey="symptoms" stroke="url(#symptomGradM)" fill="url(#symptomGradM)" strokeWidth={2} name="Symptoms" />
                           <Area type="monotone" dataKey="moods" stroke="hsl(var(--sage))" fill="url(#moodGradM)" strokeWidth={2} name="Moods" />
                         </AreaChart>
                       )}
@@ -459,9 +465,12 @@ export function CycleCharts({ logs, cycles }: CycleChartsProps) {
                       <ResponsiveContainer width="100%" height="100%">
                         <ComposedChart data={cycleLengthData}>
                           <defs>
-                            <linearGradient id="cycleGrad" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="0%" stopColor="hsl(var(--coral))" stopOpacity={0.3} />
-                              <stop offset="100%" stopColor="hsl(var(--coral))" stopOpacity={0.02} />
+                            <linearGradient id="cycleGrad" x1="0" y1="0" x2="1" y2="0">
+                              <stop offset="0%" stopColor="#ff00ff" stopOpacity={0.8} />
+                              <stop offset="25%" stopColor="#ff69b4" stopOpacity={0.8} />
+                              <stop offset="50%" stopColor="#ff7f50" stopOpacity={0.8} />
+                              <stop offset="75%" stopColor="#ffa500" stopOpacity={0.8} />
+                              <stop offset="100%" stopColor="#ffbf00" stopOpacity={0.8} />
                             </linearGradient>
                           </defs>
                           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
@@ -469,7 +478,7 @@ export function CycleCharts({ logs, cycles }: CycleChartsProps) {
                           <YAxis domain={[0, 'auto']} tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
                           <Tooltip content={<CustomTooltip />} />
                           <Legend wrapperStyle={{ fontSize: 11 }} />
-                          <Area type="monotone" dataKey="length" stroke="hsl(var(--coral))" fill="url(#cycleGrad)" strokeWidth={2} name="Cycle Length" dot={{ fill: 'hsl(var(--coral))', r: 4, strokeWidth: 2, stroke: 'hsl(var(--card))' }} />
+                          <Area type="monotone" dataKey="length" stroke="url(#cycleGrad)" fill="url(#cycleGrad)" strokeWidth={2} name="Cycle Length" dot={{ fill: '#ffa500', r: 4, strokeWidth: 2, stroke: 'hsl(var(--card))' }} />
                           <Bar dataKey="periodLength" fill="hsl(var(--lavender))" name="Period Length" radius={[4, 4, 0, 0]} opacity={0.7} barSize={16} />
                         </ComposedChart>
                       </ResponsiveContainer>

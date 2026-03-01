@@ -126,9 +126,12 @@ export function CrimsonGraph({ logs, currentMonth, onDayClick }: CrimsonGraphPro
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
               <defs>
-                <linearGradient id="crimsonGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="hsl(355, 70%, 65%)" stopOpacity={0.6} />
-                  <stop offset="100%" stopColor="hsl(355, 70%, 65%)" stopOpacity={0.05} />
+                <linearGradient id="multiStopGrad" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor="#ff00ff" stopOpacity={0.8} />
+                  <stop offset="25%" stopColor="#ff69b4" stopOpacity={0.8} />
+                  <stop offset="50%" stopColor="#ff7f50" stopOpacity={0.8} />
+                  <stop offset="75%" stopColor="#ffa500" stopOpacity={0.8} />
+                  <stop offset="100%" stopColor="#ffbf00" stopOpacity={0.8} />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.5} />
@@ -152,9 +155,9 @@ export function CrimsonGraph({ logs, currentMonth, onDayClick }: CrimsonGraphPro
               <Area
                 type="monotone"
                 dataKey="value"
-                stroke="hsl(355, 70%, 65%)"
+                stroke="url(#multiStopGrad)"
                 strokeWidth={2.5}
-                fill="url(#crimsonGradient)"
+                fill="url(#multiStopGrad)"
                 dot={<ClickableDot onDayClick={onDayClick} />}
                 activeDot={<ActiveClickableDot onDayClick={onDayClick} />}
               />

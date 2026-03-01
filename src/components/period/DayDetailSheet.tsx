@@ -202,14 +202,14 @@ export function DayDetailSheet({
                       whileTap={{ scale: 0.95 }}
                       onClick={() => onLogPeriod(date, true, option.value)}
                       className={cn(
-                        "p-3 rounded-xl border-2 transition-all text-sm",
+                        "p-4 rounded-2xl border-[1.5px] transition-all text-sm shadow-sm hover:shadow-md",
                         log.flowIntensity === option.value
-                          ? "border-coral bg-coral-light"
-                          : "border-border hover:border-coral/50"
+                          ? "border-coral bg-gradient-to-br from-coral-light to-peach-light text-coral font-medium"
+                          : "border-border/60 hover:border-coral/50 bg-card hover:bg-muted/30 text-foreground"
                       )}
                     >
-                      <span className="text-lg">{option.icon}</span>
-                      <p className="mt-1">{option.label}</p>
+                      <span className="text-xl">{option.icon}</span>
+                      <p className="mt-1.5">{option.label}</p>
                     </motion.button>
                   ))}
                   <Button
@@ -240,14 +240,14 @@ export function DayDetailSheet({
                   whileTap={{ scale: 0.95 }}
                   onClick={() => onLogMood(date, option.value)}
                   className={cn(
-                    "p-3 rounded-xl border-2 transition-all flex flex-col items-center",
+                    "p-3 rounded-2xl border-[1.5px] transition-all flex flex-col items-center shadow-sm hover:shadow-md",
                     log?.moods.includes(option.value)
-                      ? "border-sage bg-sage-light"
-                      : "border-border hover:border-sage/50"
+                      ? "border-sage bg-gradient-to-br from-sage-light to-[#d1e6d8] text-sage-dark font-medium"
+                      : "border-border/60 hover:border-sage/50 bg-card hover:bg-muted/30 text-muted-foreground"
                   )}
                 >
-                  <span className="text-2xl">{option.icon}</span>
-                  <p className="text-xs mt-1 text-muted-foreground">{option.label}</p>
+                  <span className="text-2xl drop-shadow-sm">{option.icon}</span>
+                  <p className={cn("text-xs mt-1.5", log?.moods.includes(option.value) ? "text-sage-dark font-semibold" : "")}>{option.label}</p>
                 </motion.button>
               ))}
             </div>
@@ -269,14 +269,14 @@ export function DayDetailSheet({
                   whileTap={{ scale: 0.95 }}
                   onClick={() => onLogSymptom(date, option.value)}
                   className={cn(
-                    "p-3 rounded-xl border-2 transition-all flex items-center gap-2",
+                    "p-3.5 rounded-2xl border-[1.5px] transition-all flex items-center gap-3 shadow-sm hover:shadow-md",
                     log?.symptoms.includes(option.value)
-                      ? "border-peach bg-peach-light"
-                      : "border-border hover:border-peach/50"
+                      ? "border-peach bg-gradient-to-br from-peach-light to-[#ffe1cd] text-peach-dark font-medium"
+                      : "border-border/60 hover:border-peach/50 bg-card hover:bg-muted/30 text-foreground"
                   )}
                 >
-                  <span className="text-lg">{option.icon}</span>
-                  <p className="text-sm">{option.label}</p>
+                  <span className="text-xl drop-shadow-sm">{option.icon}</span>
+                  <p className={cn("text-sm", log?.symptoms.includes(option.value) ? "text-peach-dark font-semibold" : "")}>{option.label}</p>
                 </motion.button>
               ))}
             </div>
@@ -312,7 +312,7 @@ export function DayDetailSheet({
                 </div>
               </div>
               
-              <div className="flex gap-1 mt-3 justify-center">
+              <div className="flex gap-1.5 mt-3 justify-center">
                 {Array.from({ length: 8 }).map((_, i) => (
                   <motion.button
                     key={i}
@@ -322,10 +322,19 @@ export function DayDetailSheet({
                       onLogWaterIntake?.(date, i + 1);
                     }}
                     className={cn(
-                      "w-6 h-8 rounded transition-colors",
-                      i < localWater ? "bg-secondary" : "bg-muted"
+                      "w-8 h-10 rounded-md transition-all shadow-sm relative overflow-hidden",
+                      i < localWater ? "bg-secondary border-b-2 border-secondary/80" : "bg-muted hover:bg-muted/80"
                     )}
-                  />
+                  >
+                    {i < localWater && (
+                      <motion.div
+                        className="absolute bottom-0 left-0 right-0 bg-white/20"
+                        initial={{ height: 0 }}
+                        animate={{ height: "100%" }}
+                        transition={{ duration: 0.3 }}
+                      />
+                    )}
+                  </motion.button>
                 ))}
               </div>
             </section>
@@ -368,14 +377,14 @@ export function DayDetailSheet({
                     whileTap={{ scale: 0.95 }}
                     onClick={() => onLogSleep?.(date, localSleep || 7, option.value)}
                     className={cn(
-                      "p-2 rounded-xl border-2 transition-all flex flex-col items-center",
+                      "p-3 rounded-2xl border-[1.5px] transition-all flex flex-col items-center shadow-sm hover:shadow-md",
                       log?.sleepQuality === option.value
-                        ? "border-lavender bg-lavender-light"
-                        : "border-border hover:border-lavender/50"
+                        ? "border-lavender bg-gradient-to-br from-lavender-light to-[#e6d9ff] text-lavender-dark font-medium"
+                        : "border-border/60 hover:border-lavender/50 bg-card hover:bg-muted/30 text-muted-foreground"
                     )}
                   >
-                    <span className="text-xl">{option.icon}</span>
-                    <p className="text-xs mt-1 text-muted-foreground">{option.label}</p>
+                    <span className="text-2xl drop-shadow-sm">{option.icon}</span>
+                    <p className={cn("text-xs mt-1.5", log?.sleepQuality === option.value ? "text-lavender-dark font-semibold" : "")}>{option.label}</p>
                   </motion.button>
                 ))}
               </div>
