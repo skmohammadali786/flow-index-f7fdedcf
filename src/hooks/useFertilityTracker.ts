@@ -87,7 +87,10 @@ export function useFertilityTracker() {
   const [isLoaded, setIsLoaded] = useState(false);
 
   const fetchAll = useCallback(async () => {
-    if (!user) return;
+    if (!user) {
+      setIsLoaded(true);
+      return;
+    }
     try {
       const [fertRes, pregRes, pregLogRes, birthRes, ppRes] = await Promise.all([
         supabase.from('fertility_logs').select('*').eq('user_id', user.id).order('date', { ascending: false }),

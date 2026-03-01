@@ -245,6 +245,8 @@ export function DashboardView({
   const trendStats = useMemo<TrendStat[]>(() => {
     const thisWeekData = buildChartData(logs, clinicalAssessments, journalEntries, fertilityLogs, workoutLogs, 7);
     const twoWeekData = buildChartData(logs, clinicalAssessments, journalEntries, fertilityLogs, workoutLogs, 14);
+    // twoWeekData has the oldest days first (i=13...i=0), so index 0 is 14 days ago.
+    // To get "last week" (days 8-14 ago), we need the first 7 elements.
     const lastWeekData = twoWeekData.slice(0, 7);
 
     return [
@@ -359,9 +361,12 @@ export function DashboardView({
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
                   <defs>
-                    <linearGradient id="gradFlow" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={COLORS.flow} stopOpacity={0.3} />
-                      <stop offset="95%" stopColor={COLORS.flow} stopOpacity={0} />
+                    <linearGradient id="gradFlow" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stopColor="#ff00ff" stopOpacity={0.8} />
+                      <stop offset="25%" stopColor="#ff69b4" stopOpacity={0.8} />
+                      <stop offset="50%" stopColor="#ff7f50" stopOpacity={0.8} />
+                      <stop offset="75%" stopColor="#ffa500" stopOpacity={0.8} />
+                      <stop offset="100%" stopColor="#ffbf00" stopOpacity={0.8} />
                     </linearGradient>
                     <linearGradient id="gradSleep" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor={COLORS.sleep} stopOpacity={0.25} />
@@ -385,7 +390,7 @@ export function DashboardView({
                   <YAxis tick={{ fontSize: 8, fill: 'hsl(var(--muted-foreground))' }} tickLine={false} axisLine={false} />
                   <Tooltip content={<CustomTooltip />} />
                   <Legend iconType="circle" iconSize={7} wrapperStyle={{ fontSize: '9px', paddingTop: '4px' }} />
-                  <Area type="monotone" dataKey="Flow" stroke={COLORS.flow} fill="url(#gradFlow)" strokeWidth={2} dot={false} activeDot={{ r: 3 }} />
+                  <Area type="monotone" dataKey="Flow" stroke="url(#gradFlow)" fill="url(#gradFlow)" strokeWidth={2} dot={false} activeDot={{ r: 3, fill: '#ff7f50', stroke: 'white' }} />
                   <Area type="monotone" dataKey="Sleep" stroke={COLORS.sleep} fill="url(#gradSleep)" strokeWidth={1.5} dot={false} activeDot={{ r: 3 }} />
                   <Area type="monotone" dataKey="Water" stroke={COLORS.water} fill="url(#gradWater)" strokeWidth={1.5} dot={false} activeDot={{ r: 3 }} />
                   <Area type="monotone" dataKey="Pain" stroke={COLORS.pain} fill="url(#gradPain)" strokeWidth={1.5} dot={false} activeDot={{ r: 3 }} />

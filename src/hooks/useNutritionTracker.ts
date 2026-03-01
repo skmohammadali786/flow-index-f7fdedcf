@@ -41,7 +41,10 @@ export function useNutritionTracker() {
   const [isLoading, setIsLoading] = useState(true);
 
   const fetchLogs = useCallback(async () => {
-    if (!user) return;
+    if (!user) {
+      setIsLoading(false);
+      return;
+    }
     try {
       const { data, error } = await (supabase as any)
         .from('nutrition_logs')

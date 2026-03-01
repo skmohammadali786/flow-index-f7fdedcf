@@ -86,11 +86,13 @@ export function Header({ activeTab, onTabChange }: HeaderProps) {
           <motion.h1 
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="font-display text-xl font-bold gradient-primary bg-clip-text text-transparent cursor-pointer"
+            className="text-[1.35rem] font-bold bg-clip-text text-transparent cursor-pointer tracking-tight drop-shadow-sm"
             style={{ 
+              fontFamily: '"Playfair Display", "Canela", serif',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
-              backgroundImage: 'var(--gradient-primary)'
+              backgroundImage: 'linear-gradient(to right, #ff00ff, #ff69b4, #ff7f50, #ffa500, #ffbf00)',
+              textShadow: '0 1px 2px rgba(0,0,0,0.05)',
             }}
             onClick={() => { handleTabChange('calendar'); setActiveCategory('core'); }}
           >
