@@ -11,7 +11,7 @@ import { CuteLoader } from './CuteLoader';
 import { format, subDays } from 'date-fns';
 import { Plus, Trash2, Apple, Beef, Wheat, Droplets, Flame, Cookie, TrendingUp } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-
+import { CustomTooltip } from '@/components/ui/custom-tooltip';
 const MEAL_TYPES = ['breakfast', 'lunch', 'dinner', 'snack'] as const;
 const MEAL_ICONS: Record<string, string> = { breakfast: '🌅', lunch: '☀️', dinner: '🌙', snack: '🍪' };
 const PIE_COLORS = ['hsl(var(--primary))', 'hsl(var(--accent))', 'hsl(142, 71%, 45%)', 'hsl(280, 65%, 60%)'];
